@@ -1,0 +1,25 @@
+"use client";
+
+import { LogoutIcon } from "@hugeicons/core-free-icons";
+import { useTransition } from "react";
+import { logout } from "@/app/(app)/actions";
+import { Icon } from "@/components/Icon";
+import { SidebarMenuButton, SidebarMenuItem } from "@/shadcn/ui/sidebar";
+
+export function LogoutButton() {
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        disabled={pending}
+        onClick={() => startTransition(() => logout())}
+        tooltip="Déconnexion"
+        className="rounded-full corner-squircle text-destructive hover:bg-destructive/10 hover:text-destructive"
+      >
+        <Icon icon={LogoutIcon} />
+        <span>Déconnexion</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}

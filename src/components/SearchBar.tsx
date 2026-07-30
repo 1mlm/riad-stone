@@ -13,7 +13,7 @@ import {
 } from "@/shadcn/ui/input-group";
 
 export function SearchBar({
-  placeholder = "Search...",
+  placeholder = "Rechercher...",
   icon = Search02Icon,
   // pass a matching searchQueryKey to CustomTable when overriding this
   queryKey = "q",

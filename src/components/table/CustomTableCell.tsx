@@ -29,6 +29,7 @@ import {
   formatExactDate,
   formatRelativeDate,
 } from "@/utils/date";
+import { AlignedNumber } from "./AlignedNumber";
 import type { CustomTableColumn, CustomTableEnumValue } from "./CustomTable";
 import { CustomTableEmptyValue } from "./CustomTableEmptyValue";
 
@@ -95,7 +96,7 @@ export function DateCell({ date }: { date: Date | undefined }) {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Icon icon={CodeIcon} />
-            <span className="font-semibold">Timestamp: </span>
+            <span className="font-semibold">Horodatage : </span>
             {date.getTime()}
           </span>
         </TooltipContent>
@@ -192,7 +193,13 @@ export function CustomTableCell<T>({
     const value = column.getString(item);
     if (!value) return <CustomTableEmptyValue />;
     const content =
-      column.truncate === "middle" ? (
+      column.decimals !== undefined && column.getNumber ? (
+        <AlignedNumber
+          value={column.getNumber(item)}
+          decimals={column.decimals}
+          suffix={column.suffix}
+        />
+      ) : column.truncate === "middle" ? (
         <MiddleTruncatedText value={value} monospace={column.monospace} />
       ) : (
         <span className={cn(column.monospace && "font-mono text-xs")}>

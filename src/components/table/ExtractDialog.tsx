@@ -124,10 +124,11 @@ export function ExtractDialog<T>({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            Extract {items.length} item{items.length > 1 ? "s" : ""}
+            Extraire {items.length} élément{items.length > 1 ? "s" : ""}
           </DialogTitle>
           <DialogDescription>
-            Choose a file format to download the selected rows.
+            Choisissez un format de fichier pour télécharger les lignes
+            sélectionnées.
           </DialogDescription>
         </DialogHeader>
         <RadioGroup
@@ -144,7 +145,7 @@ export function ExtractDialog<T>({
           </div>
         </RadioGroup>
         <DialogFooter>
-          <Button onClick={handleConfirm}>Confirm download</Button>
+          <Button onClick={handleConfirm}>Confirmer le téléchargement</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
