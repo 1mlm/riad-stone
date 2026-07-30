@@ -9,6 +9,7 @@ import {
 } from "nuqs";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { type HugeIcon, Icon } from "@/components/Icon";
+import { MetaPage } from "@/components/MetaPage";
 import { Button } from "@/shadcn/ui/button";
 import { Checkbox } from "@/shadcn/ui/checkbox";
 import {
@@ -72,6 +73,10 @@ export type CustomTableColumn<T> = {
       getNumber?: (item: T) => number;
       // truncates the middle instead of the end, keeping both the start and the tail visible
       truncate?: "middle";
+      // renders getNumber's value via AlignedNumber instead of getString: fixed
+      // decimal-point column alignment without padding every row with zeros
+      decimals?: number;
+      suffix?: string;
       getString: (item: T) => string;
       // renders the value as a clickable button instead of plain text
       onClick?: (item: T) => void;
@@ -295,7 +300,7 @@ export function CustomTable<T>({
                         visibleItems.length,
                       )}
                       onCheckedChange={toggleAll}
-                      aria-label="Select all rows"
+                      aria-label="Sélectionner toutes les lignes"
                     />
                   </div>
                 </TableHead>
@@ -361,7 +366,7 @@ export function CustomTable<T>({
                           <Checkbox
                             checked={selectedIds.has(id)}
                             onCheckedChange={() => toggleRow(id)}
-                            aria-label="Select row"
+                            aria-label="Sélectionner la ligne"
                           />
                         </div>
                       </TableCell>
@@ -391,10 +396,12 @@ export function CustomTable<T>({
         </table>
       </div>
       {!loading && visibleItems.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 p-10 text-muted-foreground border-t border-border">
-          <Icon icon={InboxIcon} className="size-8" />
-          <span className="text-sm">No {emptyLabel} to show</span>
-        </div>
+        <MetaPage
+          icon={InboxIcon}
+          title="Aucun élément à afficher"
+          subtitle={`(${emptyLabel})`}
+          className="border-t border-border"
+        />
       )}
       {showActionBar && (
         <div className="fixed inset-x-4 bottom-4 flex flex-col items-end gap-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:flex-row border border-border bg-sidebar px-4 py-2 rounded-full corner-squircle shadow-[0_0_16px_rgba(0,0,0,0.35)]">
@@ -417,7 +424,7 @@ export function CustomTable<T>({
                 </PaginationItem>
                 <PaginationItem>
                   <span className="px-2 text-sm whitespace-nowrap text-muted-foreground">
-                    Page {currentPage} of {pageCount}
+                    Page {currentPage} sur {pageCount}
                   </span>
                 </PaginationItem>
                 <PaginationItem>
@@ -445,9 +452,9 @@ export function CustomTable<T>({
             >
               <Icon icon={BrushCleaningIcon} />
               <span className="hidden sm:inline">
-                Reset filters &amp; sorting
+                Réinitialiser les filtres et le tri
               </span>
-              <span className="sm:hidden">Reset</span>
+              <span className="sm:hidden">Réinitialiser</span>
             </Button>
           )}
           {selectable && (

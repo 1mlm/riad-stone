@@ -79,7 +79,7 @@ function SelectAllRow({
       checked={getTriState(selectedCount, totalCount)}
       onCheckedChange={onToggle}
     >
-      Select all
+      Tout sélectionner
     </CheckboxRow>
   );
 }
@@ -166,7 +166,7 @@ function EnumFilterContent<T>({
         onCheckedChange={() => toggle(ENUM_FILTER_NONE_KEY)}
       >
         <Icon icon={Cancel01Icon} className="size-3.5 opacity-50" />
-        <span className="text-sm">No value</span>
+        <span className="text-sm">Aucune valeur</span>
       </CheckboxRow>
     </div>
   );
@@ -202,14 +202,14 @@ function BooleanFilterContent({
         onCheckedChange={() => toggle("true")}
       >
         <Icon icon={CheckIcon} className="size-3.5 text-green-500" />
-        <span className="text-sm">Yes</span>
+        <span className="text-sm">Oui</span>
       </CheckboxRow>
       <CheckboxRow
         checked={!isEnumOptionExcluded(getField, "false")}
         onCheckedChange={() => toggle("false")}
       >
         <Icon icon={Cancel01Icon} className="size-3.5 opacity-50" />
-        <span className="text-sm">No</span>
+        <span className="text-sm">Non</span>
       </CheckboxRow>
     </div>
   );
@@ -219,11 +219,11 @@ const toDateInputValue = (date: Date) => date.toISOString().slice(0, 10);
 
 const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
   {
-    label: "Last hour",
+    label: "Dernière heure",
     getRange: () => [new Date(Date.now() - 3_600_000), new Date()],
   },
   {
-    label: "Today",
+    label: "Aujourd'hui",
     getRange: () => {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
@@ -231,7 +231,7 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
     },
   },
   {
-    label: "Yesterday",
+    label: "Hier",
     getRange: () => {
       const start = new Date();
       start.setDate(start.getDate() - 1);
@@ -241,7 +241,7 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
     },
   },
   {
-    label: "This week",
+    label: "Cette semaine",
     getRange: () => {
       const start = new Date();
       start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
@@ -250,7 +250,7 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
     },
   },
   {
-    label: "This month",
+    label: "Ce mois-ci",
     getRange: () => [
       new Date(new Date().getFullYear(), new Date().getMonth(), 1),
       new Date(),
@@ -309,7 +309,7 @@ function DateRangeFilterContent({
           }}
         >
           <Icon icon={Cancel01Icon} />
-          Clear
+          Effacer
         </Button>
       )}
     </div>
@@ -340,7 +340,7 @@ function TextFilterContent({
   return (
     <div className="p-2">
       <Input
-        placeholder="Search..."
+        placeholder="Rechercher..."
         value={getField("search")}
         onChange={(e) => setField("search", e.target.value)}
         className="h-7"
@@ -383,7 +383,7 @@ function TagsFilterContent<T>({
   return (
     <div className="flex flex-col gap-1 p-1">
       <div className="flex items-center gap-1.5 p-1">
-        <span className="text-muted-foreground text-xs">Count</span>
+        <span className="text-muted-foreground text-xs">Nombre</span>
         <MinMaxInputs
           {...{ getField, setField }}
           minField="countMin"
@@ -394,7 +394,7 @@ function TagsFilterContent<T>({
       <DropdownMenuSeparator />
       <div className="p-1">
         <Input
-          placeholder="Search tags..."
+          placeholder="Rechercher des tags..."
           value={getField("search")}
           onChange={(e) => setField("search", e.target.value)}
           className="h-7"
@@ -445,23 +445,26 @@ function SortSubmenuContent({
     <>
       <DropdownMenuItem onClick={() => onSortChange("asc")}>
         <Icon icon={getSortIcon("asc", numeric)} />
-        Ascending
+        Croissant
         {sort === "asc" && (
           <span className="ml-auto text-muted-foreground text-xs">✓</span>
         )}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => onSortChange("desc")}>
         <Icon icon={getSortIcon("desc", numeric)} />
-        Descending
+        Décroissant
         {sort === "desc" && (
           <span className="ml-auto text-muted-foreground text-xs">✓</span>
         )}
       </DropdownMenuItem>
       {sort && (
-        <DropdownMenuItem onClick={() => onSortChange(null)}>
-          <Icon icon={Cancel01Icon} />
-          Clear sort
-        </DropdownMenuItem>
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onSortChange(null)}>
+            <Icon icon={Cancel01Icon} />
+            Annuler
+          </DropdownMenuItem>
+        </>
       )}
     </>
   );
@@ -531,7 +534,7 @@ export function CustomTableColumnHeader<T>({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Icon icon={FilterIcon} />
-              Filter
+              Filtrer
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent
@@ -559,6 +562,19 @@ export function CustomTableColumnHeader<T>({
                 {column.type === "boolean" && (
                   <BooleanFilterContent {...{ getField, setField }} />
                 )}
+                {hasActiveFilter && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        for (const field of fields) setField(field, "");
+                      }}
+                    >
+                      <Icon icon={Cancel01Icon} />
+                      Annuler
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
@@ -567,7 +583,7 @@ export function CustomTableColumnHeader<T>({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Icon icon={Sorting01Icon} />
-              Sort
+              Trier
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>

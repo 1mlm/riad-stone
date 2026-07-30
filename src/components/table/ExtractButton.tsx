@@ -29,10 +29,10 @@ export function ExtractButton<T>({
       >
         <Icon icon={Download01Icon} />
         <span className="hidden sm:inline">
-          Extract {selectedItems.length} item
+          Extraire {selectedItems.length} élément
           {selectedItems.length > 1 ? "s" : ""}
         </span>
-        <span className="sm:hidden">Extract {selectedItems.length}</span>
+        <span className="sm:hidden">Extraire {selectedItems.length}</span>
       </Button>
       <ExtractDialog
         {...{ open, columns, filePrefix }}

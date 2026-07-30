@@ -8,12 +8,13 @@ import { TooltipProvider } from "@/shadcn/ui/tooltip";
 const outfit = Outfit();
 
 export const metadata: Metadata = {
-  title: "Template Next.js App",
+  title: "Riad Stone",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" className={outfit.className}>
+    <html lang="fr" className={outfit.className}>
       <body className={`antialiased`}>
         <NuqsAdapter>
           <TooltipProvider>{children}</TooltipProvider>
