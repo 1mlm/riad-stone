@@ -70,16 +70,15 @@ export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="edit-bonCommande" icon={InvoiceIcon} required>
+            <FieldLabel htmlFor="edit-bonCommande" icon={InvoiceIcon}>
               Bon de commande
             </FieldLabel>
             <InputGroup>
               <InputGroupInput
                 id="edit-bonCommande"
                 name="bonCommande"
-                defaultValue={sortie.bonCommande}
+                defaultValue={sortie.bonCommande ?? ""}
                 placeholder="C928492748"
-                required
               />
             </InputGroup>
           </div>

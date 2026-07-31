@@ -8,7 +8,7 @@ export type SortieRow = {
   largeur: number;
   nombrePieces: number;
   dateSortie: Date;
-  bonCommande: string;
+  bonCommande: string | null;
 };
 
 export type AvailableEntree = {

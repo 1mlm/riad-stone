@@ -30,7 +30,7 @@ model Sortie {
   entreeReference String   @id
   entree          Entree   @relation(fields: [entreeReference], references: [reference])
   dateSortie      DateTime @default(now())
-  bonCommande     String
+  bonCommande     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

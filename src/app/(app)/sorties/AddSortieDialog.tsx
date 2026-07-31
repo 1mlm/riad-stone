@@ -3,11 +3,11 @@
 import {
   Alert02Icon,
   Calendar04Icon,
-  HashIcon,
   InvoiceIcon,
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
+import { Combobox } from "@/components/Combobox";
 import { DatePickerField } from "@/components/DatePickerField";
 import { FieldLabel } from "@/components/FieldLabel";
 import { Icon } from "@/components/Icon";
@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from "@/shadcn/ui/dialog";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
+import { ICONS } from "@/utils/icon";
 import { createSortie } from "./actions";
 import type { AvailableEntree } from "./types";
 
@@ -31,10 +32,14 @@ export function AddSortieDialog({
   availableEntrees: AvailableEntree[];
 }) {
   const [open, setOpen] = useState(false);
+  const [entreeReference, setEntreeReference] = useState("");
   const [state, formAction, pending] = useActionState(
     async (prevState: { error: string | null }, formData: FormData) => {
       const result = await createSortie(prevState, formData);
-      if (!result.error) setOpen(false);
+      if (!result.error) {
+        setOpen(false);
+        setEntreeReference("");
+      }
       return result;
     },
     { error: null },
@@ -57,29 +62,27 @@ export function AddSortieDialog({
         </DialogHeader>
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="entreeReference" icon={HashIcon} required>
+            <FieldLabel icon={ICONS.reference} required>
               Référence de l'entrée
             </FieldLabel>
-            <InputGroup>
-              <InputGroupInput
-                id="entreeReference"
-                name="entreeReference"
-                list="available-entrees"
-                placeholder="TZ20"
-                required
-              />
-            </InputGroup>
-            <datalist id="available-entrees">
-              {availableEntrees.map((entree) => (
-                <option key={entree.reference} value={entree.reference}>
-                  {entree.designation}
-                </option>
-              ))}
-            </datalist>
+            <Combobox
+              name="entreeReference"
+              value={entreeReference}
+              onValueChange={setEntreeReference}
+              options={availableEntrees.map((entree) => ({
+                value: entree.reference,
+                label: entree.designation,
+              }))}
+              placeholder="Sélectionner une entrée..."
+              searchPlaceholder="Rechercher une référence..."
+              emptyLabel="Aucune entrée disponible."
+              required
+              ariaInvalid={Boolean(state.error) && !entreeReference}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="bonCommande" icon={InvoiceIcon} required>
+            <FieldLabel htmlFor="bonCommande" icon={InvoiceIcon}>
               Bon de commande
             </FieldLabel>
             <InputGroup>
@@ -87,7 +90,6 @@ export function AddSortieDialog({
                 id="bonCommande"
                 name="bonCommande"
                 placeholder="C928492748"
-                required
               />
             </InputGroup>
           </div>
