@@ -72,6 +72,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.4.6
         version: 2.4.16
+      '@faker-js/faker':
+        specifier: ^10.5.0
+        version: 10.5.0
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.0
@@ -315,6 +318,10 @@ packages:
 
   '@emnapi/runtime@1.11.0':
     resolution: {integrity: sha512-55coeOFKHv1ywEcUXJtWU5f+Jr/W5tZDvZig8DLKSwUN1JpROQ4rk/SNOQiFWmaR/VKF4zuFyW1B8JduOSv6Pg==}
+
+  '@faker-js/faker@10.5.0':
+    resolution: {integrity: sha512-bsxD8WLS5lIj7aaoCx1YJkktqYj5vlBUE6HWzu2Q51ksrGJ0H737ECCKlFU7Yf8Br45z9t99frBp/J7kzbMPAg==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@fast-csv/format@4.3.5':
     resolution: {integrity: sha512-8iRn6QF3I8Ak78lNAa+Gdl5MJJBM5vRHivFtMRUWINdevNo00K7OXxS2PshawLKTejVwieIlPmK5YlLu6w4u8A==}
@@ -3752,6 +3759,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@faker-js/faker@10.5.0': {}
 
   '@fast-csv/format@4.3.5':
     dependencies:

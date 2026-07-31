@@ -316,7 +316,7 @@ export function AddEntreeDialog({
             <Button
               type="button"
               variant="outline"
-              className="corner-squircle"
+              className="rounded-full corner-squircle"
               onClick={addCard}
             >
               <Icon icon={PlusSignIcon} />
