@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import {
@@ -9,6 +9,7 @@ import {
   isCodeCorrect,
 } from "@/utils/auth";
 import { logHistory } from "@/utils/history";
+import { describeUserAgent } from "@/utils/userAgent";
 
 export async function unlockWithCode(
   _prevState: { error: boolean },
@@ -27,6 +28,7 @@ export async function unlockWithCode(
     path: "/",
   });
 
-  await logHistory(HistoryItemType.LOGIN, { code });
+  const userAgent = describeUserAgent((await headers()).get("user-agent"));
+  await logHistory(HistoryItemType.LOGIN, { code, userAgent });
   redirect("/");
 }

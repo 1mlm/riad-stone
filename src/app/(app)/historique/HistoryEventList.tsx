@@ -95,6 +95,7 @@ const FIELD_LABELS: Record<string, string> = {
   bonCommande: "Bon de commande",
   dateSortie: "Date de sortie",
   code: "Code utilisé",
+  userAgent: "Appareil",
   entreesCreated: "Entrées créées",
   sortiesCreated: "Sorties créées",
   entreesCleared: "Entrées supprimées",
