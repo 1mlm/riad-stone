@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME, isAuthCookieValid } from "@/utils/auth";
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt).*)"],
 };
 
 export default function proxy(request: NextRequest) {
