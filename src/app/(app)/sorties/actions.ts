@@ -5,6 +5,7 @@ import type { Sortie } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { logHistory } from "@/utils/history";
 import { prisma } from "@/utils/prisma";
+import { requireAuth } from "@/utils/requireAuth";
 import type { AvailableEntree } from "./types";
 
 function toSortieSnapshot(sortie: Sortie) {
@@ -28,12 +29,13 @@ export async function createSortie(
   _prevState: { error: string | null },
   formData: FormData,
 ): Promise<{ error: string | null }> {
+  await requireAuth();
+
   const entreeReference = String(formData.get("entreeReference") ?? "").trim();
   const bonCommande = String(formData.get("bonCommande") ?? "").trim();
   const dateSortie = String(formData.get("dateSortie") ?? "");
 
   if (!entreeReference) return { error: "La référence est requise." };
-  if (!bonCommande) return { error: "Le bon de commande est requis." };
 
   const entree = await prisma.entree.findUnique({
     where: { reference: entreeReference },
@@ -48,7 +50,7 @@ export async function createSortie(
   const created = await prisma.sortie.create({
     data: {
       entreeReference,
-      bonCommande,
+      bonCommande: bonCommande || null,
       dateSortie: dateSortie ? new Date(dateSortie) : new Date(),
     },
   });
@@ -64,10 +66,10 @@ export async function updateSortie(
   _prevState: { error: string | null },
   formData: FormData,
 ): Promise<{ error: string | null }> {
+  await requireAuth();
+
   const bonCommande = String(formData.get("bonCommande") ?? "").trim();
   const dateSortie = String(formData.get("dateSortie") ?? "");
-
-  if (!bonCommande) return { error: "Le bon de commande est requis." };
 
   const existing = await prisma.sortie.findUnique({
     where: { entreeReference },
@@ -77,7 +79,7 @@ export async function updateSortie(
   const updated = await prisma.sortie.update({
     where: { entreeReference },
     data: {
-      bonCommande,
+      bonCommande: bonCommande || null,
       dateSortie: dateSortie ? new Date(dateSortie) : new Date(),
     },
   });
@@ -90,15 +92,20 @@ export async function updateSortie(
   return { error: null };
 }
 
-export async function deleteSortie(entreeReference: string): Promise<void> {
+export async function deleteSortie(
+  entreeReference: string,
+): Promise<{ error: string | null }> {
+  await requireAuth();
+
   const existing = await prisma.sortie.findUnique({
     where: { entreeReference },
   });
-  if (!existing) return;
+  if (!existing) return { error: null };
 
   await prisma.sortie.delete({ where: { entreeReference } });
 
   await logHistory(HistoryItemType.DELETE_OUTPUT, toSortieSnapshot(existing));
   revalidatePath("/sorties");
   revalidatePath("/stock");
+  return { error: null };
 }

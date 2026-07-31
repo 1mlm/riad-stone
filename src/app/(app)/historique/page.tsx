@@ -20,6 +20,7 @@ import { HistoryItemType } from "@/generated/prisma/enums";
 import { cn } from "@/shadcn/utils";
 import { getRelativeBucket, type RelativeBucket } from "@/utils/date";
 import { prisma } from "@/utils/prisma";
+import { RevealSecretValue } from "./RevealSecretValue";
 
 const TYPE_META: Record<
   HistoryItemType,
@@ -180,7 +181,11 @@ function HistoryDataTable({
               <td
                 className={cn("py-1", changed && "font-medium text-amber-600")}
               >
-                {formatFieldValue(field, current[field])}
+                {field === "code" && current[field] ? (
+                  <RevealSecretValue value={String(current[field])} />
+                ) : (
+                  formatFieldValue(field, current[field])
+                )}
               </td>
             </tr>
           );

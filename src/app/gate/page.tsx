@@ -5,9 +5,9 @@ import {
   Key01Icon,
   SquareUnlock01Icon,
 } from "@hugeicons/core-free-icons";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { DelayedButton } from "@/components/DelayedButton";
 import { Icon } from "@/components/Icon";
-import { Button } from "@/shadcn/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
@@ -19,6 +19,17 @@ export default function GatePage() {
   const [state, formAction, pending] = useActionState(unlockWithCode, {
     error: false,
   });
+
+  // every failed attempt re-arms the delay, so brute-forcing the code stays
+  // throttled to one guess per wait window instead of only the first try
+  const [attempt, setAttempt] = useState(0);
+  const previousState = useRef(state);
+  useEffect(() => {
+    if (previousState.current !== state) {
+      previousState.current = state;
+      setAttempt((n) => n + 1);
+    }
+  }, [state]);
 
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-4 p-4">
@@ -35,10 +46,10 @@ export default function GatePage() {
             aria-invalid={state.error}
           />
         </InputGroup>
-        <Button type="submit" disabled={pending}>
+        <DelayedButton key={attempt} type="submit" disabled={pending}>
           <Icon icon={SquareUnlock01Icon} />
           Déverrouiller
-        </Button>
+        </DelayedButton>
         {state.error && (
           <span className="inline-flex items-center justify-center gap-1.5 text-sm text-destructive">
             <Icon icon={Alert02Icon} />

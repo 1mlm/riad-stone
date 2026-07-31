@@ -8,6 +8,7 @@ import { HistoryItemType } from "@/generated/prisma/enums";
 import { AUTH_COOKIE_NAME } from "@/utils/auth";
 import { logHistory } from "@/utils/history";
 import { prisma } from "@/utils/prisma";
+import { requireAuth } from "@/utils/requireAuth";
 
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
@@ -25,6 +26,8 @@ export async function isStockEmpty(): Promise<boolean> {
 }
 
 export async function clearAllData(): Promise<void> {
+  await requireAuth();
+
   const [entreesCleared, sortiesCleared] = await Promise.all([
     prisma.entree.count(),
     prisma.sortie.count(),
@@ -244,6 +247,8 @@ const FAKE_HISTORY_EVENTS: {
 ];
 
 export async function seedFakeData(): Promise<void> {
+  await requireAuth();
+
   if (!(await isStockEmpty())) return;
 
   await prisma.entree.createMany({ data: FAKE_ENTREES });
