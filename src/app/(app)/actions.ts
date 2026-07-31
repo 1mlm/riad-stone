@@ -2,7 +2,7 @@
 
 import { faker } from "@faker-js/faker";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
@@ -10,11 +10,13 @@ import { AUTH_COOKIE_NAME } from "@/utils/auth";
 import { logHistory } from "@/utils/history";
 import { prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
+import { describeUserAgent } from "@/utils/userAgent";
 
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE_NAME);
-  await logHistory(HistoryItemType.LOGOUT, {});
+  const userAgent = describeUserAgent((await headers()).get("user-agent"));
+  await logHistory(HistoryItemType.LOGOUT, { userAgent });
   redirect("/gate");
 }
 
