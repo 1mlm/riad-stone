@@ -46,7 +46,12 @@ export default function GatePage() {
             aria-invalid={state.error}
           />
         </InputGroup>
-        <DelayedButton key={attempt} type="submit" disabled={pending}>
+        <DelayedButton
+          key={attempt}
+          type="submit"
+          disabled={pending}
+          waitSeconds={attempt === 0 ? 0 : 7}
+        >
           <Icon icon={SquareUnlock01Icon} />
           Déverrouiller
         </DelayedButton>
