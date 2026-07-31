@@ -2,7 +2,6 @@
 
 import { Search02Icon } from "@hugeicons/core-free-icons";
 import { useQueryState } from "nuqs";
-import type { ReactNode } from "react";
 import type { HugeIcon } from "@/components/Icon";
 import { Icon } from "@/components/Icon";
 import {
@@ -17,14 +16,14 @@ export function SearchBar({
   icon = Search02Icon,
   // pass a matching searchQueryKey to CustomTable when overriding this
   queryKey = "q",
-  trailing,
+  resultCount,
   className,
 }: {
   placeholder?: string;
   icon?: HugeIcon;
   queryKey?: string;
-  // right-aligned slot, e.g. a "12 users" result count
-  trailing?: ReactNode;
+  // shown right-aligned inside the bar, e.g. "12 résultats"
+  resultCount?: number;
   className?: string;
 }) {
   const [search, setSearch] = useQueryState(queryKey, { defaultValue: "" });
@@ -39,9 +38,11 @@ export function SearchBar({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      {trailing && (
+      {resultCount !== undefined && (
         <InputGroupAddon align="inline-end">
-          <InputGroupText>{trailing}</InputGroupText>
+          <InputGroupText>
+            {resultCount} {resultCount === 1 ? "résultat" : "résultats"}
+          </InputGroupText>
         </InputGroupAddon>
       )}
     </InputGroup>

@@ -1,57 +1,26 @@
 "use client";
 
-import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useState } from "react";
 import {
   createDesignationColumn,
-  createLargeurColumn,
-  createLongueurColumn,
+  createLengthColumn,
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
 } from "@/app/(app)/entrees/columns";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Icon } from "@/components/Icon";
+import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SearchBar } from "@/components/SearchBar";
 import {
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
-import { Button } from "@/shadcn/ui/button";
 import { ICONS } from "@/utils/icon";
 import { AddSortieDialog } from "./AddSortieDialog";
 import { deleteSortie } from "./actions";
 import { EditSortieDialog } from "./EditSortieDialog";
 import type { AvailableEntree, SortieRow } from "./types";
-
-function DeleteButton({
-  id,
-  entreeReference,
-}: {
-  id: number;
-  entreeReference: string;
-}) {
-  return (
-    <ConfirmDialog
-      trigger={
-        <Button
-          variant="destructive"
-          size="icon-sm"
-          className="corner-squircle"
-        >
-          <Icon icon={Delete02Icon} />
-        </Button>
-      }
-      title="Supprimer cette sortie ?"
-      content={`La sortie de l'entrée ${entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
-      confirmLabel="Supprimer"
-      confirmIcon={Delete02Icon}
-      onConfirm={() => deleteSortie(id)}
-    />
-  );
-}
 
 const columns: CustomTableColumn<SortieRow>[] = [
   createReferenceColumn((row) => row.entreeReference),
@@ -78,8 +47,8 @@ const columns: CustomTableColumn<SortieRow>[] = [
     getDate: (row) => row.dateEntree,
   },
   createOrigineColumn(),
-  createLongueurColumn(),
-  createLargeurColumn(),
+  createLengthColumn("longueur"),
+  createLengthColumn("largeur"),
   createSurfacePieceColumn(),
   createNombrePiecesColumn(),
   createSurfaceTotaleColumn(),
@@ -91,7 +60,11 @@ const columns: CustomTableColumn<SortieRow>[] = [
     getButtons: (row) => (
       <div className="flex items-center justify-center gap-1">
         <EditSortieDialog sortie={row} />
-        <DeleteButton id={row.id} entreeReference={row.entreeReference} />
+        <DeleteRowButton
+          title="Supprimer cette sortie ?"
+          content={`La sortie de l'entrée ${row.entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
+          onConfirm={() => deleteSortie(row.id)}
+        />
       </div>
     ),
   },
@@ -112,7 +85,7 @@ function SortiesTableContent({
         <SearchBar
           className="flex-1"
           placeholder="Rechercher une sortie..."
-          trailing={`${resultCount} ${resultCount === 1 ? "résultat" : "résultats"}`}
+          {...{ resultCount }}
         />
         <AddSortieDialog {...{ availableEntrees }} />
       </div>

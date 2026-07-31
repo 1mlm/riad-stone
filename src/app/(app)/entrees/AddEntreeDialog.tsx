@@ -1,13 +1,10 @@
 "use client";
 
-import {
-  Alert02Icon,
-  Delete02Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FieldLabel } from "@/components/FieldLabel";
+import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
@@ -348,12 +345,7 @@ export function AddEntreeDialog({
             </>
           )}
 
-          {state.error && (
-            <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
-              <Icon icon={Alert02Icon} />
-              {state.error}
-            </span>
-          )}
+          <FormError>{state.error}</FormError>
 
           <DialogFooter>
             <Button type="submit" disabled={pending || cards.length === 0}>

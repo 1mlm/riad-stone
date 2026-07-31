@@ -132,30 +132,6 @@ function readEntreeFormData(
   };
 }
 
-export async function createEntree(
-  _prevState: { error: string | null },
-  formData: FormData,
-): Promise<{ error: string | null }> {
-  await requireAuth();
-
-  const parsed = readEntreeFormData(formData);
-  if (parsed.error) return { error: parsed.error };
-
-  let created: Entree;
-  try {
-    created = await prisma.entree.create({ data: parsed.data });
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "P2002")
-      return { error: "Cette référence existe déjà." };
-    throw error;
-  }
-
-  await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(created));
-  revalidatePath("/entrees");
-  revalidatePath("/stock");
-  return { error: null };
-}
-
 export type CreateEntreesResult = {
   error: string | null;
   // the offending reference, if the error is a duplicate — the client

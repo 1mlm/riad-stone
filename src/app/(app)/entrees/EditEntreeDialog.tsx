@@ -1,7 +1,8 @@
 "use client";
 
-import { Alert02Icon, EditIcon } from "@hugeicons/core-free-icons";
+import { EditIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
+import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
@@ -45,12 +46,7 @@ export function EditEntreeDialog({ entree }: { entree: EntreeRow }) {
         <form action={formAction} className="flex flex-col gap-4">
           <EntreeFormFields mode="edit" {...{ entree }} />
 
-          {state.error && (
-            <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
-              <Icon icon={Alert02Icon} />
-              {state.error}
-            </span>
-          )}
+          <FormError>{state.error}</FormError>
 
           <DialogFooter>
             <Button type="submit" variant="warning" disabled={pending}>

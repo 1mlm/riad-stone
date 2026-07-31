@@ -1,6 +1,18 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
+import {
+  createDateColumn,
+  createDesignationColumn,
+  createLengthColumn,
+  createNombrePiecesColumn,
+  createOrigineColumn,
+  createReferenceColumn,
+  createSurfaceDesignationColumn,
+  createSurfacePieceColumn,
+  createSurfaceTotaleColumn,
+  DESIGNATION_THEN_REFERENCE_SORT,
+} from "@/app/(app)/entrees/columns";
 import type { EntreeRow } from "@/app/(app)/entrees/types";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { ReferenceHistoryDialog } from "@/components/ReferenceHistoryDialog";
@@ -10,22 +22,6 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { ICONS } from "@/utils/icon";
-import {
-  createDesignationColumn,
-  createLargeurColumn,
-  createLongueurColumn,
-  createNombrePiecesColumn,
-  createOrigineColumn,
-  createReferenceColumn,
-  createSurfaceDesignationColumn,
-  createSurfacePieceColumn,
-  createSurfaceTotaleColumn,
-} from "../entrees/columns";
-
-const DEFAULT_SORT = [
-  { columnId: "designation", dir: "asc" as const },
-  { columnId: "reference", dir: "desc" as const },
-];
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
   const [resultCount, setResultCount] = useState(items.length);
@@ -34,16 +30,10 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
     () => [
       createDesignationColumn(),
       createReferenceColumn((row) => row.reference),
-      {
-        id: "date",
-        label: "Date",
-        icon: ICONS.date,
-        type: "date",
-        getDate: (row) => row.date,
-      },
+      createDateColumn(),
       createOrigineColumn(),
-      createLongueurColumn(),
-      createLargeurColumn(),
+      createLengthColumn("longueur"),
+      createLengthColumn("largeur"),
       createSurfacePieceColumn(),
       createNombrePiecesColumn("Pièces restantes"),
       createSurfaceTotaleColumn(),
@@ -68,14 +58,14 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
     <div className="flex min-w-0 flex-col gap-4 p-5">
       <SearchBar
         placeholder="Rechercher dans le stock..."
-        trailing={`${resultCount} ${resultCount === 1 ? "résultat" : "résultats"}`}
+        {...{ resultCount }}
       />
       <CustomTable
         {...{ items, columns }}
         getItemId={(row) => row.reference}
         exportFilePrefix="stock"
         selectable
-        defaultSort={DEFAULT_SORT}
+        defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
       />
     </div>
@@ -85,7 +75,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
 export function StockTable({ items }: { items: EntreeRow[] }) {
   return (
     <Suspense>
-      <StockTableContent items={items} />
+      <StockTableContent {...{ items }} />
     </Suspense>
   );
 }

@@ -19,12 +19,7 @@ type BaseField = {
 };
 
 export type EntreeField =
-  | (BaseField & {
-      kind: "text";
-      placeholder?: string;
-      // feeds a <datalist> of past values for this field
-      suggestions?: boolean;
-    })
+  | (BaseField & { kind: "text"; placeholder?: string })
   | (BaseField & { kind: "date" })
   | (BaseField & { kind: "unitLength" })
   | (BaseField & { kind: "integer" });
@@ -40,7 +35,6 @@ export const ENTREE_FIELDS = [
     required: true,
     kind: "text",
     placeholder: "Granite, Ibiza...",
-    suggestions: true,
   },
   {
     key: "reference",

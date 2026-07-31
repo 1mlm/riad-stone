@@ -298,9 +298,19 @@ export function CustomTable<T>({
     ? Math.max(1, Math.ceil(visibleItems.length / PAGE_SIZE))
     : 1;
   const currentPage = Math.min(Math.max(page, 1), pageCount);
-  const paginatedItems = paginate
-    ? visibleItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-    : visibleItems;
+  // stable reference across renders — an unmemoized .slice() would return a
+  // new array every render, and effects keyed on it (scroll-fade below)
+  // would re-fire every render and loop forever
+  const paginatedItems = useMemo(
+    () =>
+      paginate
+        ? visibleItems.slice(
+            (currentPage - 1) * PAGE_SIZE,
+            currentPage * PAGE_SIZE,
+          )
+        : visibleItems,
+    [paginate, visibleItems, currentPage],
+  );
 
   // consecutive-equal runs per mergeAdjacent column, computed over the
   // rendered page only — a run split across a page boundary renders as two
@@ -341,12 +351,13 @@ export function CustomTable<T>({
     if (!scrollContainer) return;
 
     const updateScrollFade = () => {
-      setScrollFade({
-        left: scrollContainer.scrollLeft > 0,
-        right:
-          scrollContainer.scrollLeft + scrollContainer.clientWidth <
-          scrollContainer.scrollWidth - 1,
-      });
+      const left = scrollContainer.scrollLeft > 0;
+      const right =
+        scrollContainer.scrollLeft + scrollContainer.clientWidth <
+        scrollContainer.scrollWidth - 1;
+      setScrollFade((prev) =>
+        prev.left === left && prev.right === right ? prev : { left, right },
+      );
     };
 
     updateScrollFade();

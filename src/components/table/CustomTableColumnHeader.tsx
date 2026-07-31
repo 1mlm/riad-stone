@@ -573,9 +573,7 @@ export function CustomTableColumnHeader<T>({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button type="button">{label}</button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger>{label}</DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-40">
         {canFilter && (
           <DropdownMenuSub>

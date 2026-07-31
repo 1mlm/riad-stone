@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="fr" className={outfit.className}>
-      <body className={`antialiased`}>
+      <body className="antialiased">
         <NuqsAdapter>
           <TooltipProvider>{children}</TooltipProvider>
         </NuqsAdapter>
