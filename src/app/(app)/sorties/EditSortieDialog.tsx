@@ -65,7 +65,10 @@ export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
                   disabled
                 />
               </InputGroup>
-              <EntreeDetailsDialog reference={sortie.entreeReference} />
+              <EntreeDetailsDialog
+                reference={sortie.entreeReference}
+                allowAddSortie={false}
+              />
             </div>
           </div>
 

@@ -1,12 +1,15 @@
 "use client";
 
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import {
   type EntreeDetails,
   getEntreeDetails,
 } from "@/app/(app)/entrees/actions";
 import { toDisplayLength } from "@/app/(app)/entrees/fields";
+import { AddSortieDialog } from "@/app/(app)/sorties/AddSortieDialog";
 import { Icon } from "@/components/Icon";
 import { LazyDialog } from "@/components/LazyDialog";
+import { Button } from "@/shadcn/ui/button";
 import { ICONS } from "@/utils/icon";
 
 function getSummaryRows(details: EntreeDetails) {
@@ -74,7 +77,16 @@ function SortiesList({ sorties }: { sorties: EntreeDetails["sorties"] }) {
   );
 }
 
-export function EntreeDetailsDialog({ reference }: { reference: string }) {
+export function EntreeDetailsDialog({
+  reference,
+  // hides the "Ajouter une sortie" action — set to false when this dialog is
+  // itself opened from within a sortie form, so opening it doesn't offer to
+  // open another sortie form on top of the one already open
+  allowAddSortie = true,
+}: {
+  reference: string;
+  allowAddSortie?: boolean;
+}) {
   return (
     <LazyDialog
       triggerIcon={ICONS.details}
@@ -104,6 +116,24 @@ export function EntreeDetailsDialog({ reference }: { reference: string }) {
               </span>
               <SortiesList sorties={details.sorties} />
             </div>
+            {allowAddSortie && details.piecesRestantes > 0 && (
+              <AddSortieDialog
+                availableEntrees={[
+                  {
+                    reference: details.reference,
+                    designation: details.designation,
+                    piecesRestantes: details.piecesRestantes,
+                  },
+                ]}
+                initialReference={details.reference}
+                trigger={
+                  <Button className="rounded-full corner-squircle">
+                    <Icon icon={PlusSignIcon} />
+                    Ajouter une sortie
+                  </Button>
+                }
+              />
+            )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import {
   createDesignationColumn,
   createLengthColumn,
@@ -24,61 +24,6 @@ import { deleteSortie } from "./actions";
 import { EditSortieDialog } from "./EditSortieDialog";
 import type { AvailableEntree, SortieRow } from "./types";
 
-const columns: CustomTableColumn<SortieRow>[] = [
-  createReferenceColumn((row) => row.entreeReference),
-  createDesignationColumn(),
-  {
-    id: "bonCommande",
-    label: "Bon de commande",
-    icon: ICONS.bonCommande,
-    type: "string",
-    monospace: true,
-    getString: (row) => row.bonCommande ?? "",
-  },
-  {
-    id: "dateSortie",
-    label: "Date de sortie",
-    icon: ICONS.date,
-    type: "date",
-    getDate: (row) => row.dateSortie,
-  },
-  {
-    id: "dateEntree",
-    label: "Date d'entrée",
-    icon: ICONS.date,
-    type: "date",
-    getDate: (row) => row.dateEntree,
-  },
-  createOrigineColumn(),
-  createLengthColumn("longueur"),
-  createLengthColumn("largeur"),
-  createSurfacePieceColumn(),
-  createNombrePiecesColumn(),
-  createSurfaceTotaleColumn(),
-  {
-    id: "actions",
-    label: "Actions",
-    icon: ICONS.actions,
-    type: "buttons",
-    getButtons: (row) => (
-      <div className="flex items-center justify-center gap-1">
-        <CopyButton
-          value={buildRowSummary(columns, row)}
-          variant="outline"
-          size="icon-sm"
-          className="corner-squircle"
-        />
-        <EditSortieDialog sortie={row} />
-        <DeleteRowButton
-          title="Supprimer cette sortie ?"
-          content={`La sortie de l'entrée ${row.entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
-          onConfirm={() => deleteSortie(row.id)}
-        />
-      </div>
-    ),
-  },
-];
-
 function SortiesTableContent({
   items,
   availableEntrees,
@@ -87,6 +32,83 @@ function SortiesTableContent({
   availableEntrees: AvailableEntree[];
 }) {
   const [resultCount, setResultCount] = useState(items.length);
+  // hides a row the moment its delete is confirmed, instead of waiting on
+  // the server action's revalidatePath round-trip — rolled back on error
+  const [pendingRemovedIds, setPendingRemovedIds] = useState<Set<number>>(
+    new Set(),
+  );
+  const visibleItems = useMemo(
+    () => items.filter((item) => !pendingRemovedIds.has(item.id)),
+    [items, pendingRemovedIds],
+  );
+
+  const columns: CustomTableColumn<SortieRow>[] = useMemo(
+    () => [
+      createReferenceColumn((row) => row.entreeReference),
+      createDesignationColumn(),
+      {
+        id: "bonCommande",
+        label: "Bon de commande",
+        icon: ICONS.bonCommande,
+        type: "string",
+        monospace: true,
+        getString: (row) => row.bonCommande ?? "",
+      },
+      {
+        id: "dateSortie",
+        label: "Date de sortie",
+        icon: ICONS.date,
+        type: "date",
+        getDate: (row) => row.dateSortie,
+      },
+      {
+        id: "dateEntree",
+        label: "Date d'entrée",
+        icon: ICONS.date,
+        type: "date",
+        getDate: (row) => row.dateEntree,
+      },
+      createOrigineColumn(),
+      createLengthColumn("longueur"),
+      createLengthColumn("largeur"),
+      createSurfacePieceColumn(),
+      createNombrePiecesColumn(),
+      createSurfaceTotaleColumn(),
+      {
+        id: "actions",
+        label: "Actions",
+        icon: ICONS.actions,
+        type: "buttons",
+        getButtons: (row) => (
+          <div className="flex items-center justify-center gap-1">
+            <CopyButton
+              value={buildRowSummary(columns, row)}
+              variant="outline"
+              size="icon-sm"
+              className="corner-squircle"
+            />
+            <EditSortieDialog sortie={row} />
+            <DeleteRowButton
+              title="Supprimer cette sortie ?"
+              content={`La sortie de l'entrée ${row.entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
+              onConfirm={async () => {
+                setPendingRemovedIds((prev) => new Set(prev).add(row.id));
+                const result = await deleteSortie(row.id);
+                if (result.error)
+                  setPendingRemovedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(row.id);
+                    return next;
+                  });
+                return result;
+              }}
+            />
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="flex min-w-0 flex-col gap-4 p-5">
@@ -99,10 +121,29 @@ function SortiesTableContent({
         <AddSortieDialog {...{ availableEntrees }} />
       </div>
       <CustomTable
-        {...{ items, columns }}
+        items={visibleItems}
+        {...{ columns }}
         getItemId={(row) => String(row.id)}
         exportFilePrefix="sorties"
         selectable
+        onDeleteSelected={async (rows) => {
+          setPendingRemovedIds(
+            (prev) => new Set([...prev, ...rows.map((row) => row.id)]),
+          );
+          const results = await Promise.all(
+            rows.map((row) => deleteSortie(row.id)),
+          );
+          const failedIds = rows
+            .filter((_, i) => results[i].error)
+            .map((row) => row.id);
+          if (failedIds.length > 0)
+            setPendingRemovedIds((prev) => {
+              const next = new Set(prev);
+              for (const id of failedIds) next.delete(id);
+              return next;
+            });
+          return { error: results.find((r) => r.error)?.error ?? null };
+        }}
         onVisibleCountChange={setResultCount}
       />
     </div>

@@ -35,6 +35,15 @@ function EntreesTableContent({
   designationSuggestions: string[];
 }) {
   const [resultCount, setResultCount] = useState(items.length);
+  // hides a row the moment its delete is confirmed, instead of waiting on
+  // the server action's revalidatePath round-trip — rolled back on error
+  const [pendingRemovedRefs, setPendingRemovedRefs] = useState<Set<string>>(
+    new Set(),
+  );
+  const visibleItems = useMemo(
+    () => items.filter((item) => !pendingRemovedRefs.has(item.reference)),
+    [items, pendingRemovedRefs],
+  );
 
   const columns: CustomTableColumn<EntreeRow>[] = useMemo(
     () => [
@@ -47,7 +56,7 @@ function EntreesTableContent({
       createSurfacePieceColumn(),
       createNombrePiecesColumn(),
       createSurfaceTotaleColumn(),
-      createSurfaceDesignationColumn(items),
+      createSurfaceDesignationColumn(visibleItems),
       {
         id: "actions",
         label: "Actions",
@@ -65,13 +74,25 @@ function EntreesTableContent({
             <DeleteRowButton
               title="Supprimer cette entrée ?"
               content={`L'entrée ${row.reference} sera supprimée définitivement. Cette action est irréversible.`}
-              onConfirm={() => deleteEntree(row.reference)}
+              onConfirm={async () => {
+                setPendingRemovedRefs((prev) =>
+                  new Set(prev).add(row.reference),
+                );
+                const result = await deleteEntree(row.reference);
+                if (result.error)
+                  setPendingRemovedRefs((prev) => {
+                    const next = new Set(prev);
+                    next.delete(row.reference);
+                    return next;
+                  });
+                return result;
+              }}
             />
           </div>
         ),
       },
     ],
-    [items],
+    [visibleItems],
   );
 
   return (
@@ -85,10 +106,29 @@ function EntreesTableContent({
         <AddEntreeDialog {...{ designationSuggestions }} />
       </div>
       <CustomTable
-        {...{ items, columns }}
+        items={visibleItems}
+        {...{ columns }}
         getItemId={(row) => row.reference}
         exportFilePrefix="entrees"
         selectable
+        onDeleteSelected={async (rows) => {
+          setPendingRemovedRefs(
+            (prev) => new Set([...prev, ...rows.map((row) => row.reference)]),
+          );
+          const results = await Promise.all(
+            rows.map((row) => deleteEntree(row.reference)),
+          );
+          const failedRefs = rows
+            .filter((_, i) => results[i].error)
+            .map((row) => row.reference);
+          if (failedRefs.length > 0)
+            setPendingRemovedRefs((prev) => {
+              const next = new Set(prev);
+              for (const ref of failedRefs) next.delete(ref);
+              return next;
+            });
+          return { error: results.find((r) => r.error)?.error ?? null };
+        }}
         defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
       />
