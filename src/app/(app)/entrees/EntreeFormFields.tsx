@@ -11,23 +11,33 @@ import { UnitLengthInput } from "./UnitLengthInput";
 
 type Mode = "add" | "edit";
 
-const inputId = (mode: Mode, key: string) =>
-  mode === "edit" ? `edit-${key}` : key;
+// with no namePrefix, id/name are the bare field key (single-instance forms:
+// add/edit dialogs). With a namePrefix (e.g. a card id in a multi-card
+// form), both are namespaced so many instances of the same field can coexist
+// in one <form> without colliding.
+const inputId = (mode: Mode, key: string, namePrefix?: string) =>
+  namePrefix ? `${namePrefix}-${key}` : mode === "edit" ? `edit-${key}` : key;
+const inputName = (key: string, namePrefix?: string) =>
+  namePrefix ? `${namePrefix}__${key}` : key;
 
 function TextInput({
   field,
   mode,
   entree,
   designationSuggestions,
+  namePrefix,
 }: {
   field: Extract<EntreeField, { kind: "text" }>;
   mode: Mode;
   entree?: EntreeRow;
   designationSuggestions?: string[];
+  namePrefix?: string;
 }) {
-  const id = inputId(mode, field.key);
+  const id = inputId(mode, field.key, namePrefix);
   const locked = mode === "edit" && field.lockedOnEdit;
-  const listId = field.suggestions ? `${field.key}-suggestions` : undefined;
+  const listId = field.suggestions
+    ? `${inputId(mode, field.key, namePrefix)}-suggestions`
+    : undefined;
   const defaultValue = entree
     ? ((entree[field.key] as string | null) ?? "")
     : undefined;
@@ -37,7 +47,7 @@ function TextInput({
       <InputGroup className={locked ? "bg-input/50 opacity-70" : undefined}>
         <InputGroupInput
           id={id}
-          name={field.key}
+          name={inputName(field.key, namePrefix)}
           list={listId}
           placeholder={field.placeholder}
           defaultValue={defaultValue}
@@ -64,23 +74,34 @@ function FieldInput({
   mode,
   entree,
   designationSuggestions,
+  namePrefix,
 }: {
   field: EntreeField;
   mode: Mode;
   entree?: EntreeRow;
   designationSuggestions?: string[];
+  namePrefix?: string;
 }) {
   if (field.kind === "text")
-    return <TextInput {...{ field, mode, entree, designationSuggestions }} />;
+    return (
+      <TextInput
+        {...{ field, mode, entree, designationSuggestions, namePrefix }}
+      />
+    );
 
   if (field.kind === "date")
-    return <DatePickerField name={field.key} defaultValue={entree?.date} />;
+    return (
+      <DatePickerField
+        name={inputName(field.key, namePrefix)}
+        defaultValue={entree?.date}
+      />
+    );
 
   if (field.kind === "unitLength")
     return (
       <UnitLengthInput
-        valueName={`${field.key}Value`}
-        unitName={`${field.key}Unit`}
+        valueName={inputName(`${field.key}Value`, namePrefix)}
+        unitName={inputName(`${field.key}Unit`, namePrefix)}
         placeholder="0"
         defaultValue={
           entree
@@ -93,8 +114,8 @@ function FieldInput({
   return (
     <InputGroup>
       <InputGroupInput
-        id={inputId(mode, field.key)}
-        name={field.key}
+        id={inputId(mode, field.key, namePrefix)}
+        name={inputName(field.key, namePrefix)}
         type="number"
         min="1"
         step="1"
@@ -110,15 +131,19 @@ function renderField(
   mode: Mode,
   entree: EntreeRow | undefined,
   designationSuggestions: string[] | undefined,
+  namePrefix: string | undefined,
 ) {
-  const id = field.kind === "date" ? undefined : inputId(mode, field.key);
+  const id =
+    field.kind === "date" ? undefined : inputId(mode, field.key, namePrefix);
 
   return (
     <div className="flex flex-col gap-1.5" key={field.key}>
       <FieldLabel htmlFor={id} icon={field.icon} required={field.required}>
         {field.label}
       </FieldLabel>
-      <FieldInput {...{ field, mode, entree, designationSuggestions }} />
+      <FieldInput
+        {...{ field, mode, entree, designationSuggestions, namePrefix }}
+      />
     </div>
   );
 }
@@ -142,13 +167,22 @@ export function EntreeFormFields({
   mode,
   entree,
   designationSuggestions,
+  namePrefix,
+  excludeKeys,
 }: {
   mode: Mode;
   entree?: EntreeRow;
   designationSuggestions?: string[];
+  // namespaces every id/name under this prefix — needed when several
+  // EntreeFormFields instances share one <form> (the multi-card add flow)
+  namePrefix?: string;
+  excludeKeys?: EntreeField["key"][];
 }) {
-  const requiredFields = ENTREE_FIELDS.filter((field) => field.required);
-  const optionalFields = ENTREE_FIELDS.filter((field) => !field.required);
+  const fields = ENTREE_FIELDS.filter(
+    (field) => !excludeKeys?.includes(field.key),
+  );
+  const requiredFields = fields.filter((field) => field.required);
+  const optionalFields = fields.filter((field) => !field.required);
 
   const renderItem = (item: EntreeField | EntreeField[]): ReactNode =>
     Array.isArray(item) ? (
@@ -157,11 +191,11 @@ export function EntreeFormFields({
         className="grid grid-cols-2 gap-3"
       >
         {item.map((field) =>
-          renderField(field, mode, entree, designationSuggestions),
+          renderField(field, mode, entree, designationSuggestions, namePrefix),
         )}
       </div>
     ) : (
-      renderField(item, mode, entree, designationSuggestions)
+      renderField(item, mode, entree, designationSuggestions, namePrefix)
     );
 
   return (

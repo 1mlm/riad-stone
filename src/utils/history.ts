@@ -1,7 +1,7 @@
 import type { HistoryEvent, Prisma } from "@/generated/prisma/client";
-import { prisma } from "@/utils/prisma";
-import { getEventReference } from "@/utils/historySnapshot";
 import type { HistoryItemType } from "@/generated/prisma/enums";
+import { getEventReference } from "@/utils/historySnapshot";
+import { prisma } from "@/utils/prisma";
 
 export async function logHistory(
   type: HistoryItemType,

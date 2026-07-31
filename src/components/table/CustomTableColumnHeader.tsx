@@ -536,6 +536,7 @@ export function CustomTableColumnHeader<T>({
   const numeric =
     column.type === "string" &&
     (column.filterType === "number" || column.filterType === "length");
+  const unitSuffix = column.type === "string" ? column.suffix : undefined;
 
   const label = (
     <span
@@ -546,6 +547,11 @@ export function CustomTableColumnHeader<T>({
     >
       <Icon icon={column.icon} />
       {column.label}
+      {unitSuffix && (
+        <span className="font-mono text-[0.8em] opacity-70">
+          ({unitSuffix})
+        </span>
+      )}
       {hasActiveFilter && (
         <Icon
           icon={ICONS.filter}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import type { EntreeRow } from "@/app/(app)/entrees/types";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { ReferenceHistoryDialog } from "@/components/ReferenceHistoryDialog";
@@ -17,42 +17,52 @@ import {
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
+  createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
 } from "../entrees/columns";
 
-const columns: CustomTableColumn<EntreeRow>[] = [
-  createReferenceColumn((row) => row.reference),
-  createDesignationColumn(),
-  {
-    id: "date",
-    label: "Date",
-    icon: ICONS.date,
-    type: "date",
-    getDate: (row) => row.date,
-  },
-  createOrigineColumn(),
-  createLongueurColumn(),
-  createLargeurColumn(),
-  createSurfacePieceColumn(),
-  createNombrePiecesColumn("Pièces restantes"),
-  createSurfaceTotaleColumn(),
-  {
-    id: "actions",
-    label: "Actions",
-    icon: ICONS.actions,
-    type: "buttons",
-    getButtons: (row) => (
-      <div className="flex items-center justify-center gap-1">
-        <ReferenceHistoryDialog reference={row.reference} />
-        <EntreeDetailsDialog reference={row.reference} />
-      </div>
-    ),
-  },
+const DEFAULT_SORT = [
+  { columnId: "designation", dir: "asc" as const },
+  { columnId: "reference", dir: "desc" as const },
 ];
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
   const [resultCount, setResultCount] = useState(items.length);
+
+  const columns: CustomTableColumn<EntreeRow>[] = useMemo(
+    () => [
+      createDesignationColumn(),
+      createReferenceColumn((row) => row.reference),
+      {
+        id: "date",
+        label: "Date",
+        icon: ICONS.date,
+        type: "date",
+        getDate: (row) => row.date,
+      },
+      createOrigineColumn(),
+      createLongueurColumn(),
+      createLargeurColumn(),
+      createSurfacePieceColumn(),
+      createNombrePiecesColumn("Pièces restantes"),
+      createSurfaceTotaleColumn(),
+      createSurfaceDesignationColumn(items),
+      {
+        id: "actions",
+        label: "Actions",
+        icon: ICONS.actions,
+        type: "buttons",
+        getButtons: (row) => (
+          <div className="flex items-center justify-center gap-1">
+            <ReferenceHistoryDialog reference={row.reference} />
+            <EntreeDetailsDialog reference={row.reference} />
+          </div>
+        ),
+      },
+    ],
+    [items],
+  );
 
   return (
     <div className="flex min-w-0 flex-col gap-4 p-5">
@@ -65,6 +75,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         getItemId={(row) => row.reference}
         exportFilePrefix="stock"
         selectable
+        defaultSort={DEFAULT_SORT}
         onVisibleCountChange={setResultCount}
       />
     </div>
