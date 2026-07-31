@@ -7,7 +7,7 @@ import {
   useQueryState,
   useQueryStates,
 } from "nuqs";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { Button } from "@/shadcn/ui/button";
@@ -45,6 +45,21 @@ import {
 const PAGE_SIZE = 25;
 
 const SKELETON_ROW_KEYS = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`);
+
+const SCROLL_FADE_SIZE = 32;
+
+// alpha-masks the scroll container itself (not an overlay) so the fade
+// blends correctly over striped/merged row backgrounds and the sticky
+// header alike, and only appears on edges that still have more to scroll to
+function getScrollFadeMask(canScrollLeft: boolean, canScrollRight: boolean) {
+  const left = canScrollLeft
+    ? `transparent, black ${SCROLL_FADE_SIZE}px`
+    : "black 0px";
+  const right = canScrollRight
+    ? `black calc(100% - ${SCROLL_FADE_SIZE}px), transparent`
+    : "black 100%";
+  return `linear-gradient(to right, ${left}, ${right})`;
+}
 
 export type CustomTableEnumValue = {
   label: string;
@@ -317,6 +332,33 @@ export function CustomTable<T>({
     return runs;
   }, [columns, paginatedItems]);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollFade, setScrollFade] = useState({ left: false, right: false });
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const updateScrollFade = () => {
+      setScrollFade({
+        left: scrollContainer.scrollLeft > 0,
+        right:
+          scrollContainer.scrollLeft + scrollContainer.clientWidth <
+          scrollContainer.scrollWidth - 1,
+      });
+    };
+
+    updateScrollFade();
+    scrollContainer.addEventListener("scroll", updateScrollFade);
+    const resizeObserver = new ResizeObserver(updateScrollFade);
+    resizeObserver.observe(scrollContainer);
+    return () => {
+      scrollContainer.removeEventListener("scroll", updateScrollFade);
+      resizeObserver.disconnect();
+    };
+  }, [columns, paginatedItems]);
+
   const toggleRow = (id: string) => {
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
@@ -340,9 +382,18 @@ export function CustomTable<T>({
     selectedIds.has(getItemId(item)),
   );
 
+  const scrollFadeMask = getScrollFadeMask(scrollFade.left, scrollFade.right);
+
   return (
     <div className="rounded-md overflow-clip">
-      <div className="w-full overflow-x-auto">
+      <div
+        ref={scrollContainerRef}
+        className="w-full overflow-x-auto"
+        style={{
+          maskImage: scrollFadeMask,
+          WebkitMaskImage: scrollFadeMask,
+        }}
+      >
         <table className="w-full caption-bottom text-sm">
           <TableHeader>
             <TableRow className="*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4">
