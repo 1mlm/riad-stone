@@ -48,7 +48,9 @@ function EntreeCard({
     <div
       ref={cardRef}
       className={cn(
-        "flex w-full shrink-0 snap-center flex-col gap-4 rounded-lg border border-border p-3",
+        // narrower than the scroll container so the next/previous card
+        // peeks in on the sides instead of being fully clipped
+        "flex w-[88%] shrink-0 snap-center flex-col gap-4 rounded-lg border border-border p-3",
         invalid && "border-destructive",
       )}
     >
