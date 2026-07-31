@@ -1,7 +1,9 @@
 "use client";
 
+import { Download01Icon } from "@hugeicons/core-free-icons";
 import ExcelJS from "exceljs";
 import { useState } from "react";
+import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -145,7 +147,10 @@ export function ExtractDialog<T>({
           </div>
         </RadioGroup>
         <DialogFooter>
-          <Button onClick={handleConfirm}>Confirmer le téléchargement</Button>
+          <Button onClick={handleConfirm}>
+            <Icon icon={Download01Icon} />
+            Confirmer le téléchargement
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

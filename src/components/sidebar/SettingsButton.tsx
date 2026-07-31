@@ -60,6 +60,7 @@ export function SettingsButton() {
         title="Vider toutes les données ?"
         content="Toutes les entrées et sorties seront supprimées définitivement. Cette action est irréversible."
         confirmLabel="Tout supprimer"
+        confirmIcon={NuclearPowerIcon}
         onConfirm={handleClearAllData}
       />
       {stockEmpty && (
@@ -73,8 +74,9 @@ export function SettingsButton() {
               </Button>
             }
             title="Ajouter des données fictives ?"
-            content="Des entrées, sorties et un historique fictifs seront ajoutés au stock, y compris en production."
+            content="Des entrées, sorties et un historique fictifs seront ajoutés au stock actuel."
             confirmLabel="Ajouter"
+            confirmIcon={Plant01Icon}
             confirmVariant="secondary"
             onConfirm={handleSeedFakeData}
           />

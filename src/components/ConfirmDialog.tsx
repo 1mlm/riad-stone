@@ -8,7 +8,7 @@ import {
   useTransition,
 } from "react";
 import { DelayedButton } from "@/components/DelayedButton";
-import { Icon } from "@/components/Icon";
+import { type HugeIcon, Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shadcn/ui/dialog";
+import { ICONS } from "@/utils/icon";
 
 export function ConfirmDialog({
   trigger,
@@ -26,6 +27,8 @@ export function ConfirmDialog({
   content,
   confirmLabel = "Confirmer",
   cancelLabel = "Annuler",
+  confirmIcon,
+  cancelIcon = ICONS.cancel,
   confirmVariant = "destructive",
   waitSeconds = 7,
   onConfirm,
@@ -35,6 +38,8 @@ export function ConfirmDialog({
   content: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmIcon: HugeIcon;
+  cancelIcon?: HugeIcon;
   confirmVariant?: ComponentProps<typeof Button>["variant"];
   waitSeconds?: number;
   onConfirm: () => Promise<{ error: string | null } | undefined>;
@@ -76,7 +81,10 @@ export function ConfirmDialog({
         )}
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">{cancelLabel}</Button>
+            <Button variant="outline">
+              <Icon icon={cancelIcon} />
+              {cancelLabel}
+            </Button>
           </DialogClose>
           <DelayedButton
             variant={confirmVariant}
@@ -84,6 +92,7 @@ export function ConfirmDialog({
             disabled={pending}
             onClick={handleConfirm}
           >
+            <Icon icon={confirmIcon} />
             {confirmLabel}
           </DelayedButton>
         </DialogFooter>

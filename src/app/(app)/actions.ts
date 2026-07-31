@@ -130,10 +130,10 @@ const FAKE_ENTREES = [
 ];
 
 const FAKE_SORTIES = [
-  { entreeReference: "TZ02", bonCommande: "C100000001" },
-  { entreeReference: "TZ05", bonCommande: "C100000002" },
-  { entreeReference: "TZ07", bonCommande: "C100000003" },
-  { entreeReference: "TZ09", bonCommande: "C100000004" },
+  { entreeReference: "TZ02", nombrePieces: 40, bonCommande: "C100000001" },
+  { entreeReference: "TZ05", nombrePieces: 80, bonCommande: "C100000002" },
+  { entreeReference: "TZ07", nombrePieces: 60, bonCommande: "C100000003" },
+  { entreeReference: "TZ09", nombrePieces: 70, bonCommande: "C100000004" },
 ];
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
@@ -199,6 +199,7 @@ const FAKE_HISTORY_EVENTS: {
     type: HistoryItemType.CREATE_OUTPUT,
     data: {
       entreeReference: "TZ02",
+      nombrePieces: 40,
       bonCommande: "C100000001",
       dateSortie: daysAgo(4).toISOString(),
     },
@@ -209,11 +210,13 @@ const FAKE_HISTORY_EVENTS: {
     data: {
       before: {
         entreeReference: "TZ05",
+        nombrePieces: 80,
         bonCommande: "C100000002",
         dateSortie: daysAgo(6).toISOString(),
       },
       after: {
         entreeReference: "TZ05",
+        nombrePieces: 80,
         bonCommande: "C100000099",
         dateSortie: daysAgo(6).toISOString(),
       },
@@ -224,6 +227,7 @@ const FAKE_HISTORY_EVENTS: {
     type: HistoryItemType.DELETE_OUTPUT,
     data: {
       entreeReference: "TZ12",
+      nombrePieces: 30,
       bonCommande: "C100000050",
       dateSortie: daysAgo(10).toISOString(),
     },
