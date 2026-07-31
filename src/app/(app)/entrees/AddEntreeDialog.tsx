@@ -6,6 +6,7 @@ import {
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
 import { useActionState, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
@@ -58,15 +59,27 @@ function EntreeCard({
         <span className="text-xs text-muted-foreground">
           Fiche {index + 1} / {count}
         </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="text-destructive hover:text-destructive"
-          onClick={onDelete}
-        >
-          <Icon icon={Delete02Icon} />
-        </Button>
+        <ConfirmDialog
+          trigger={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-destructive hover:text-destructive"
+            >
+              <Icon icon={Delete02Icon} />
+            </Button>
+          }
+          title="Supprimer cette fiche ?"
+          content="Les informations saisies dans cette fiche seront perdues."
+          confirmLabel="Supprimer"
+          confirmIcon={Delete02Icon}
+          waitSeconds={0}
+          onConfirm={async () => {
+            onDelete();
+            return undefined;
+          }}
+        />
       </div>
       <EntreeFormFields
         mode="add"
