@@ -135,6 +135,7 @@ export async function createSortie(
   );
   revalidatePath("/sorties");
   revalidatePath("/stock");
+  revalidatePath("/historique");
   return { error: null };
 }
 
@@ -179,6 +180,7 @@ export async function updateSortie(
   });
   revalidatePath("/sorties");
   revalidatePath("/stock");
+  revalidatePath("/historique");
   return { error: null };
 }
 
@@ -195,5 +197,6 @@ export async function deleteSortie(
   await logHistory(HistoryItemType.DELETE_OUTPUT, toSortieSnapshot(existing));
   revalidatePath("/sorties");
   revalidatePath("/stock");
+  revalidatePath("/historique");
   return { error: null };
 }

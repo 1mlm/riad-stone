@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shadcn/ui/dialog";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
 
 export function ConfirmDialog({
@@ -57,6 +58,7 @@ export function ConfirmDialog({
       }
       setError(null);
       setOpen(false);
+      haptic("success");
     });
 
   return (
