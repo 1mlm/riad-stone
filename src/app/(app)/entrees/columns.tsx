@@ -153,7 +153,7 @@ export function createSurfaceDesignationColumn<T extends EntreeLikeRow>(
   return {
     id: "surfaceDesignation",
     label: "Surface de désignation",
-    icon: ICONS.designation,
+    icon: ICONS.surfaceDesignation,
     type: "string",
     align: "right",
     filterType: "number",
