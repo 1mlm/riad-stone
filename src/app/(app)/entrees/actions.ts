@@ -29,6 +29,58 @@ export async function getDesignationSuggestions(): Promise<string[]> {
   return rows.map((row) => row.designation);
 }
 
+export type EntreeDetails = {
+  reference: string;
+  designation: string;
+  date: string;
+  origine: string | null;
+  // metres
+  longueur: number;
+  largeur: number;
+  nombrePieces: number;
+  piecesRestantes: number;
+  sorties: {
+    id: number;
+    nombrePieces: number;
+    dateSortie: string;
+    bonCommande: string | null;
+  }[];
+};
+
+export async function getEntreeDetails(
+  reference: string,
+): Promise<EntreeDetails | null> {
+  await requireAuth();
+
+  const entree = await prisma.entree.findUnique({
+    where: { reference },
+    include: { sorties: { orderBy: { dateSortie: "desc" } } },
+  });
+  if (!entree) return null;
+
+  const piecesSorties = entree.sorties.reduce(
+    (sum, sortie) => sum + sortie.nombrePieces,
+    0,
+  );
+
+  return {
+    reference: entree.reference,
+    designation: entree.designation,
+    date: entree.date.toISOString(),
+    origine: entree.origine,
+    longueur: Number(entree.longueur),
+    largeur: Number(entree.largeur),
+    nombrePieces: entree.nombrePieces,
+    piecesRestantes: entree.nombrePieces - piecesSorties,
+    sorties: entree.sorties.map((sortie) => ({
+      id: sortie.id,
+      nombrePieces: sortie.nombrePieces,
+      dateSortie: sortie.dateSortie.toISOString(),
+      bonCommande: sortie.bonCommande,
+    })),
+  };
+}
+
 function isLengthUnit(value: string): value is LengthUnit {
   return (LENGTH_UNITS as readonly string[]).includes(value);
 }
@@ -106,10 +158,10 @@ export async function updateEntree(
 
   const existing = await prisma.entree.findUnique({
     where: { reference: originalReference },
-    include: { sortie: { select: { entreeReference: true } } },
+    include: { sorties: { select: { id: true } } },
   });
   if (!existing) return { error: "Cette entrée n'existe pas." };
-  if (existing.sortie)
+  if (existing.sorties.length > 0)
     return {
       error:
         "Cette entrée a déjà une sortie associée, elle ne peut plus être modifiée.",
@@ -143,10 +195,10 @@ export async function deleteEntree(
 
   const existing = await prisma.entree.findUnique({
     where: { reference },
-    include: { sortie: { select: { entreeReference: true } } },
+    include: { sorties: { select: { id: true } } },
   });
   if (!existing) return { error: null };
-  if (existing.sortie)
+  if (existing.sorties.length > 0)
     return {
       error:
         "Cette entrée a déjà une sortie associée, elle ne peut pas être supprimée.",

@@ -2,6 +2,8 @@
 
 import { Suspense, useState } from "react";
 import type { EntreeRow } from "@/app/(app)/entrees/types";
+import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
+import { ReferenceHistoryDialog } from "@/components/ReferenceHistoryDialog";
 import { SearchBar } from "@/components/SearchBar";
 import {
   CustomTable,
@@ -33,8 +35,20 @@ const columns: CustomTableColumn<EntreeRow>[] = [
   createLongueurColumn(),
   createLargeurColumn(),
   createSurfacePieceColumn(),
-  createNombrePiecesColumn(),
+  createNombrePiecesColumn("Pièces restantes"),
   createSurfaceTotaleColumn(),
+  {
+    id: "actions",
+    label: "Actions",
+    icon: ICONS.actions,
+    type: "buttons",
+    getButtons: (row) => (
+      <div className="flex items-center justify-center gap-1">
+        <ReferenceHistoryDialog reference={row.reference} />
+        <EntreeDetailsDialog reference={row.reference} />
+      </div>
+    ),
+  },
 ];
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
@@ -49,7 +63,6 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
       <CustomTable
         {...{ items, columns }}
         getItemId={(row) => row.reference}
-        emptyLabel="stock"
         exportFilePrefix="stock"
         selectable
         onVisibleCountChange={setResultCount}

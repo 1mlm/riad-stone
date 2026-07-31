@@ -3,12 +3,14 @@
 import {
   Alert02Icon,
   Calendar04Icon,
+  EditIcon,
   InvoiceIcon,
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { DatePickerField } from "@/components/DatePickerField";
+import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
@@ -25,6 +27,62 @@ import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
 import { createSortie } from "./actions";
 import type { AvailableEntree } from "./types";
+
+function EntreeReferenceField({
+  availableEntrees,
+  entreeReference,
+  onSelect,
+  onClear,
+  invalid,
+}: {
+  availableEntrees: AvailableEntree[];
+  entreeReference: string;
+  onSelect: (reference: string) => void;
+  onClear: () => void;
+  invalid: boolean;
+}) {
+  if (!entreeReference)
+    return (
+      <Combobox
+        name="entreeReference"
+        value={entreeReference}
+        onValueChange={onSelect}
+        options={availableEntrees.map((entree) => ({
+          value: entree.reference,
+          label: `${entree.designation} — ${entree.piecesRestantes} pièce(s) restante(s)`,
+        }))}
+        placeholder="Sélectionner une entrée..."
+        searchPlaceholder="Rechercher une référence..."
+        emptyLabel="Aucune entrée disponible."
+        required
+        ariaInvalid={invalid}
+      />
+    );
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <input type="hidden" name="entreeReference" value={entreeReference} />
+      <InputGroup className="flex-1">
+        <InputGroupInput
+          defaultValue={entreeReference}
+          readOnly
+          disabled
+          className="font-mono"
+        />
+      </InputGroup>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        className="corner-squircle"
+        onClick={onClear}
+      >
+        <Icon icon={EditIcon} />
+      </Button>
+      <EntreeDetailsDialog reference={entreeReference} />
+    </div>
+  );
+}
 
 export function AddSortieDialog({
   availableEntrees,
@@ -43,6 +101,12 @@ export function AddSortieDialog({
       return result;
     },
     { error: null },
+  );
+
+  const selectedEntree = useMemo(
+    () =>
+      availableEntrees.find((entree) => entree.reference === entreeReference),
+    [availableEntrees, entreeReference],
   );
 
   return (
@@ -65,20 +129,31 @@ export function AddSortieDialog({
             <FieldLabel icon={ICONS.reference} required>
               Référence de l'entrée
             </FieldLabel>
-            <Combobox
-              name="entreeReference"
-              value={entreeReference}
-              onValueChange={setEntreeReference}
-              options={availableEntrees.map((entree) => ({
-                value: entree.reference,
-                label: entree.designation,
-              }))}
-              placeholder="Sélectionner une entrée..."
-              searchPlaceholder="Rechercher une référence..."
-              emptyLabel="Aucune entrée disponible."
-              required
-              ariaInvalid={Boolean(state.error) && !entreeReference}
+            <EntreeReferenceField
+              {...{ availableEntrees, entreeReference }}
+              onSelect={setEntreeReference}
+              onClear={() => setEntreeReference("")}
+              invalid={Boolean(state.error) && !entreeReference}
             />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel htmlFor="nombrePieces" icon={ICONS.pieces} required>
+              Nombre de pièces
+              {selectedEntree && ` (max ${selectedEntree.piecesRestantes})`}
+            </FieldLabel>
+            <InputGroup>
+              <InputGroupInput
+                id="nombrePieces"
+                name="nombrePieces"
+                type="number"
+                min="1"
+                max={selectedEntree?.piecesRestantes}
+                step="1"
+                disabled={!selectedEntree}
+                required
+              />
+            </InputGroup>
           </div>
 
           <div className="flex flex-col gap-1.5">

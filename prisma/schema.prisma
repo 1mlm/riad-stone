@@ -21,18 +21,23 @@ model Entree {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // a lot is sold entirely or not at all, so at most one sortie per entree
-  sortie Sortie?
+  // a lot can be sold across several partial sorties over time — the
+  // pieces still in stock are nombrePieces minus the sum of sorties.nombrePieces
+  sorties Sortie[]
 }
 
 model Sortie {
-  // 1:1 with Entree — selling a lot consumes it entirely, never partially
-  entreeReference String   @id
+  id              Int      @id @default(autoincrement())
+  entreeReference String
   entree          Entree   @relation(fields: [entreeReference], references: [reference])
+  // pieces taken by this specific sortie — may be less than the entree's total
+  nombrePieces    Int
   dateSortie      DateTime @default(now())
   bonCommande     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([entreeReference])
 }
 
 enum HistoryItemType {

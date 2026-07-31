@@ -103,12 +103,12 @@ export function createSurfacePieceColumn<
   };
 }
 
-export function createNombrePiecesColumn<
-  T extends EntreeLikeRow,
->(): CustomTableColumn<T> {
+export function createNombrePiecesColumn<T extends EntreeLikeRow>(
+  labelOverride?: string,
+): CustomTableColumn<T> {
   return {
     id: "nombrePieces",
-    label: ENTREE_FIELD_BY_KEY.nombrePieces.label,
+    label: labelOverride ?? ENTREE_FIELD_BY_KEY.nombrePieces.label,
     icon: ENTREE_FIELD_BY_KEY.nombrePieces.icon,
     type: "string",
     align: "right",
