@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  Calendar04Icon,
-  Cursor02Icon,
-  Delete02Icon,
-  InvoiceIcon,
-} from "@hugeicons/core-free-icons";
-import { Suspense, useState, useTransition } from "react";
+import { Delete02Icon } from "@hugeicons/core-free-icons";
+import { Suspense, useState } from "react";
 import {
   createDesignationColumn,
   createLargeurColumn,
@@ -17,6 +12,7 @@ import {
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
 } from "@/app/(app)/entrees/columns";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { SearchBar } from "@/components/SearchBar";
 import {
@@ -24,24 +20,29 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { Button } from "@/shadcn/ui/button";
+import { ICONS } from "@/utils/icon";
 import { AddSortieDialog } from "./AddSortieDialog";
 import { deleteSortie } from "./actions";
 import { EditSortieDialog } from "./EditSortieDialog";
 import type { AvailableEntree, SortieRow } from "./types";
 
 function DeleteButton({ entreeReference }: { entreeReference: string }) {
-  const [pending, startTransition] = useTransition();
-
   return (
-    <Button
-      variant="destructive"
-      size="icon-sm"
-      className="corner-squircle"
-      disabled={pending}
-      onClick={() => startTransition(() => deleteSortie(entreeReference))}
-    >
-      <Icon icon={Delete02Icon} />
-    </Button>
+    <ConfirmDialog
+      trigger={
+        <Button
+          variant="destructive"
+          size="icon-sm"
+          className="corner-squircle"
+        >
+          <Icon icon={Delete02Icon} />
+        </Button>
+      }
+      title="Supprimer cette sortie ?"
+      content={`La sortie de l'entrée ${entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
+      confirmLabel="Supprimer"
+      onConfirm={() => deleteSortie(entreeReference)}
+    />
   );
 }
 
@@ -51,21 +52,21 @@ const columns: CustomTableColumn<SortieRow>[] = [
   {
     id: "bonCommande",
     label: "Bon de commande",
-    icon: InvoiceIcon,
+    icon: ICONS.bonCommande,
     type: "string",
-    getString: (row) => row.bonCommande,
+    getString: (row) => row.bonCommande ?? "",
   },
   {
     id: "dateSortie",
     label: "Date de sortie",
-    icon: Calendar04Icon,
+    icon: ICONS.date,
     type: "date",
     getDate: (row) => row.dateSortie,
   },
   {
     id: "dateEntree",
     label: "Date d'entrée",
-    icon: Calendar04Icon,
+    icon: ICONS.date,
     type: "date",
     getDate: (row) => row.dateEntree,
   },
@@ -78,7 +79,7 @@ const columns: CustomTableColumn<SortieRow>[] = [
   {
     id: "actions",
     label: "Actions",
-    icon: Cursor02Icon,
+    icon: ICONS.actions,
     type: "buttons",
     getButtons: (row) => (
       <div className="flex items-center justify-center gap-1">
@@ -113,6 +114,7 @@ function SortiesTableContent({
         getItemId={(row) => row.entreeReference}
         emptyLabel="sorties"
         exportFilePrefix="sorties"
+        selectable
         onVisibleCountChange={setResultCount}
       />
     </div>

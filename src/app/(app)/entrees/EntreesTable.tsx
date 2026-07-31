@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  Calendar04Icon,
-  Cursor02Icon,
-  Delete02Icon,
-} from "@hugeicons/core-free-icons";
-import { Suspense, useState, useTransition } from "react";
+import { Delete02Icon } from "@hugeicons/core-free-icons";
+import { Suspense, useState } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { SearchBar } from "@/components/SearchBar";
 import {
@@ -13,6 +10,7 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { Button } from "@/shadcn/ui/button";
+import { ICONS } from "@/utils/icon";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
 import {
@@ -29,24 +27,22 @@ import { EditEntreeDialog } from "./EditEntreeDialog";
 import type { EntreeRow } from "./types";
 
 function DeleteButton({ reference }: { reference: string }) {
-  const [pending, startTransition] = useTransition();
-
-  const handleDelete = () =>
-    startTransition(async () => {
-      const result = await deleteEntree(reference);
-      if (result.error) alert(result.error);
-    });
-
   return (
-    <Button
-      variant="destructive"
-      size="icon-sm"
-      className="corner-squircle"
-      disabled={pending}
-      onClick={handleDelete}
-    >
-      <Icon icon={Delete02Icon} />
-    </Button>
+    <ConfirmDialog
+      trigger={
+        <Button
+          variant="destructive"
+          size="icon-sm"
+          className="corner-squircle"
+        >
+          <Icon icon={Delete02Icon} />
+        </Button>
+      }
+      title="Supprimer cette entrée ?"
+      content={`L'entrée ${reference} sera supprimée définitivement. Cette action est irréversible.`}
+      confirmLabel="Supprimer"
+      onConfirm={() => deleteEntree(reference)}
+    />
   );
 }
 
@@ -56,7 +52,7 @@ const columns: CustomTableColumn<EntreeRow>[] = [
   {
     id: "date",
     label: "Date",
-    icon: Calendar04Icon,
+    icon: ICONS.date,
     type: "date",
     getDate: (row) => row.date,
   },
@@ -69,7 +65,7 @@ const columns: CustomTableColumn<EntreeRow>[] = [
   {
     id: "actions",
     label: "Actions",
-    icon: Cursor02Icon,
+    icon: ICONS.actions,
     type: "buttons",
     getButtons: (row) => (
       <div className="flex items-center justify-center gap-1">
@@ -104,6 +100,7 @@ function EntreesTableContent({
         getItemId={(row) => row.reference}
         emptyLabel="entrées"
         exportFilePrefix="entrees"
+        selectable
         onVisibleCountChange={setResultCount}
       />
     </div>
