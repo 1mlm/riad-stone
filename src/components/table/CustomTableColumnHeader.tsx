@@ -1,17 +1,8 @@
 "use client";
 
-import {
-  ArrowDown01Icon,
-  ArrowUp10Icon,
-  Cancel01Icon,
-  CheckIcon,
-  FilterIcon,
-  Sorting01Icon,
-  SortingAZ02Icon,
-  SortingZA01Icon,
-} from "@hugeicons/core-free-icons";
-import { type ReactNode, useId } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { UnitDropdown } from "@/components/UnitDropdown";
 import { Button } from "@/shadcn/ui/button";
 import { Calendar } from "@/shadcn/ui/calendar";
 import { Checkbox } from "@/shadcn/ui/checkbox";
@@ -28,6 +19,8 @@ import {
 } from "@/shadcn/ui/dropdown-menu";
 import { Input } from "@/shadcn/ui/input";
 import { cn } from "@/shadcn/utils";
+import { ICONS } from "@/utils/icon";
+import { type LengthUnit, lengthToMeters, metersToUnit } from "@/utils/length";
 import type { CustomTableColumn } from "./CustomTable";
 import { EnumBadge } from "./CustomTableCell";
 import {
@@ -165,7 +158,7 @@ function EnumFilterContent<T>({
         checked={!isEnumOptionExcluded(getField, ENUM_FILTER_NONE_KEY)}
         onCheckedChange={() => toggle(ENUM_FILTER_NONE_KEY)}
       >
-        <Icon icon={Cancel01Icon} className="size-3.5 opacity-50" />
+        <Icon icon={ICONS.cancel} className="size-3.5 opacity-50" />
         <span className="text-sm">Aucune valeur</span>
       </CheckboxRow>
     </div>
@@ -201,14 +194,14 @@ function BooleanFilterContent({
         checked={!isEnumOptionExcluded(getField, "true")}
         onCheckedChange={() => toggle("true")}
       >
-        <Icon icon={CheckIcon} className="size-3.5 text-green-500" />
+        <Icon icon={ICONS.check} className="size-3.5 text-green-500" />
         <span className="text-sm">Oui</span>
       </CheckboxRow>
       <CheckboxRow
         checked={!isEnumOptionExcluded(getField, "false")}
         onCheckedChange={() => toggle("false")}
       >
-        <Icon icon={Cancel01Icon} className="size-3.5 opacity-50" />
+        <Icon icon={ICONS.cancel} className="size-3.5 opacity-50" />
         <span className="text-sm">Non</span>
       </CheckboxRow>
     </div>
@@ -308,7 +301,7 @@ function DateRangeFilterContent({
             setField("to", "");
           }}
         >
-          <Icon icon={Cancel01Icon} />
+          <Icon icon={ICONS.cancel} />
           Effacer
         </Button>
       )}
@@ -326,6 +319,50 @@ function NumberRangeFilterContent({
   return (
     <div className="flex items-center gap-1.5 p-2">
       <MinMaxInputs {...{ getField, setField }} showToLabel />
+    </div>
+  );
+}
+
+// same min/max pair as NumberRangeFilterContent, but with a unit dropdown —
+// the stored min/max stay in the column's own unit (cm), only the displayed
+// digits get converted as the user switches units
+function LengthRangeFilterContent({
+  getField,
+  setField,
+}: {
+  getField: GetFilterField;
+  setField: (field: ColumnFilterField, value: string) => void;
+}) {
+  const [unit, setUnit] = useState<LengthUnit>("cm");
+
+  const toDisplay = (storedCm: string) =>
+    storedCm ? String(metersToUnit(Number(storedCm) / 100, unit)) : "";
+  const toStoredCm = (displayValue: string) =>
+    displayValue
+      ? String(lengthToMeters(Number(displayValue), unit) * 100)
+      : "";
+
+  return (
+    <div className="flex flex-col gap-1.5 p-2">
+      <div className="flex items-center gap-1.5">
+        <span className="text-muted-foreground text-xs">Entre</span>
+        <Input
+          type="number"
+          placeholder="Min"
+          value={toDisplay(getField("min"))}
+          onChange={(e) => setField("min", toStoredCm(e.target.value))}
+          className="h-7 w-16"
+        />
+        <span className="text-muted-foreground text-xs">et</span>
+        <Input
+          type="number"
+          placeholder="Max"
+          value={toDisplay(getField("max"))}
+          onChange={(e) => setField("max", toStoredCm(e.target.value))}
+          className="h-7 w-16"
+        />
+      </div>
+      <UnitDropdown {...{ unit }} onUnitChange={setUnit} />
     </div>
   );
 }
@@ -422,15 +459,17 @@ function TagsFilterContent<T>({
   );
 }
 
-// numeric columns sort with an up/down-digit icon, everything else with an A-Z/Z-A icon
+// numeric columns sort with a 1-9/9-1 icon, everything else with an A-Z/Z-A
+// icon — both pairs come from the same "Sorting" icon family so they read as
+// one consistent visual language instead of mixing arrow and sorting glyphs
 const getSortIcon = (dir: "asc" | "desc", numeric: boolean) =>
   dir === "asc"
     ? numeric
-      ? ArrowDown01Icon
-      : SortingAZ02Icon
+      ? ICONS.increasingNumber
+      : ICONS.increasingText
     : numeric
-      ? ArrowUp10Icon
-      : SortingZA01Icon;
+      ? ICONS.decreasingNumber
+      : ICONS.decreasingText;
 
 function SortSubmenuContent({
   numeric,
@@ -461,7 +500,7 @@ function SortSubmenuContent({
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onSortChange(null)}>
-            <Icon icon={Cancel01Icon} />
+            <Icon icon={ICONS.cancel} />
             Annuler
           </DropdownMenuItem>
         </>
@@ -494,7 +533,9 @@ export function CustomTableColumnHeader<T>({
   const canSort = sortable && columnEligible;
   const fields = getColumnFilterFields(column);
   const hasActiveFilter = canFilter && fields.some((field) => getField(field));
-  const numeric = column.type === "string" && column.filterType === "number";
+  const numeric =
+    column.type === "string" &&
+    (column.filterType === "number" || column.filterType === "length");
 
   const label = (
     <span
@@ -507,7 +548,7 @@ export function CustomTableColumnHeader<T>({
       {column.label}
       {hasActiveFilter && (
         <Icon
-          icon={FilterIcon}
+          icon={ICONS.filter}
           fill="currentColor"
           className="size-3 text-primary"
         />
@@ -533,13 +574,16 @@ export function CustomTableColumnHeader<T>({
         {canFilter && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Icon icon={FilterIcon} />
+              <Icon icon={ICONS.filter} />
               Filtrer
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent
                 className={cn(
                   column.type !== "string" && column.type !== "tags" && "w-56",
+                  column.type === "string" &&
+                    column.filterType === "length" &&
+                    "w-56",
                 )}
               >
                 {column.type === "enum" && (
@@ -551,9 +595,14 @@ export function CustomTableColumnHeader<T>({
                 {column.type === "string" && column.filterType === "number" && (
                   <NumberRangeFilterContent {...{ getField, setField }} />
                 )}
-                {column.type === "string" && column.filterType !== "number" && (
-                  <TextFilterContent {...{ getField, setField }} />
+                {column.type === "string" && column.filterType === "length" && (
+                  <LengthRangeFilterContent {...{ getField, setField }} />
                 )}
+                {column.type === "string" &&
+                  column.filterType !== "number" &&
+                  column.filterType !== "length" && (
+                    <TextFilterContent {...{ getField, setField }} />
+                  )}
                 {column.type === "tags" && (
                   <TagsFilterContent
                     {...{ column, items, getField, setField }}
@@ -570,7 +619,7 @@ export function CustomTableColumnHeader<T>({
                         for (const field of fields) setField(field, "");
                       }}
                     >
-                      <Icon icon={Cancel01Icon} />
+                      <Icon icon={ICONS.cancel} />
                       Annuler
                     </DropdownMenuItem>
                   </>
@@ -582,7 +631,7 @@ export function CustomTableColumnHeader<T>({
         {canSort && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Icon icon={Sorting01Icon} />
+              <Icon icon={ICONS.sort} />
               Trier
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>

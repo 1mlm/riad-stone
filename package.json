@@ -9,7 +9,6 @@
     "build": "next build",
     "start": "next start",
     "check": "tsc --noEmit",
-    "db:fresh": "node -e \"require('fs').rmSync('prisma/migrations',{recursive:true,force:true})\" && prisma db push --force-reset && prisma generate",
     "biome": "biome lint .",
     "biome:fix": "biome check . --write"
   },

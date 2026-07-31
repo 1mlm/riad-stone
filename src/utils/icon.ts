@@ -1,0 +1,45 @@
+import {
+  ArrowHorizontalIcon,
+  ArrowVerticalIcon,
+  Calendar04Icon,
+  Cancel01Icon,
+  CheckIcon,
+  Cursor02Icon,
+  DashboardSquare01Icon,
+  FilterIcon,
+  HashIcon,
+  InvoiceIcon,
+  Location06Icon,
+  Sorting01Icon,
+  SortingAZ02Icon,
+  SortingNineOneIcon,
+  SortingOneNineIcon,
+  SortingZA01Icon,
+  SquareIcon,
+  Tag01Icon,
+} from "@hugeicons/core-free-icons";
+import type { HugeIcon } from "@/components/Icon";
+
+// one place mapping a concept to its icon — edit here, not at each call site
+export const ICONS = {
+  reference: HashIcon,
+  designation: Tag01Icon,
+  date: Calendar04Icon,
+  location: Location06Icon,
+  length: ArrowHorizontalIcon,
+  width: ArrowVerticalIcon,
+  pieces: HashIcon,
+  surfacePiece: SquareIcon,
+  surfaceTotale: DashboardSquare01Icon,
+  bonCommande: InvoiceIcon,
+  actions: Cursor02Icon,
+
+  filter: FilterIcon,
+  sort: Sorting01Icon,
+  increasingNumber: SortingOneNineIcon,
+  decreasingNumber: SortingNineOneIcon,
+  increasingText: SortingAZ02Icon,
+  decreasingText: SortingZA01Icon,
+  cancel: Cancel01Icon,
+  check: CheckIcon,
+} satisfies Record<string, HugeIcon>;

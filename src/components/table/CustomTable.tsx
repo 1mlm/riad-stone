@@ -67,8 +67,10 @@ export type CustomTableColumn<T> = {
       type: "string";
       monospace?: boolean;
       align?: "left" | "right";
-      // 'number' switches the filter UI from a text search to a min/max range
-      filterType?: "text" | "number";
+      // 'number' switches the filter UI to a min/max range, 'length' does the
+      // same but with a unit dropdown (min/max are still stored in the same
+      // unit getNumber returns, the widget converts on the way in and out)
+      filterType?: "text" | "number" | "length";
       // used for the numeric range filter/sort when getString isn't a raw parsable number (e.g. formatted currency)
       getNumber?: (item: T) => number;
       // truncates the middle instead of the end, keeping both the start and the tail visible

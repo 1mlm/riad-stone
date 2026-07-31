@@ -46,7 +46,9 @@ export function getColumnFilterFields<T>(
   if (column.type === "date") return ["from", "to"];
   if (column.type === "tags") return ["search", "only", "countMin", "countMax"];
   if (column.type === "string")
-    return column.filterType === "number" ? ["min", "max"] : ["search"];
+    return column.filterType === "number" || column.filterType === "length"
+      ? ["min", "max"]
+      : ["search"];
   return [];
 }
 
@@ -170,7 +172,7 @@ export function columnMatchesFilter<T>(
   getField: GetFilterField,
 ): boolean {
   if (column.type === "string") {
-    return column.filterType === "number"
+    return column.filterType === "number" || column.filterType === "length"
       ? numberMatches(
           getField("min"),
           getField("max"),
@@ -195,7 +197,7 @@ export function compareColumnValues<T>(
   b: T,
 ): number {
   if (column.type === "string") {
-    if (column.filterType === "number")
+    if (column.filterType === "number" || column.filterType === "length")
       return getColumnNumber(column, a) - getColumnNumber(column, b);
     return column.getString(a).localeCompare(column.getString(b));
   }
