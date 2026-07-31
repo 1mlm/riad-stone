@@ -1,15 +1,25 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
+const SECRET_CODE = (() => {
+  const value = process.env.SECRET_CODE;
+  if (!value) {
+    throw new Error(
+      "SECRET_CODE must be set — refusing to run with a blank, guessable auth secret.",
+    );
+  }
+  return value;
+})();
+
 export const AUTH_COOKIE_NAME = "riad_stone_auth";
 
 const hashCode = (code: string) => createHash("sha256").update(code).digest();
 
 export function getExpectedAuthCookieValue(): string {
-  return hashCode(process.env.SECRET_CODE ?? "").toString("hex");
+  return hashCode(SECRET_CODE).toString("hex");
 }
 
 export function isCodeCorrect(code: string): boolean {
-  const expected = hashCode(process.env.SECRET_CODE ?? "");
+  const expected = hashCode(SECRET_CODE);
   const actual = hashCode(code);
   return timingSafeEqual(expected, actual);
 }
