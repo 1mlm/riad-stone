@@ -159,6 +159,7 @@ function HistoryDataTable({
                 <td
                   className={cn(
                     "py-1 pr-3",
+                    field === "bonCommande" && "font-mono",
                     changed && "text-muted-foreground line-through",
                   )}
                 >
@@ -166,7 +167,11 @@ function HistoryDataTable({
                 </td>
               )}
               <td
-                className={cn("py-1", changed && "font-medium text-amber-600")}
+                className={cn(
+                  "py-1",
+                  field === "bonCommande" && "font-mono",
+                  changed && "font-medium text-amber-600",
+                )}
               >
                 {field === "code" && current[field] ? (
                   <RevealSecretValue value={String(current[field])} />

@@ -13,9 +13,11 @@ import {
 import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SearchBar } from "@/components/SearchBar";
 import {
+  buildRowSummary,
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
+import { CopyButton } from "@/components/table/CustomTableCell";
 import { ICONS } from "@/utils/icon";
 import { AddSortieDialog } from "./AddSortieDialog";
 import { deleteSortie } from "./actions";
@@ -30,6 +32,7 @@ const columns: CustomTableColumn<SortieRow>[] = [
     label: "Bon de commande",
     icon: ICONS.bonCommande,
     type: "string",
+    monospace: true,
     getString: (row) => row.bonCommande ?? "",
   },
   {
@@ -59,6 +62,12 @@ const columns: CustomTableColumn<SortieRow>[] = [
     type: "buttons",
     getButtons: (row) => (
       <div className="flex items-center justify-center gap-1">
+        <CopyButton
+          value={buildRowSummary(columns, row)}
+          variant="outline"
+          size="icon-sm"
+          className="corner-squircle"
+        />
         <EditSortieDialog sortie={row} />
         <DeleteRowButton
           title="Supprimer cette sortie ?"

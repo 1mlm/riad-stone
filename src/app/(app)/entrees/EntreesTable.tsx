@@ -4,9 +4,11 @@ import { Suspense, useMemo, useState } from "react";
 import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SearchBar } from "@/components/SearchBar";
 import {
+  buildRowSummary,
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
+import { CopyButton } from "@/components/table/CustomTableCell";
 import { ICONS } from "@/utils/icon";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
@@ -53,6 +55,12 @@ function EntreesTableContent({
         type: "buttons",
         getButtons: (row) => (
           <div className="flex items-center justify-center gap-1">
+            <CopyButton
+              value={buildRowSummary(columns, row)}
+              variant="outline"
+              size="icon-sm"
+              className="corner-squircle"
+            />
             <EditEntreeDialog entree={row} />
             <DeleteRowButton
               title="Supprimer cette entrée ?"

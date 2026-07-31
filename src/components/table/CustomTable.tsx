@@ -150,6 +150,32 @@ export function getColumnExportValue<T>(
   return column.getValue(item) ?? "";
 }
 
+// plain-text "Label: value" block for every non-button column, in column
+// order — meant to be pasted into a chat message, so it uses the same
+// rounded, human-readable strings the table cells show (getString/toLocaleDateString)
+// rather than the raw unrounded numbers getColumnExportValue produces for spreadsheets
+export function buildRowSummary<T>(
+  columns: CustomTableColumn<T>[],
+  item: T,
+): string {
+  return columns
+    .filter((column) => column.type !== "buttons")
+    .map((column) => {
+      const value =
+        column.type === "date"
+          ? (column.getDate(item)?.toLocaleDateString("fr-FR") ?? "")
+          : column.type === "string"
+            ? column.getString(item)
+            : getColumnExportValue(column, item);
+      const suffix =
+        column.type === "string" && column.suffix && value !== ""
+          ? ` ${column.suffix}`
+          : "";
+      return `${column.label}: ${value || "—"}${suffix}`;
+    })
+    .join("\n");
+}
+
 // everything the global search box is allowed to match against for one row
 function getSearchableStrings<T>(
   columns: CustomTableColumn<T>[],

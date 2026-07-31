@@ -18,7 +18,9 @@ import { APP_HEADER, NAV_ITEMS } from "./data";
 import { LogoutButton } from "./LogoutButton";
 import { SettingsButton } from "./SettingsButton";
 
-export function AppSidebar() {
+export type NavCounts = Record<"entrees" | "sorties" | "stock", number>;
+
+export function AppSidebar({ counts }: { counts: NavCounts }) {
   const pathname = usePathname();
 
   return (
@@ -65,6 +67,11 @@ export function AppSidebar() {
                     <Link href={item.href}>
                       <Icon icon={item.icon} />
                       <span>{item.label}</span>
+                      {item.countKey && counts[item.countKey] > 0 && (
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                          {counts[item.countKey]}
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

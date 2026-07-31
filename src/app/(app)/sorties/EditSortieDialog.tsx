@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  Calendar04Icon,
-  EditIcon,
-  InvoiceIcon,
-} from "@hugeicons/core-free-icons";
+import { EditIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
-import { DatePickerField } from "@/components/DatePickerField";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormError } from "@/components/FormError";
@@ -24,6 +19,7 @@ import {
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
 import { updateSortie } from "./actions";
+import { SortieFormFields } from "./SortieFormFields";
 import type { SortieRow } from "./types";
 
 export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
@@ -94,29 +90,7 @@ export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
             </InputGroup>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="edit-bonCommande" icon={InvoiceIcon}>
-              Bon de commande
-            </FieldLabel>
-            <InputGroup>
-              <InputGroupInput
-                id="edit-bonCommande"
-                name="bonCommande"
-                defaultValue={sortie.bonCommande ?? ""}
-                placeholder="C928492748"
-              />
-            </InputGroup>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel icon={Calendar04Icon} required>
-              Date de sortie
-            </FieldLabel>
-            <DatePickerField
-              name="dateSortie"
-              defaultValue={sortie.dateSortie}
-            />
-          </div>
+          <SortieFormFields mode="edit" {...{ sortie }} />
 
           <FormError>{state.error}</FormError>
 

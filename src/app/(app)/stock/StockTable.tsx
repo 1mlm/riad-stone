@@ -18,9 +18,11 @@ import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { ReferenceHistoryDialog } from "@/components/ReferenceHistoryDialog";
 import { SearchBar } from "@/components/SearchBar";
 import {
+  buildRowSummary,
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
+import { CopyButton } from "@/components/table/CustomTableCell";
 import { ICONS } from "@/utils/icon";
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
@@ -45,6 +47,12 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         type: "buttons",
         getButtons: (row) => (
           <div className="flex items-center justify-center gap-1">
+            <CopyButton
+              value={buildRowSummary(columns, row)}
+              variant="outline"
+              size="icon-sm"
+              className="corner-squircle"
+            />
             <ReferenceHistoryDialog reference={row.reference} />
             <EntreeDetailsDialog reference={row.reference} />
           </div>
