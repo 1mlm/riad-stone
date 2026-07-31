@@ -9,48 +9,48 @@ import { ENTREE_FIELDS, type EntreeField, toDisplayLength } from "./fields";
 import type { EntreeRow } from "./types";
 import { UnitLengthInput } from "./UnitLengthInput";
 
-type Mode = "add" | "edit";
+// everything a field renderer needs beyond the field definition itself,
+// passed around as one bag so each renderer keeps a two-prop signature
+type FieldContext = {
+  mode: "add" | "edit";
+  entree?: EntreeRow;
+  // namespaces every id/name under this prefix — needed when several
+  // EntreeFormFields instances share one <form> (the multi-card add flow)
+  namePrefix?: string;
+};
 
 // with no namePrefix, id/name are the bare field key (single-instance forms:
 // add/edit dialogs). With a namePrefix (e.g. a card id in a multi-card
 // form), both are namespaced so many instances of the same field can coexist
 // in one <form> without colliding.
-const inputId = (mode: Mode, key: string, namePrefix?: string) =>
-  namePrefix ? `${namePrefix}-${key}` : mode === "edit" ? `edit-${key}` : key;
-const inputName = (key: string, namePrefix?: string) =>
+function getInputId(key: string, { mode, namePrefix }: FieldContext) {
+  if (namePrefix) return `${namePrefix}-${key}`;
+  if (mode === "edit") return `edit-${key}`;
+  return key;
+}
+const getInputName = (key: string, { namePrefix }: FieldContext) =>
   namePrefix ? `${namePrefix}__${key}` : key;
 
-function TextInput({
+function FieldInput({
   field,
-  mode,
-  entree,
-  designationSuggestions,
-  namePrefix,
+  context,
 }: {
-  field: Extract<EntreeField, { kind: "text" }>;
-  mode: Mode;
-  entree?: EntreeRow;
-  designationSuggestions?: string[];
-  namePrefix?: string;
+  field: EntreeField;
+  context: FieldContext;
 }) {
-  const id = inputId(mode, field.key, namePrefix);
-  const locked = mode === "edit" && field.lockedOnEdit;
-  const listId = field.suggestions
-    ? `${inputId(mode, field.key, namePrefix)}-suggestions`
-    : undefined;
-  const defaultValue = entree
-    ? ((entree[field.key] as string | null) ?? "")
-    : undefined;
+  const { mode, entree } = context;
 
-  return (
-    <>
+  if (field.kind === "text") {
+    const locked = mode === "edit" && field.lockedOnEdit;
+    return (
       <InputGroup className={locked ? "bg-input/50 opacity-70" : undefined}>
         <InputGroupInput
-          id={id}
-          name={inputName(field.key, namePrefix)}
-          list={listId}
+          id={getInputId(field.key, context)}
+          name={getInputName(field.key, context)}
           placeholder={field.placeholder}
-          defaultValue={defaultValue}
+          defaultValue={
+            entree ? ((entree[field.key] as string | null) ?? "") : undefined
+          }
           readOnly={locked}
           className={
             locked ? "cursor-not-allowed text-muted-foreground" : undefined
@@ -58,41 +58,13 @@ function TextInput({
           required={field.required}
         />
       </InputGroup>
-      {listId && (
-        <datalist id={listId}>
-          {designationSuggestions?.map((value) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-      )}
-    </>
-  );
-}
-
-function FieldInput({
-  field,
-  mode,
-  entree,
-  designationSuggestions,
-  namePrefix,
-}: {
-  field: EntreeField;
-  mode: Mode;
-  entree?: EntreeRow;
-  designationSuggestions?: string[];
-  namePrefix?: string;
-}) {
-  if (field.kind === "text")
-    return (
-      <TextInput
-        {...{ field, mode, entree, designationSuggestions, namePrefix }}
-      />
     );
+  }
 
   if (field.kind === "date")
     return (
       <DatePickerField
-        name={inputName(field.key, namePrefix)}
+        name={getInputName(field.key, context)}
         defaultValue={entree?.date}
       />
     );
@@ -100,8 +72,8 @@ function FieldInput({
   if (field.kind === "unitLength")
     return (
       <UnitLengthInput
-        valueName={inputName(`${field.key}Value`, namePrefix)}
-        unitName={inputName(`${field.key}Unit`, namePrefix)}
+        valueName={getInputName(`${field.key}Value`, context)}
+        unitName={getInputName(`${field.key}Unit`, context)}
         placeholder="0"
         defaultValue={
           entree
@@ -114,8 +86,8 @@ function FieldInput({
   return (
     <InputGroup>
       <InputGroupInput
-        id={inputId(mode, field.key, namePrefix)}
-        name={inputName(field.key, namePrefix)}
+        id={getInputId(field.key, context)}
+        name={getInputName(field.key, context)}
         type="number"
         min="1"
         step="1"
@@ -126,24 +98,23 @@ function FieldInput({
   );
 }
 
-function renderField(
-  field: EntreeField,
-  mode: Mode,
-  entree: EntreeRow | undefined,
-  designationSuggestions: string[] | undefined,
-  namePrefix: string | undefined,
-) {
-  const id =
-    field.kind === "date" ? undefined : inputId(mode, field.key, namePrefix);
+function LabelledField({
+  field,
+  context,
+}: {
+  field: EntreeField;
+  context: FieldContext;
+}) {
+  // a date field is a popover trigger, not an input a label can focus by id
+  const htmlFor =
+    field.kind === "date" ? undefined : getInputId(field.key, context);
 
   return (
-    <div className="flex flex-col gap-1.5" key={field.key}>
-      <FieldLabel htmlFor={id} icon={field.icon} required={field.required}>
+    <div className="flex flex-col gap-1.5">
+      <FieldLabel {...{ htmlFor }} icon={field.icon} required={field.required}>
         {field.label}
       </FieldLabel>
-      <FieldInput
-        {...{ field, mode, entree, designationSuggestions, namePrefix }}
-      />
+      <FieldInput {...{ field, context }} />
     </div>
   );
 }
@@ -166,18 +137,10 @@ function groupFields(
 export function EntreeFormFields({
   mode,
   entree,
-  designationSuggestions,
   namePrefix,
   excludeKeys,
-}: {
-  mode: Mode;
-  entree?: EntreeRow;
-  designationSuggestions?: string[];
-  // namespaces every id/name under this prefix — needed when several
-  // EntreeFormFields instances share one <form> (the multi-card add flow)
-  namePrefix?: string;
-  excludeKeys?: EntreeField["key"][];
-}) {
+}: FieldContext & { excludeKeys?: EntreeField["key"][] }) {
+  const context = { mode, entree, namePrefix };
   const fields = ENTREE_FIELDS.filter(
     (field) => !excludeKeys?.includes(field.key),
   );
@@ -190,12 +153,12 @@ export function EntreeFormFields({
         key={item.map((f) => f.key).join("-")}
         className="grid grid-cols-2 gap-3"
       >
-        {item.map((field) =>
-          renderField(field, mode, entree, designationSuggestions, namePrefix),
-        )}
+        {item.map((field) => (
+          <LabelledField key={field.key} {...{ field, context }} />
+        ))}
       </div>
     ) : (
-      renderField(item, mode, entree, designationSuggestions, namePrefix)
+      <LabelledField key={item.key} field={item} {...{ context }} />
     );
 
   return (

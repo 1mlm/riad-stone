@@ -182,6 +182,25 @@ function TagsCell({
   );
 }
 
+function renderStringContent<T>(
+  column: Extract<CustomTableColumn<T>, { type: "string" }>,
+  item: T,
+  value: string,
+) {
+  if (column.decimals !== undefined && column.getNumber)
+    return (
+      <AlignedNumber
+        value={column.getNumber(item)}
+        decimals={column.decimals}
+      />
+    );
+  if (column.truncate === "middle")
+    return <MiddleTruncatedText {...{ value }} monospace={column.monospace} />;
+  return (
+    <span className={cn(column.monospace && "font-mono text-xs")}>{value}</span>
+  );
+}
+
 export function CustomTableCell<T>({
   column,
   item,
@@ -192,19 +211,7 @@ export function CustomTableCell<T>({
   if (column.type === "string") {
     const value = column.getString(item);
     if (!value) return <CustomTableEmptyValue />;
-    const content =
-      column.decimals !== undefined && column.getNumber ? (
-        <AlignedNumber
-          value={column.getNumber(item)}
-          decimals={column.decimals}
-        />
-      ) : column.truncate === "middle" ? (
-        <MiddleTruncatedText value={value} monospace={column.monospace} />
-      ) : (
-        <span className={cn(column.monospace && "font-mono text-xs")}>
-          {value}
-        </span>
-      );
+    const content = renderStringContent(column, item, value);
     if (!column.onClick) return content;
     return (
       <button

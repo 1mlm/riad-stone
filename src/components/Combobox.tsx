@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { cn } from "@/shadcn/utils";
 import { ICONS } from "@/utils/icon";
 
-export type ComboboxOption = { value: string; label: string };
+type ComboboxOption = { value: string; label: string };
 
 // a searchable single-select — the trigger is a hidden input carrying `value`
 // so it plugs into a plain <form action={serverAction}> the same way a

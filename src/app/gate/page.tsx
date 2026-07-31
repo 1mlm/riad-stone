@@ -1,12 +1,9 @@
 "use client";
 
-import {
-  Alert02Icon,
-  Key01Icon,
-  SquareUnlock01Icon,
-} from "@hugeicons/core-free-icons";
+import { Key01Icon, SquareUnlock01Icon } from "@hugeicons/core-free-icons";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { DelayedButton } from "@/components/DelayedButton";
+import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import {
   InputGroup,
@@ -57,10 +54,7 @@ export default function GatePage() {
           Déverrouiller
         </DelayedButton>
         {state.error && (
-          <span className="inline-flex items-center justify-center gap-1.5 text-sm text-destructive">
-            <Icon icon={Alert02Icon} />
-            Code incorrect
-          </span>
+          <FormError className="justify-center">Code incorrect</FormError>
         )}
       </form>
     </div>

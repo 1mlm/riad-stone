@@ -10,6 +10,13 @@ type EntreeLikeRow = {
   nombrePieces: number;
 };
 
+// entree-shaped tables (entrees, stock) group by designation first, then show
+// the newest reference of each group on top
+export const DESIGNATION_THEN_REFERENCE_SORT = [
+  { columnId: "designation", dir: "asc" as const },
+  { columnId: "reference", dir: "desc" as const },
+];
+
 export const getSurfacePieceM2 = (row: EntreeLikeRow) =>
   row.longueur * row.largeur;
 export const getSurfaceTotaleM2 = (row: EntreeLikeRow) =>
@@ -41,6 +48,18 @@ export function createDesignationColumn<
   };
 }
 
+export function createDateColumn<
+  T extends { date: Date },
+>(): CustomTableColumn<T> {
+  return {
+    id: "date",
+    label: ENTREE_FIELD_BY_KEY.date.label,
+    icon: ENTREE_FIELD_BY_KEY.date.icon,
+    type: "date",
+    getDate: (row) => row.date,
+  };
+}
+
 export function createOrigineColumn<
   T extends EntreeLikeRow,
 >(): CustomTableColumn<T> {
@@ -53,37 +72,20 @@ export function createOrigineColumn<
   };
 }
 
-export function createLongueurColumn<
-  T extends EntreeLikeRow,
->(): CustomTableColumn<T> {
+export function createLengthColumn<T extends EntreeLikeRow>(
+  key: "longueur" | "largeur",
+): CustomTableColumn<T> {
   return {
-    id: "longueur",
-    label: ENTREE_FIELD_BY_KEY.longueur.label,
-    icon: ENTREE_FIELD_BY_KEY.longueur.icon,
+    id: key,
+    label: ENTREE_FIELD_BY_KEY[key].label,
+    icon: ENTREE_FIELD_BY_KEY[key].icon,
     type: "string",
     align: "right",
     filterType: "length",
     decimals: 2,
     suffix: "cm",
-    getString: (row) => toDisplayLength(row.longueur).toFixed(2),
-    getNumber: (row) => toDisplayLength(row.longueur),
-  };
-}
-
-export function createLargeurColumn<
-  T extends EntreeLikeRow,
->(): CustomTableColumn<T> {
-  return {
-    id: "largeur",
-    label: ENTREE_FIELD_BY_KEY.largeur.label,
-    icon: ENTREE_FIELD_BY_KEY.largeur.icon,
-    type: "string",
-    align: "right",
-    filterType: "length",
-    decimals: 2,
-    suffix: "cm",
-    getString: (row) => toDisplayLength(row.largeur).toFixed(2),
-    getNumber: (row) => toDisplayLength(row.largeur),
+    getString: (row) => toDisplayLength(row[key]).toFixed(2),
+    getNumber: (row) => toDisplayLength(row[key]),
   };
 }
 

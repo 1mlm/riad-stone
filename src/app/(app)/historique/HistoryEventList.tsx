@@ -21,6 +21,7 @@ import { HistoryItemType } from "@/generated/prisma/enums";
 import { cn } from "@/shadcn/utils";
 import { getRelativeBucket, type RelativeBucket } from "@/utils/date";
 import {
+  getEventReference,
   getEventSnapshots,
   type HistorySnapshot,
 } from "@/utils/historySnapshot";
@@ -214,9 +215,7 @@ export function HistoryEventList({
                   event.type,
                   event.data,
                 );
-                const reference = String(
-                  current.reference ?? current.entreeReference ?? "",
-                );
+                const reference = getEventReference(event.type, event.data);
                 return (
                   <li
                     key={event.id}

@@ -1,4 +1,5 @@
 import {
+  Alert02Icon,
   ArrowHorizontalIcon,
   ArrowVerticalIcon,
   Calendar04Icon,
@@ -56,6 +57,7 @@ export const ICONS = {
   decreasingText: SortingZA01Icon,
   cancel: Cancel01Icon,
   check: CheckIcon,
+  alert: Alert02Icon,
   notFound: FileNotFoundIcon,
   home: Home01Icon,
 } satisfies Record<string, HugeIcon>;

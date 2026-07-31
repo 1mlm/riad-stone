@@ -1,7 +1,8 @@
 "use client";
 
-import { Alert02Icon, Key01Icon, ViewIcon } from "@hugeicons/core-free-icons";
+import { Key01Icon, ViewIcon } from "@hugeicons/core-free-icons";
 import { type FormEvent, useState } from "react";
+import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
@@ -78,12 +79,7 @@ export function RevealSecretValue({ value }: { value: string }) {
             <Icon icon={ViewIcon} />
             Afficher
           </Button>
-          {error && (
-            <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
-              <Icon icon={Alert02Icon} />
-              Code incorrect
-            </span>
-          )}
+          {error && <FormError>Code incorrect</FormError>}
         </form>
       </PopoverContent>
     </Popover>

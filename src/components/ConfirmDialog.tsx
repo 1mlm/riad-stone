@@ -1,6 +1,5 @@
 "use client";
 
-import { Alert02Icon } from "@hugeicons/core-free-icons";
 import {
   type ComponentProps,
   type ReactNode,
@@ -8,6 +7,7 @@ import {
   useTransition,
 } from "react";
 import { DelayedButton } from "@/components/DelayedButton";
+import { FormError } from "@/components/FormError";
 import { type HugeIcon, Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
@@ -73,12 +73,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="text-sm text-muted-foreground">{content}</div>
-        {error && (
-          <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
-            <Icon icon={Alert02Icon} />
-            {error}
-          </span>
-        )}
+        <FormError>{error}</FormError>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" className="rounded-full corner-squircle">

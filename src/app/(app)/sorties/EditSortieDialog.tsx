@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert02Icon,
   Calendar04Icon,
   EditIcon,
   InvoiceIcon,
@@ -10,6 +9,7 @@ import { useActionState, useState } from "react";
 import { DatePickerField } from "@/components/DatePickerField";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
+import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
@@ -118,12 +118,7 @@ export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
             />
           </div>
 
-          {state.error && (
-            <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
-              <Icon icon={Alert02Icon} />
-              {state.error}
-            </span>
-          )}
+          <FormError>{state.error}</FormError>
 
           <DialogFooter>
             <Button type="submit" variant="warning" disabled={pending}>

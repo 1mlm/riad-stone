@@ -1,57 +1,29 @@
 "use client";
 
-import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Icon } from "@/components/Icon";
+import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SearchBar } from "@/components/SearchBar";
 import {
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
-import { Button } from "@/shadcn/ui/button";
 import { ICONS } from "@/utils/icon";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
 import {
+  createDateColumn,
   createDesignationColumn,
-  createLargeurColumn,
-  createLongueurColumn,
+  createLengthColumn,
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
   createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
+  DESIGNATION_THEN_REFERENCE_SORT,
 } from "./columns";
 import { EditEntreeDialog } from "./EditEntreeDialog";
 import type { EntreeRow } from "./types";
-
-const DEFAULT_SORT = [
-  { columnId: "designation", dir: "asc" as const },
-  { columnId: "reference", dir: "desc" as const },
-];
-
-function DeleteButton({ reference }: { reference: string }) {
-  return (
-    <ConfirmDialog
-      trigger={
-        <Button
-          variant="destructive"
-          size="icon-sm"
-          className="corner-squircle"
-        >
-          <Icon icon={Delete02Icon} />
-        </Button>
-      }
-      title="Supprimer cette entrée ?"
-      content={`L'entrée ${reference} sera supprimée définitivement. Cette action est irréversible.`}
-      confirmLabel="Supprimer"
-      confirmIcon={Delete02Icon}
-      onConfirm={() => deleteEntree(reference)}
-    />
-  );
-}
 
 function EntreesTableContent({
   items,
@@ -66,16 +38,10 @@ function EntreesTableContent({
     () => [
       createDesignationColumn(),
       createReferenceColumn((row) => row.reference),
-      {
-        id: "date",
-        label: "Date",
-        icon: ICONS.date,
-        type: "date",
-        getDate: (row) => row.date,
-      },
+      createDateColumn(),
       createOrigineColumn(),
-      createLongueurColumn(),
-      createLargeurColumn(),
+      createLengthColumn("longueur"),
+      createLengthColumn("largeur"),
       createSurfacePieceColumn(),
       createNombrePiecesColumn(),
       createSurfaceTotaleColumn(),
@@ -88,7 +54,11 @@ function EntreesTableContent({
         getButtons: (row) => (
           <div className="flex items-center justify-center gap-1">
             <EditEntreeDialog entree={row} />
-            <DeleteButton reference={row.reference} />
+            <DeleteRowButton
+              title="Supprimer cette entrée ?"
+              content={`L'entrée ${row.reference} sera supprimée définitivement. Cette action est irréversible.`}
+              onConfirm={() => deleteEntree(row.reference)}
+            />
           </div>
         ),
       },
@@ -102,7 +72,7 @@ function EntreesTableContent({
         <SearchBar
           className="flex-1"
           placeholder="Rechercher une entrée..."
-          trailing={`${resultCount} ${resultCount === 1 ? "résultat" : "résultats"}`}
+          {...{ resultCount }}
         />
         <AddEntreeDialog {...{ designationSuggestions }} />
       </div>
@@ -111,7 +81,7 @@ function EntreesTableContent({
         getItemId={(row) => row.reference}
         exportFilePrefix="entrees"
         selectable
-        defaultSort={DEFAULT_SORT}
+        defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
       />
     </div>

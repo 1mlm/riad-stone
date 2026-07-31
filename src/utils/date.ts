@@ -125,15 +125,6 @@ export function formatRelativeDate(
   return formatRelativeLabel(Math.abs(years), "an", "ans", years > 0);
 }
 
-// "1h 30m", "45m", "2h" — compact, no unit words needed for a two-unit max
-export function formatDurationMinutes(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours === 0) return `${minutes}m`;
-  if (minutes === 0) return `${hours}h`;
-  return `${hours}h ${minutes}m`;
-}
-
 const DURATION_UNITS = [
   ["jour", "jours", 86400],
   ["heure", "heures", 3600],

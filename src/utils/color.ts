@@ -14,12 +14,9 @@ const isColorRamp = (value: Palette[keyof Palette]): value is Palette["blue"] =>
 
 // a color often arrives as a plain string (a user-editable value, an api field),
 // so anything reading the palette needs a fallback
-export function isColor(value: string): value is Color {
+function isColor(value: string): value is Color {
   return value in colors && isColorRamp(colors[value as keyof Palette]);
 }
-
-// every hue tailwind ships, for pickers and swatch grids
-export const COLORS = Object.keys(colors).filter(isColor);
 
 const toColorRamp = (colorId?: string | null) =>
   colors[colorId && isColor(colorId) ? colorId : "gray"];
