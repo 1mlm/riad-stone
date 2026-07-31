@@ -6,8 +6,9 @@ import {
   Plant01Icon,
   SlidersVerticalIcon,
 } from "@hugeicons/core-free-icons";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { clearAllData, isStockEmpty, seedFakeData } from "@/app/(app)/actions";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { ResponsivePopover } from "@/components/ResponsivePopover";
 import { Button } from "@/shadcn/ui/button";
@@ -17,29 +18,22 @@ import { SidebarMenuButton } from "@/shadcn/ui/sidebar";
 export function SettingsButton() {
   const [open, setOpen] = useState(false);
   const [stockEmpty, setStockEmpty] = useState(false);
-  const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     if (open) isStockEmpty().then(setStockEmpty);
   }, [open]);
 
-  const handleClearAllData = () =>
-    startTransition(async () => {
-      if (
-        !confirm(
-          "Supprimer définitivement toutes les entrées et sorties ? Cette action est irréversible.",
-        )
-      )
-        return;
-      await clearAllData();
-      setStockEmpty(true);
-    });
+  const handleClearAllData = async () => {
+    await clearAllData();
+    setStockEmpty(true);
+    return undefined;
+  };
 
-  const handleSeedFakeData = () =>
-    startTransition(async () => {
-      await seedFakeData();
-      setOpen(false);
-    });
+  const handleSeedFakeData = async () => {
+    await seedFakeData();
+    setOpen(false);
+    return undefined;
+  };
 
   return (
     <ResponsivePopover
@@ -56,21 +50,34 @@ export function SettingsButton() {
       }
       className="flex flex-col gap-2"
     >
-      <Button
-        variant="destructive"
-        disabled={pending}
-        onClick={handleClearAllData}
-      >
-        <Icon icon={NuclearPowerIcon} />
-        Vider toutes les données
-      </Button>
+      <ConfirmDialog
+        trigger={
+          <Button variant="destructive">
+            <Icon icon={NuclearPowerIcon} />
+            Vider toutes les données
+          </Button>
+        }
+        title="Vider toutes les données ?"
+        content="Toutes les entrées et sorties seront supprimées définitivement. Cette action est irréversible."
+        confirmLabel="Tout supprimer"
+        onConfirm={handleClearAllData}
+      />
       {stockEmpty && (
         <>
           <Separator />
-          <Button disabled={pending} variant={"secondary"} onClick={handleSeedFakeData}>
-            <Icon icon={Plant01Icon} />
-            Ajouter des données fictives
-          </Button>
+          <ConfirmDialog
+            trigger={
+              <Button variant="secondary">
+                <Icon icon={Plant01Icon} />
+                Ajouter des données fictives
+              </Button>
+            }
+            title="Ajouter des données fictives ?"
+            content="Des entrées, sorties et un historique fictifs seront ajoutés au stock, y compris en production."
+            confirmLabel="Ajouter"
+            confirmVariant="secondary"
+            onConfirm={handleSeedFakeData}
+          />
         </>
       )}
     </ResponsivePopover>
