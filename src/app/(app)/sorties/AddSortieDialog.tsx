@@ -1,7 +1,7 @@
 "use client";
 
 import { EditIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
-import { useActionState, useMemo, useState } from "react";
+import { type ReactNode, useActionState, useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
@@ -74,18 +74,27 @@ function EntreeReferenceField({
       >
         <Icon icon={EditIcon} />
       </Button>
-      <EntreeDetailsDialog reference={entreeReference} />
+      <EntreeDetailsDialog reference={entreeReference} allowAddSortie={false} />
     </div>
   );
 }
 
 export function AddSortieDialog({
   availableEntrees,
+  initialReference,
+  trigger,
 }: {
   availableEntrees: AvailableEntree[];
+  // pre-selects the entrée reference and skips the combobox — used when
+  // opening this dialog from a specific entrée's details rather than the
+  // sorties page, where the user should still pick freely
+  initialReference?: string;
+  trigger?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [entreeReference, setEntreeReference] = useState("");
+  const [entreeReference, setEntreeReference] = useState(
+    initialReference ?? "",
+  );
   const [state, formAction, pending] = useActionState(
     async (prevState: { error: string | null }, formData: FormData) => {
       const result = await createSortie(prevState, formData);
@@ -107,10 +116,12 @@ export function AddSortieDialog({
   return (
     <Dialog {...{ open, onOpenChange: setOpen }}>
       <DialogTrigger asChild>
-        <Button className="rounded-full corner-squircle">
-          <Icon icon={PlusSignIcon} />
-          Ajouter une sortie
-        </Button>
+        {trigger ?? (
+          <Button className="rounded-full corner-squircle">
+            <Icon icon={PlusSignIcon} />
+            Ajouter une sortie
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

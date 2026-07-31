@@ -1,6 +1,10 @@
 "use client";
 
-import { BrushCleaningIcon, InboxIcon } from "@hugeicons/core-free-icons";
+import {
+  BrushCleaningIcon,
+  Delete02Icon,
+  InboxIcon,
+} from "@hugeicons/core-free-icons";
 import {
   parseAsInteger,
   parseAsString,
@@ -8,6 +12,7 @@ import {
   useQueryStates,
 } from "nuqs";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { Button } from "@/shadcn/ui/button";
@@ -210,6 +215,7 @@ export function CustomTable<T>({
   exportFilePrefix = "export",
   onVisibleCountChange,
   defaultSort,
+  onDeleteSelected,
 }: {
   items: T[];
   columns: CustomTableColumn<T>[];
@@ -230,6 +236,9 @@ export function CustomTable<T>({
   // hasn't picked an explicit column sort — doesn't count as an "active
   // sort" for the reset button
   defaultSort?: { columnId: string; dir: "asc" | "desc" }[];
+  // enables the bulk-delete action in the selection bar; the table clears
+  // its own selection once this resolves without an error
+  onDeleteSelected?: (items: T[]) => Promise<{ error: string | null }>;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
@@ -403,12 +412,22 @@ export function CustomTable<T>({
     setSelectedIds(next);
   };
 
+  // compared against visible rows only — selectedIds can hold ids hidden by
+  // the current filter, which would otherwise make this false (and the
+  // header checkbox look unchecked) even when every visible row is selected
+  const visibleSelectedCount = visibleItems.filter((item) =>
+    selectedIds.has(getItemId(item)),
+  ).length;
   const allSelected =
-    visibleItems.length > 0 && selectedIds.size === visibleItems.length;
-  const toggleAll = () =>
-    setSelectedIds(
-      allSelected ? new Set() : new Set(visibleItems.map(getItemId)),
-    );
+    visibleItems.length > 0 && visibleSelectedCount === visibleItems.length;
+  const toggleAll = () => {
+    const next = new Set(selectedIds);
+    for (const item of visibleItems) {
+      if (allSelected) next.delete(getItemId(item));
+      else next.add(getItemId(item));
+    }
+    setSelectedIds(next);
+  };
 
   const canResetFilterAndSort =
     (filterable || sortable) && hasActiveFilterOrSort;
@@ -439,7 +458,7 @@ export function CustomTable<T>({
                   <div className="flex justify-center pr-2!">
                     <Checkbox
                       checked={getTriState(
-                        selectedIds.size,
+                        visibleSelectedCount,
                         visibleItems.length,
                       )}
                       onCheckedChange={toggleAll}
@@ -609,6 +628,31 @@ export function CustomTable<T>({
               </span>
               <span className="sm:hidden">Réinitialiser</span>
             </Button>
+          )}
+          {selectable && onDeleteSelected && selectedItems.length > 0 && (
+            <ConfirmDialog
+              trigger={
+                <Button variant="destructive" className="shadow-lg">
+                  <Icon icon={Delete02Icon} />
+                  <span className="hidden sm:inline">
+                    Supprimer {selectedItems.length} élément
+                    {selectedItems.length > 1 ? "s" : ""}
+                  </span>
+                  <span className="sm:hidden">
+                    Supprimer {selectedItems.length}
+                  </span>
+                </Button>
+              }
+              title={`Supprimer ${selectedItems.length} élément${selectedItems.length > 1 ? "s" : ""} ?`}
+              content="Ces lignes seront supprimées définitivement. Cette action est irréversible."
+              confirmLabel="Supprimer"
+              confirmIcon={Delete02Icon}
+              onConfirm={async () => {
+                const result = await onDeleteSelected(selectedItems);
+                if (!result.error) setSelectedIds(new Set());
+                return result;
+              }}
+            />
           )}
           {selectable && (
             <ExtractButton
