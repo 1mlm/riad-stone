@@ -26,7 +26,13 @@ import { deleteSortie } from "./actions";
 import { EditSortieDialog } from "./EditSortieDialog";
 import type { AvailableEntree, SortieRow } from "./types";
 
-function DeleteButton({ entreeReference }: { entreeReference: string }) {
+function DeleteButton({
+  id,
+  entreeReference,
+}: {
+  id: number;
+  entreeReference: string;
+}) {
   return (
     <ConfirmDialog
       trigger={
@@ -41,7 +47,8 @@ function DeleteButton({ entreeReference }: { entreeReference: string }) {
       title="Supprimer cette sortie ?"
       content={`La sortie de l'entrée ${entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
       confirmLabel="Supprimer"
-      onConfirm={() => deleteSortie(entreeReference)}
+      confirmIcon={Delete02Icon}
+      onConfirm={() => deleteSortie(id)}
     />
   );
 }
@@ -84,7 +91,7 @@ const columns: CustomTableColumn<SortieRow>[] = [
     getButtons: (row) => (
       <div className="flex items-center justify-center gap-1">
         <EditSortieDialog sortie={row} />
-        <DeleteButton entreeReference={row.entreeReference} />
+        <DeleteButton id={row.id} entreeReference={row.entreeReference} />
       </div>
     ),
   },
@@ -111,8 +118,7 @@ function SortiesTableContent({
       </div>
       <CustomTable
         {...{ items, columns }}
-        getItemId={(row) => row.entreeReference}
-        emptyLabel="sorties"
+        getItemId={(row) => String(row.id)}
         exportFilePrefix="sorties"
         selectable
         onVisibleCountChange={setResultCount}

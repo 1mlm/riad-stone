@@ -12,13 +12,14 @@ export default async function SortiesPage() {
   ]);
 
   const rows = sorties.map((sortie) => ({
+    id: sortie.id,
     entreeReference: sortie.entreeReference,
     designation: sortie.entree.designation,
     origine: sortie.entree.origine,
     dateEntree: sortie.entree.date,
     longueur: Number(sortie.entree.longueur),
     largeur: Number(sortie.entree.largeur),
-    nombrePieces: sortie.entree.nombrePieces,
+    nombrePieces: sortie.nombrePieces,
     dateSortie: sortie.dateSortie,
     bonCommande: sortie.bonCommande,
   }));
