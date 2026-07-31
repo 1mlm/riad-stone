@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { cn } from "@/shadcn/utils";
+import { haptic } from "@/utils/haptics";
 import { NAV_ITEMS } from "./data";
 
 export function MobileBottomBar() {
@@ -17,6 +18,7 @@ export function MobileBottomBar() {
           <Link
             key={item.href}
             href={item.href}
+            onClick={() => haptic("light")}
             className={cn(
               "flex flex-1 flex-col items-center gap-0.5 py-2 text-muted-foreground",
               isActive && "text-foreground",

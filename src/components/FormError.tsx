@@ -1,6 +1,9 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { type ReactNode, useEffect } from "react";
 import { Icon } from "@/components/Icon";
 import { cn } from "@/shadcn/utils";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
 
 export function FormError({
@@ -10,6 +13,11 @@ export function FormError({
   children: ReactNode;
   className?: string;
 }) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only fires when the error appears, not on every children re-render
+  useEffect(() => {
+    if (children) haptic("error");
+  }, [Boolean(children)]);
+
   if (!children) return null;
 
   return (
