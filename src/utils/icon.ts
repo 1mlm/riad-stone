@@ -7,9 +7,9 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Compass01Icon,
   Cursor02Icon,
   DashboardSquare01Icon,
+  FileNotFoundIcon,
   FilterIcon,
   HashIcon,
   Home01Icon,
@@ -56,6 +56,6 @@ export const ICONS = {
   decreasingText: SortingZA01Icon,
   cancel: Cancel01Icon,
   check: CheckIcon,
-  notFound: Compass01Icon,
+  notFound: FileNotFoundIcon,
   home: Home01Icon,
 } satisfies Record<string, HugeIcon>;
