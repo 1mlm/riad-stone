@@ -9,6 +9,7 @@ import {
   createReferenceColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
+  DESIGNATION_THEN_REFERENCE_SORT,
 } from "@/app/(app)/entrees/columns";
 import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SearchBar } from "@/components/SearchBar";
@@ -144,6 +145,7 @@ function SortiesTableContent({
             });
           return { error: results.find((r) => r.error)?.error ?? null };
         }}
+        defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
       />
     </div>
