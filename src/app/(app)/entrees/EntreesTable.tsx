@@ -41,6 +41,7 @@ function DeleteButton({ reference }: { reference: string }) {
       title="Supprimer cette entrée ?"
       content={`L'entrée ${reference} sera supprimée définitivement. Cette action est irréversible.`}
       confirmLabel="Supprimer"
+      confirmIcon={Delete02Icon}
       onConfirm={() => deleteEntree(reference)}
     />
   );
@@ -98,7 +99,6 @@ function EntreesTableContent({
       <CustomTable
         {...{ items, columns }}
         getItemId={(row) => row.reference}
-        emptyLabel="entrées"
         exportFilePrefix="entrees"
         selectable
         onVisibleCountChange={setResultCount}

@@ -158,7 +158,6 @@ export function CustomTable<T>({
   searchQueryKey = "q",
   exportFilePrefix = "export",
   onVisibleCountChange,
-  emptyLabel = "items",
 }: {
   items: T[];
   columns: CustomTableColumn<T>[];
@@ -175,8 +174,6 @@ export function CustomTable<T>({
   exportFilePrefix?: string;
   // reports how many rows survive the current search/filter, e.g. for a "12 results" indicator
   onVisibleCountChange?: (count: number) => void;
-  // shown in the empty state, e.g. "users" -> "No users to show"
-  emptyLabel?: string;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
@@ -400,8 +397,7 @@ export function CustomTable<T>({
       {!loading && visibleItems.length === 0 && (
         <MetaPage
           icon={InboxIcon}
-          title="Aucun élément à afficher"
-          subtitle={`(${emptyLabel})`}
+          title="Rien à afficher"
           className="border-t border-border"
         />
       )}
