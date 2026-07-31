@@ -1,12 +1,5 @@
-import {
-  ArrowHorizontalIcon,
-  ArrowVerticalIcon,
-  Calendar04Icon,
-  HashIcon,
-  Location01Icon,
-  Tag01Icon,
-} from "@hugeicons/core-free-icons";
 import type { HugeIcon } from "@/components/Icon";
+import { ICONS } from "@/utils/icon";
 import { metersToUnit } from "@/utils/length";
 import type { EntreeRow } from "./types";
 
@@ -43,7 +36,7 @@ export const ENTREE_FIELDS = [
   {
     key: "designation",
     label: "Désignation",
-    icon: Tag01Icon,
+    icon: ICONS.designation,
     required: true,
     kind: "text",
     placeholder: "Granite, Ibiza...",
@@ -52,7 +45,7 @@ export const ENTREE_FIELDS = [
   {
     key: "reference",
     label: "Référence",
-    icon: HashIcon,
+    icon: ICONS.reference,
     required: true,
     kind: "text",
     placeholder: "TZ20",
@@ -61,14 +54,14 @@ export const ENTREE_FIELDS = [
   {
     key: "date",
     label: "Date",
-    icon: Calendar04Icon,
+    icon: ICONS.date,
     required: true,
     kind: "date",
   },
   {
     key: "longueur",
     label: "Longueur",
-    icon: ArrowHorizontalIcon,
+    icon: ICONS.length,
     required: true,
     kind: "unitLength",
     group: "dimensions",
@@ -76,7 +69,7 @@ export const ENTREE_FIELDS = [
   {
     key: "largeur",
     label: "Largeur",
-    icon: ArrowVerticalIcon,
+    icon: ICONS.width,
     required: true,
     kind: "unitLength",
     group: "dimensions",
@@ -84,14 +77,14 @@ export const ENTREE_FIELDS = [
   {
     key: "nombrePieces",
     label: "Pièces",
-    icon: HashIcon,
+    icon: ICONS.pieces,
     required: true,
     kind: "integer",
   },
   {
     key: "origine",
     label: "Origine",
-    icon: Location01Icon,
+    icon: ICONS.location,
     required: false,
     kind: "text",
   },

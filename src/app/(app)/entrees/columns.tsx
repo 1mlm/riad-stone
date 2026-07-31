@@ -1,5 +1,5 @@
-import { DashboardSquare01Icon, SquareIcon } from "@hugeicons/core-free-icons";
 import type { CustomTableColumn } from "@/components/table/CustomTable";
+import { ICONS } from "@/utils/icon";
 import { ENTREE_FIELD_BY_KEY, toDisplayLength } from "./fields";
 
 type EntreeLikeRow = {
@@ -61,7 +61,7 @@ export function createLongueurColumn<
     icon: ENTREE_FIELD_BY_KEY.longueur.icon,
     type: "string",
     align: "right",
-    filterType: "number",
+    filterType: "length",
     decimals: 2,
     suffix: "cm",
     getString: (row) => `${toDisplayLength(row.longueur).toFixed(2)} cm`,
@@ -78,7 +78,7 @@ export function createLargeurColumn<
     icon: ENTREE_FIELD_BY_KEY.largeur.icon,
     type: "string",
     align: "right",
-    filterType: "number",
+    filterType: "length",
     decimals: 2,
     suffix: "cm",
     getString: (row) => `${toDisplayLength(row.largeur).toFixed(2)} cm`,
@@ -92,7 +92,7 @@ export function createSurfacePieceColumn<
   return {
     id: "surfacePiece",
     label: "Surface de pièce",
-    icon: SquareIcon,
+    icon: ICONS.surfacePiece,
     type: "string",
     align: "right",
     filterType: "number",
@@ -125,7 +125,7 @@ export function createSurfaceTotaleColumn<
   return {
     id: "surfaceTotale",
     label: "Surface totale",
-    icon: DashboardSquare01Icon,
+    icon: ICONS.surfaceTotale,
     type: "string",
     align: "right",
     filterType: "number",

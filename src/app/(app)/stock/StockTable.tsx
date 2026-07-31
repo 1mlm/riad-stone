@@ -1,6 +1,5 @@
 "use client";
 
-import { Calendar04Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useState } from "react";
 import type { EntreeRow } from "@/app/(app)/entrees/types";
 import { SearchBar } from "@/components/SearchBar";
@@ -8,6 +7,7 @@ import {
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
+import { ICONS } from "@/utils/icon";
 import {
   createDesignationColumn,
   createLargeurColumn,
@@ -25,7 +25,7 @@ const columns: CustomTableColumn<EntreeRow>[] = [
   {
     id: "date",
     label: "Date",
-    icon: Calendar04Icon,
+    icon: ICONS.date,
     type: "date",
     getDate: (row) => row.date,
   },
@@ -51,6 +51,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         getItemId={(row) => row.reference}
         emptyLabel="stock"
         exportFilePrefix="stock"
+        selectable
         onVisibleCountChange={setResultCount}
       />
     </div>
