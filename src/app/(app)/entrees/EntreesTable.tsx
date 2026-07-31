@@ -1,7 +1,7 @@
 "use client";
 
 import { Delete02Icon } from "@hugeicons/core-free-icons";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { SearchBar } from "@/components/SearchBar";
@@ -20,11 +20,17 @@ import {
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
+  createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
 } from "./columns";
 import { EditEntreeDialog } from "./EditEntreeDialog";
 import type { EntreeRow } from "./types";
+
+const DEFAULT_SORT = [
+  { columnId: "designation", dir: "asc" as const },
+  { columnId: "reference", dir: "desc" as const },
+];
 
 function DeleteButton({ reference }: { reference: string }) {
   return (
@@ -47,36 +53,6 @@ function DeleteButton({ reference }: { reference: string }) {
   );
 }
 
-const columns: CustomTableColumn<EntreeRow>[] = [
-  createReferenceColumn((row) => row.reference),
-  createDesignationColumn(),
-  {
-    id: "date",
-    label: "Date",
-    icon: ICONS.date,
-    type: "date",
-    getDate: (row) => row.date,
-  },
-  createOrigineColumn(),
-  createLongueurColumn(),
-  createLargeurColumn(),
-  createSurfacePieceColumn(),
-  createNombrePiecesColumn(),
-  createSurfaceTotaleColumn(),
-  {
-    id: "actions",
-    label: "Actions",
-    icon: ICONS.actions,
-    type: "buttons",
-    getButtons: (row) => (
-      <div className="flex items-center justify-center gap-1">
-        <EditEntreeDialog entree={row} />
-        <DeleteButton reference={row.reference} />
-      </div>
-    ),
-  },
-];
-
 function EntreesTableContent({
   items,
   designationSuggestions,
@@ -85,6 +61,40 @@ function EntreesTableContent({
   designationSuggestions: string[];
 }) {
   const [resultCount, setResultCount] = useState(items.length);
+
+  const columns: CustomTableColumn<EntreeRow>[] = useMemo(
+    () => [
+      createDesignationColumn(),
+      createReferenceColumn((row) => row.reference),
+      {
+        id: "date",
+        label: "Date",
+        icon: ICONS.date,
+        type: "date",
+        getDate: (row) => row.date,
+      },
+      createOrigineColumn(),
+      createLongueurColumn(),
+      createLargeurColumn(),
+      createSurfacePieceColumn(),
+      createNombrePiecesColumn(),
+      createSurfaceTotaleColumn(),
+      createSurfaceDesignationColumn(items),
+      {
+        id: "actions",
+        label: "Actions",
+        icon: ICONS.actions,
+        type: "buttons",
+        getButtons: (row) => (
+          <div className="flex items-center justify-center gap-1">
+            <EditEntreeDialog entree={row} />
+            <DeleteButton reference={row.reference} />
+          </div>
+        ),
+      },
+    ],
+    [items],
+  );
 
   return (
     <div className="flex min-w-0 flex-col gap-4 p-5">
@@ -101,6 +111,7 @@ function EntreesTableContent({
         getItemId={(row) => row.reference}
         exportFilePrefix="entrees"
         selectable
+        defaultSort={DEFAULT_SORT}
         onVisibleCountChange={setResultCount}
       />
     </div>

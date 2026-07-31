@@ -197,7 +197,6 @@ export function CustomTableCell<T>({
         <AlignedNumber
           value={column.getNumber(item)}
           decimals={column.decimals}
-          suffix={column.suffix}
         />
       ) : column.truncate === "middle" ? (
         <MiddleTruncatedText value={value} monospace={column.monospace} />

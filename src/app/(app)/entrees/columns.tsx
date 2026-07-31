@@ -36,6 +36,7 @@ export function createDesignationColumn<
     label: ENTREE_FIELD_BY_KEY.designation.label,
     icon: ENTREE_FIELD_BY_KEY.designation.icon,
     type: "string",
+    mergeAdjacent: true,
     getString: (row) => row.designation,
   };
 }
@@ -64,7 +65,7 @@ export function createLongueurColumn<
     filterType: "length",
     decimals: 2,
     suffix: "cm",
-    getString: (row) => `${toDisplayLength(row.longueur).toFixed(2)} cm`,
+    getString: (row) => toDisplayLength(row.longueur).toFixed(2),
     getNumber: (row) => toDisplayLength(row.longueur),
   };
 }
@@ -81,7 +82,7 @@ export function createLargeurColumn<
     filterType: "length",
     decimals: 2,
     suffix: "cm",
-    getString: (row) => `${toDisplayLength(row.largeur).toFixed(2)} cm`,
+    getString: (row) => toDisplayLength(row.largeur).toFixed(2),
     getNumber: (row) => toDisplayLength(row.largeur),
   };
 }
@@ -98,7 +99,7 @@ export function createSurfacePieceColumn<
     filterType: "number",
     decimals: 4,
     suffix: "m²",
-    getString: (row) => `${getSurfacePieceM2(row).toFixed(4)} m²`,
+    getString: (row) => getSurfacePieceM2(row).toFixed(4),
     getNumber: getSurfacePieceM2,
   };
 }
@@ -131,7 +132,36 @@ export function createSurfaceTotaleColumn<
     filterType: "number",
     decimals: 4,
     suffix: "m²",
-    getString: (row) => `${getSurfaceTotaleM2(row).toFixed(4)} m²`,
+    getString: (row) => getSurfaceTotaleM2(row).toFixed(4),
     getNumber: getSurfaceTotaleM2,
+  };
+}
+
+// one designation ⇒ one merged cell showing the sum of every row's surface
+// totale sharing that designation — computed once over all rows so it
+// doesn't shift as the user searches/filters
+export function createSurfaceDesignationColumn<T extends EntreeLikeRow>(
+  items: T[],
+): CustomTableColumn<T> {
+  const totalsByDesignation = new Map<string, number>();
+  for (const row of items)
+    totalsByDesignation.set(
+      row.designation,
+      (totalsByDesignation.get(row.designation) ?? 0) + getSurfaceTotaleM2(row),
+    );
+
+  return {
+    id: "surfaceDesignation",
+    label: "Surface de désignation",
+    icon: ICONS.designation,
+    type: "string",
+    align: "right",
+    filterType: "number",
+    decimals: 4,
+    suffix: "m²",
+    mergeAdjacent: true,
+    getString: (row) =>
+      (totalsByDesignation.get(row.designation) ?? 0).toFixed(4),
+    getNumber: (row) => totalsByDesignation.get(row.designation) ?? 0,
   };
 }

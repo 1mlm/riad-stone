@@ -78,10 +78,14 @@ export type CustomTableColumn<T> = {
       // renders getNumber's value via AlignedNumber instead of getString: fixed
       // decimal-point column alignment without padding every row with zeros
       decimals?: number;
+      // shown after the label in the header (e.g. "(cm)"), never inside the cell
       suffix?: string;
       getString: (item: T) => string;
       // renders the value as a clickable button instead of plain text
       onClick?: (item: T) => void;
+      // merges consecutive rows sharing the same getString value into one
+      // rowspan-ed cell — only makes sense once rows are sorted by this column
+      mergeAdjacent?: boolean;
     }
   | {
       type: "copy";
@@ -106,13 +110,19 @@ export type CustomTableColumn<T> = {
   | { type: "buttons"; getButtons: (item: T) => ReactNode }
 );
 
-// raw, spreadsheet-friendly value for a column (dates as ISO, enums as their underlying key, tags joined by comma)
+// raw, spreadsheet-friendly value for a column (numeric columns export the
+// raw number instead of the formatted string, dates as ISO, enums as their
+// underlying key, tags joined by comma)
 export function getColumnExportValue<T>(
   column: CustomTableColumn<T>,
   item: T,
-): string {
-  if (column.type === "string" || column.type === "copy")
+): string | number {
+  if (column.type === "string") {
+    if (column.decimals !== undefined && column.getNumber)
+      return column.getNumber(item);
     return column.getString(item);
+  }
+  if (column.type === "copy") return column.getString(item);
   if (column.type === "date") return column.getDate(item)?.toISOString() ?? "";
   if (column.type === "boolean")
     return column.getBoolean(item) ? "true" : "false";
@@ -158,6 +168,7 @@ export function CustomTable<T>({
   searchQueryKey = "q",
   exportFilePrefix = "export",
   onVisibleCountChange,
+  defaultSort,
 }: {
   items: T[];
   columns: CustomTableColumn<T>[];
@@ -174,6 +185,10 @@ export function CustomTable<T>({
   exportFilePrefix?: string;
   // reports how many rows survive the current search/filter, e.g. for a "12 results" indicator
   onVisibleCountChange?: (count: number) => void;
+  // applied, in order, until one key breaks the tie, only while the user
+  // hasn't picked an explicit column sort — doesn't count as an "active
+  // sort" for the reset button
+  defaultSort?: { columnId: string; dir: "asc" | "desc" }[];
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
@@ -235,14 +250,25 @@ export function CustomTable<T>({
         ),
       );
     });
-    if (!sort) return filtered;
-    const sortColumn = columns.find((column) => column.id === sort.columnId);
-    if (!sortColumn) return filtered;
-    const sorted = [...filtered].sort((a, b) =>
-      compareColumnValues(sortColumn, a, b),
-    );
-    return sort.dir === "desc" ? sorted.reverse() : sorted;
-  }, [items, columns, search, sort, filterValues, filterable]);
+    if (sort) {
+      const sortColumn = columns.find((column) => column.id === sort.columnId);
+      if (!sortColumn) return filtered;
+      const sorted = [...filtered].sort((a, b) =>
+        compareColumnValues(sortColumn, a, b),
+      );
+      return sort.dir === "desc" ? sorted.reverse() : sorted;
+    }
+    if (!defaultSort || defaultSort.length === 0) return filtered;
+    return [...filtered].sort((a, b) => {
+      for (const key of defaultSort) {
+        const sortColumn = columns.find((column) => column.id === key.columnId);
+        if (!sortColumn) continue;
+        const cmp = compareColumnValues(sortColumn, a, b);
+        if (cmp !== 0) return key.dir === "desc" ? -cmp : cmp;
+      }
+      return 0;
+    });
+  }, [items, columns, search, sort, defaultSort, filterValues, filterable]);
 
   useEffect(() => {
     onVisibleCountChange?.(visibleItems.length);
@@ -260,6 +286,36 @@ export function CustomTable<T>({
   const paginatedItems = paginate
     ? visibleItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
     : visibleItems;
+
+  // consecutive-equal runs per mergeAdjacent column, computed over the
+  // rendered page only — a run split across a page boundary renders as two
+  // merged cells, which is correct given each page is its own <table>
+  const mergeRuns = useMemo(() => {
+    const runs = new Map<string, { start: boolean; length: number }[]>();
+    for (const column of columns) {
+      if (column.type !== "string" || !column.mergeAdjacent) continue;
+      const getString = column.getString;
+      const arr: { start: boolean; length: number }[] = [];
+      for (let i = 0; i < paginatedItems.length; i++) {
+        if (
+          i > 0 &&
+          getString(paginatedItems[i - 1]) === getString(paginatedItems[i])
+        ) {
+          arr.push({ start: false, length: 0 });
+          continue;
+        }
+        let length = 1;
+        while (
+          i + length < paginatedItems.length &&
+          getString(paginatedItems[i + length]) === getString(paginatedItems[i])
+        )
+          length++;
+        arr.push({ start: true, length });
+      }
+      runs.set(column.id, arr);
+    }
+    return runs;
+  }, [columns, paginatedItems]);
 
   const toggleRow = (id: string) => {
     const next = new Set(selectedIds);
@@ -370,24 +426,35 @@ export function CustomTable<T>({
                         </div>
                       </TableCell>
                     )}
-                    {columns.map((column) => (
-                      <TableCell
-                        key={column.id}
-                        className={cn(
-                          "border-r border-border/50 last:border-r-0",
-                          column.type === "string" &&
-                            column.align === "right" &&
-                            "text-right",
-                          (column.type === "copy" ||
-                            column.type === "enum" ||
-                            column.type === "tags" ||
-                            column.type === "buttons") &&
-                            "text-center",
-                        )}
-                      >
-                        <CustomTableCell {...{ column, item }} />
-                      </TableCell>
-                    ))}
+                    {columns.map((column) => {
+                      const run =
+                        column.type === "string" && column.mergeAdjacent
+                          ? mergeRuns.get(column.id)?.[index]
+                          : undefined;
+                      if (run && !run.start) return null;
+                      return (
+                        <TableCell
+                          key={column.id}
+                          rowSpan={run?.start ? run.length : undefined}
+                          className={cn(
+                            "border-r border-border/50 last:border-r-0",
+                            column.type === "string" &&
+                              column.align === "right" &&
+                              "text-right",
+                            (column.type === "copy" ||
+                              column.type === "enum" ||
+                              column.type === "tags" ||
+                              column.type === "buttons") &&
+                              "text-center",
+                            run?.start &&
+                              run.length > 1 &&
+                              "bg-foreground/5! align-middle",
+                          )}
+                        >
+                          <CustomTableCell {...{ column, item }} />
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 );
               })}

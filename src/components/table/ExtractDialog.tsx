@@ -44,6 +44,13 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+// carries the unit into the exported header (e.g. "Largeur (cm)") since the
+// on-screen header shows it separately but the cell values are now unitless
+const getExportHeader = <T,>(column: CustomTableColumn<T>) =>
+  column.type === "string" && column.suffix
+    ? `${column.label} (${column.suffix})`
+    : column.label;
+
 function buildExportRows<T>(items: T[], columns: CustomTableColumn<T>[]) {
   const exportableColumns = columns.filter(
     (column) => column.type !== "buttons",
@@ -51,7 +58,7 @@ function buildExportRows<T>(items: T[], columns: CustomTableColumn<T>[]) {
   return items.map((item) =>
     Object.fromEntries(
       exportableColumns.map((column) => [
-        column.label,
+        getExportHeader(column),
         getColumnExportValue(column, item),
       ]),
     ),
@@ -59,7 +66,7 @@ function buildExportRows<T>(items: T[], columns: CustomTableColumn<T>[]) {
 }
 
 async function downloadAsExcel(
-  rows: Record<string, string>[],
+  rows: Record<string, string | number>[],
   filename: string,
 ) {
   const workbook = new ExcelJS.Workbook();
@@ -78,10 +85,15 @@ async function downloadAsExcel(
   );
 }
 
-const escapeCsvValue = (value: string) =>
-  /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+const escapeCsvValue = (value: string | number) =>
+  typeof value === "string" && /[",\n]/.test(value)
+    ? `"${value.replace(/"/g, '""')}"`
+    : String(value);
 
-function downloadAsCsv(rows: Record<string, string>[], filename: string) {
+function downloadAsCsv(
+  rows: Record<string, string | number>[],
+  filename: string,
+) {
   const headers = Object.keys(rows[0] ?? {});
   const lines = [
     headers,
@@ -149,7 +161,7 @@ export function ExtractDialog<T>({
         <DialogFooter>
           <Button onClick={handleConfirm}>
             <Icon icon={Download01Icon} />
-            Confirmer le téléchargement
+            Extraire {items.length} élément{items.length > 1 ? "s" : ""}
           </Button>
         </DialogFooter>
       </DialogContent>

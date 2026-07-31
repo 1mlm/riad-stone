@@ -6,11 +6,9 @@
 export function AlignedNumber({
   value,
   decimals,
-  suffix,
 }: {
   value: number;
   decimals: number;
-  suffix?: string;
 }) {
   const [intPart, decPart = ""] = value.toFixed(decimals).split(".");
   const significantLength = decPart.replace(/0+$/, "").length;
@@ -29,7 +27,6 @@ export function AlignedNumber({
           {trailingZeros && <span className="opacity-0">{trailingZeros}</span>}
         </>
       )}
-      {suffix && <span className="text-[0.8em] opacity-60"> {suffix}</span>}
     </span>
   );
 }

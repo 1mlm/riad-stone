@@ -85,16 +85,26 @@ function isLengthUnit(value: string): value is LengthUnit {
   return (LENGTH_UNITS as readonly string[]).includes(value);
 }
 
-function readEntreeFormData(formData: FormData) {
-  const designation = String(formData.get("designation") ?? "").trim();
-  const reference = String(formData.get("reference") ?? "").trim();
-  const origine = String(formData.get("origine") ?? "").trim();
-  const date = String(formData.get("date") ?? "");
-  const longueurValue = Number(formData.get("longueurValue"));
-  const longueurUnit = String(formData.get("longueurUnit"));
-  const largeurValue = Number(formData.get("largeurValue"));
-  const largeurUnit = String(formData.get("largeurUnit"));
-  const nombrePieces = Number(formData.get("nombrePieces"));
+// reads one entree's fields off formData, optionally namespaced under
+// `${namePrefix}__` — the multi-card add flow puts several cards' fields in
+// one <form>, each namespaced by its own card id
+function readEntreeFormData(
+  formData: FormData,
+  namePrefix?: string,
+  designationOverride?: string,
+) {
+  const key = (k: string) => (namePrefix ? `${namePrefix}__${k}` : k);
+  const designation =
+    designationOverride ??
+    String(formData.get(key("designation")) ?? "").trim();
+  const reference = String(formData.get(key("reference")) ?? "").trim();
+  const origine = String(formData.get(key("origine")) ?? "").trim();
+  const date = String(formData.get(key("date")) ?? "");
+  const longueurValue = Number(formData.get(key("longueurValue")));
+  const longueurUnit = String(formData.get(key("longueurUnit")));
+  const largeurValue = Number(formData.get(key("largeurValue")));
+  const largeurUnit = String(formData.get(key("largeurUnit")));
+  const nombrePieces = Number(formData.get(key("nombrePieces")));
 
   if (!designation) return { error: "La désignation est requise." as const };
   if (!reference) return { error: "La référence est requise." as const };
@@ -141,6 +151,71 @@ export async function createEntree(
   }
 
   await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(created));
+  revalidatePath("/entrees");
+  revalidatePath("/stock");
+  return { error: null };
+}
+
+export type CreateEntreesResult = {
+  error: string | null;
+  // the offending reference, if the error is a duplicate — the client
+  // matches it against its own cards' current values to decide which one
+  // (of possibly two) to jump to
+  duplicateReference?: string;
+};
+
+// creates every card under one shared designation in a single transaction:
+// either all of them land, or none do
+export async function createEntrees(
+  _prevState: CreateEntreesResult,
+  formData: FormData,
+): Promise<CreateEntreesResult> {
+  await requireAuth();
+
+  const designation = String(formData.get("designation") ?? "").trim();
+  if (!designation) return { error: "La désignation est requise." };
+
+  const cardIds = String(formData.get("cardIds") ?? "")
+    .split(",")
+    .filter(Boolean);
+  if (cardIds.length === 0) return { error: "Ajoutez au moins une fiche." };
+
+  const parsedCards: {
+    cardId: string;
+    data: NonNullable<ReturnType<typeof readEntreeFormData>["data"]>;
+  }[] = [];
+  for (const cardId of cardIds) {
+    const parsed = readEntreeFormData(formData, cardId, designation);
+    if (parsed.error) return { error: parsed.error };
+    parsedCards.push({ cardId, data: parsed.data });
+  }
+
+  const referencesSoFar = new Set<string>();
+  for (const { data } of parsedCards) {
+    if (referencesSoFar.has(data.reference))
+      return {
+        error: `La référence "${data.reference}" est utilisée par deux fiches.`,
+        duplicateReference: data.reference,
+      };
+    referencesSoFar.add(data.reference);
+  }
+
+  const existing = await prisma.entree.findMany({
+    where: { reference: { in: [...referencesSoFar] } },
+    select: { reference: true },
+  });
+  if (existing.length > 0)
+    return {
+      error: `La référence "${existing[0].reference}" existe déjà.`,
+      duplicateReference: existing[0].reference,
+    };
+
+  const created = await prisma.$transaction(
+    parsedCards.map(({ data }) => prisma.entree.create({ data })),
+  );
+
+  for (const entree of created)
+    await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(entree));
   revalidatePath("/entrees");
   revalidatePath("/stock");
   return { error: null };
