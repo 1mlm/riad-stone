@@ -9,7 +9,7 @@ import {
   Forward02Icon,
   FullScreenIcon,
 } from "@hugeicons/core-free-icons";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Badge } from "@/shadcn/ui/badge";
 import { Button } from "@/shadcn/ui/button";
@@ -29,6 +29,7 @@ import {
   formatExactDate,
   formatRelativeDate,
 } from "@/utils/date";
+import { haptic } from "@/utils/haptics";
 import { AlignedNumber } from "./AlignedNumber";
 import type { CustomTableColumn, CustomTableEnumValue } from "./CustomTable";
 import { CustomTableEmptyValue } from "./CustomTableEmptyValue";
@@ -54,17 +55,32 @@ export function EnumBadge({ value }: { value: CustomTableEnumValue }) {
   );
 }
 
-function CopyButton({ value }: { value: string }) {
+export function CopyButton({
+  value,
+  variant = "ghost",
+  size = "icon",
+  className,
+}: {
+  value: string;
+  variant?: ComponentProps<typeof Button>["variant"];
+  size?: ComponentProps<typeof Button>["size"];
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
     setCopied(true);
+    haptic("light");
     setTimeout(() => setCopied(false), 1000);
   };
 
   return (
-    <Button variant="ghost" size="icon" className="size-6" onClick={handleCopy}>
+    <Button
+      {...{ variant, size }}
+      className={cn(size === "icon" && "size-6", className)}
+      onClick={handleCopy}
+    >
       <Icon icon={copied ? CheckIcon : Copy01Icon} />
     </Button>
   );

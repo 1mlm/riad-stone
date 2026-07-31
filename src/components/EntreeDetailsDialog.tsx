@@ -64,7 +64,7 @@ function SortiesList({ sorties }: { sorties: EntreeDetails["sorties"] }) {
             <td className="py-1.5 pr-3 font-medium">
               {sortie.nombrePieces} pièce{sortie.nombrePieces > 1 ? "s" : ""}
             </td>
-            <td className="py-1.5 text-muted-foreground">
+            <td className="py-1.5 font-mono text-muted-foreground">
               {sortie.bonCommande ?? "—"}
             </td>
           </tr>

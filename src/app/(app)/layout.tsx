@@ -1,25 +1,28 @@
-"use client";
-
 import type { PropsWithChildren } from "react";
-import { AppSidebar } from "@/components/sidebar/AppSidebar";
-import { MobileBottomBar } from "@/components/sidebar/MobileBottomBar";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/shadcn/ui/sidebar";
+import { AppShell } from "@/components/sidebar/AppShell";
+import { prisma } from "@/utils/prisma";
 
-export default function AppLayout({ children }: PropsWithChildren) {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <div className="flex items-center border-b border-border p-2 sm:hidden">
-          <SidebarTrigger />
-        </div>
-        <div className="pb-16 sm:pb-0">{children}</div>
-        <MobileBottomBar />
-      </SidebarInset>
-    </SidebarProvider>
-  );
+async function getStockCount() {
+  const entrees = await prisma.entree.findMany({
+    select: {
+      nombrePieces: true,
+      sorties: { select: { nombrePieces: true } },
+    },
+  });
+  return entrees.filter(
+    (entree) =>
+      entree.nombrePieces -
+        entree.sorties.reduce((sum, sortie) => sum + sortie.nombrePieces, 0) >
+      0,
+  ).length;
+}
+
+export default async function AppLayout({ children }: PropsWithChildren) {
+  const [entrees, sorties, stock] = await Promise.all([
+    prisma.entree.count(),
+    prisma.sortie.count(),
+    getStockCount(),
+  ]);
+
+  return <AppShell counts={{ entrees, sorties, stock }}>{children}</AppShell>;
 }

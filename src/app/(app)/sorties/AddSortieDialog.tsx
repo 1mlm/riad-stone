@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  Calendar04Icon,
-  EditIcon,
-  InvoiceIcon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { EditIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
-import { DatePickerField } from "@/components/DatePickerField";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormError } from "@/components/FormError";
@@ -26,6 +20,7 @@ import {
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
 import { createSortie } from "./actions";
+import { SortieFormFields } from "./SortieFormFields";
 import type { AvailableEntree } from "./types";
 
 function EntreeReferenceField({
@@ -156,25 +151,7 @@ export function AddSortieDialog({
             </InputGroup>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="bonCommande" icon={InvoiceIcon}>
-              Bon de commande
-            </FieldLabel>
-            <InputGroup>
-              <InputGroupInput
-                id="bonCommande"
-                name="bonCommande"
-                placeholder="C928492748"
-              />
-            </InputGroup>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel icon={Calendar04Icon} required>
-              Date de sortie
-            </FieldLabel>
-            <DatePickerField name="dateSortie" />
-          </div>
+          <SortieFormFields mode="add" />
 
           <FormError>{state.error}</FormError>
 

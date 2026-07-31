@@ -12,9 +12,24 @@ export const APP_HEADER: { iconSrc: string; text: string; subtext?: string } = {
   subtext: "Pour Blal 😋",
 };
 
-export const NAV_ITEMS: { href: string; label: string; icon: HugeIcon }[] = [
-  { href: "/entrees", label: "Entrées", icon: ArchiveArrowDownIcon },
-  { href: "/sorties", label: "Sorties", icon: ArchiveArrowUpIcon },
-  { href: "/stock", label: "Stock", icon: PackageIcon },
+export const NAV_ITEMS: {
+  href: string;
+  label: string;
+  icon: HugeIcon;
+  countKey?: "entrees" | "sorties" | "stock";
+}[] = [
+  {
+    href: "/entrees",
+    label: "Entrées",
+    icon: ArchiveArrowDownIcon,
+    countKey: "entrees",
+  },
+  {
+    href: "/sorties",
+    label: "Sorties",
+    icon: ArchiveArrowUpIcon,
+    countKey: "sorties",
+  },
+  { href: "/stock", label: "Stock", icon: PackageIcon, countKey: "stock" },
   { href: "/historique", label: "Historique", icon: ScrollIcon },
 ];
