@@ -49,6 +49,7 @@ export default function GatePage() {
         <DelayedButton
           key={attempt}
           type="submit"
+          className="rounded-full corner-squircle"
           disabled={pending}
           waitSeconds={attempt === 0 ? 0 : 7}
         >

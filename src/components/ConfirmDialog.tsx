@@ -81,13 +81,14 @@ export function ConfirmDialog({
         )}
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">
+            <Button variant="outline" className="rounded-full corner-squircle">
               <Icon icon={cancelIcon} />
               {cancelLabel}
             </Button>
           </DialogClose>
           <DelayedButton
             variant={confirmVariant}
+            className="rounded-full corner-squircle"
             waitSeconds={waitSeconds}
             disabled={pending}
             onClick={handleConfirm}

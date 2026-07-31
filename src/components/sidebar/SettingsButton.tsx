@@ -52,7 +52,10 @@ export function SettingsButton() {
     >
       <ConfirmDialog
         trigger={
-          <Button variant="destructive">
+          <Button
+            variant="destructive"
+            className="rounded-full corner-squircle"
+          >
             <Icon icon={NuclearPowerIcon} />
             Vider toutes les données
           </Button>
@@ -68,7 +71,10 @@ export function SettingsButton() {
           <Separator />
           <ConfirmDialog
             trigger={
-              <Button variant="secondary">
+              <Button
+                variant="secondary"
+                className="rounded-full corner-squircle"
+              >
                 <Icon icon={Plant01Icon} />
                 Ajouter des données fictives
               </Button>
