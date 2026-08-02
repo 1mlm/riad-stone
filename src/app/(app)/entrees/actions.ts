@@ -193,6 +193,7 @@ export async function createEntrees(
   for (const entree of created)
     await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(entree));
   revalidatePath("/entrees");
+  revalidatePath("/sorties");
   revalidatePath("/stock");
   revalidatePath("/historique");
   return { error: null };
@@ -236,6 +237,7 @@ export async function updateEntree(
     after: toEntreeSnapshot(updated),
   });
   revalidatePath("/entrees");
+  revalidatePath("/sorties");
   revalidatePath("/stock");
   revalidatePath("/historique");
   return { error: null };
@@ -261,6 +263,7 @@ export async function deleteEntree(
 
   await logHistory(HistoryItemType.DELETE_INPUT, toEntreeSnapshot(existing));
   revalidatePath("/entrees");
+  revalidatePath("/sorties");
   revalidatePath("/stock");
   revalidatePath("/historique");
   return { error: null };
