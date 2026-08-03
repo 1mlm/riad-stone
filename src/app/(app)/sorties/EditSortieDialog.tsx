@@ -20,10 +20,22 @@ import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
 import { updateSortie } from "./actions";
 import { SortieFormFields } from "./SortieFormFields";
-import type { SortieRow } from "./types";
+import type { AvailableEntree, SortieRow } from "./types";
 
-export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
+export function EditSortieDialog({
+  sortie,
+  availableEntrees,
+}: {
+  sortie: SortieRow;
+  availableEntrees: AvailableEntree[];
+}) {
   const [open, setOpen] = useState(false);
+  // availableEntrees.piecesRestantes already excludes this sortie's own
+  // amount — add it back since editing releases it before re-applying
+  const maxNombrePieces =
+    (availableEntrees.find(
+      (entree) => entree.reference === sortie.entreeReference,
+    )?.piecesRestantes ?? 0) + sortie.nombrePieces;
   const [state, formAction, pending] = useActionState(
     async (prevState: { error: string | null }, formData: FormData) => {
       const result = await updateSortie(sortie.id, prevState, formData);
@@ -78,7 +90,7 @@ export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
               icon={ICONS.pieces}
               required
             >
-              Nombre de pièces
+              Nombre de pièces (max {maxNombrePieces})
             </FieldLabel>
             <InputGroup>
               <InputGroupInput
@@ -86,6 +98,7 @@ export function EditSortieDialog({ sortie }: { sortie: SortieRow }) {
                 name="nombrePieces"
                 type="number"
                 min="1"
+                max={maxNombrePieces}
                 step="1"
                 defaultValue={sortie.nombrePieces}
                 required

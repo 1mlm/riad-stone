@@ -30,7 +30,7 @@ export function UnitLengthInput({
         name={valueName}
         type="number"
         step="any"
-        min="0"
+        min="0.01"
         {...{ placeholder, defaultValue }}
       />
       <input type="hidden" name={unitName} value={unit} />
