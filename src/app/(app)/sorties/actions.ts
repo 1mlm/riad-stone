@@ -133,6 +133,7 @@ export async function createSortie(
     HistoryItemType.CREATE_OUTPUT,
     toSortieSnapshot(outcome.result),
   );
+  revalidatePath("/entrees");
   revalidatePath("/sorties");
   revalidatePath("/stock");
   revalidatePath("/historique");
@@ -178,6 +179,7 @@ export async function updateSortie(
     before: toSortieSnapshot(outcome.result.existing),
     after: toSortieSnapshot(outcome.result.updated),
   });
+  revalidatePath("/entrees");
   revalidatePath("/sorties");
   revalidatePath("/stock");
   revalidatePath("/historique");
@@ -195,6 +197,7 @@ export async function deleteSortie(
   await prisma.sortie.delete({ where: { id } });
 
   await logHistory(HistoryItemType.DELETE_OUTPUT, toSortieSnapshot(existing));
+  revalidatePath("/entrees");
   revalidatePath("/sorties");
   revalidatePath("/stock");
   revalidatePath("/historique");

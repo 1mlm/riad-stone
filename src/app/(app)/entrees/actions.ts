@@ -2,11 +2,57 @@
 
 import { revalidatePath } from "next/cache";
 import type { Entree } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { logHistory } from "@/utils/history";
 import { LENGTH_UNITS, type LengthUnit, lengthToMeters } from "@/utils/length";
 import { prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
+
+// thrown inside a transaction to surface a validation message to the caller
+// without it being mistaken for a real (retry-worthy) database error
+class EntreeValidationError extends Error {
+  duplicateReference?: string;
+  constructor(message: string, duplicateReference?: string) {
+    super(message);
+    this.duplicateReference = duplicateReference;
+  }
+}
+
+async function runEntreeTransaction<T>(
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<
+  | { result: T; error: null; duplicateReference?: undefined }
+  | { result: null; error: string; duplicateReference?: string }
+> {
+  try {
+    const result = await prisma.$transaction(fn, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
+    return { result, error: null };
+  } catch (error) {
+    if (error instanceof EntreeValidationError)
+      return {
+        result: null,
+        error: error.message,
+        duplicateReference: error.duplicateReference,
+      };
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    )
+      return { result: null, error: "Cette référence existe déjà." };
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
+    )
+      return {
+        result: null,
+        error: "Conflit de mise à jour, veuillez réessayer.",
+      };
+    throw error;
+  }
+}
 
 function toEntreeSnapshot(entree: Entree) {
   return {
@@ -138,6 +184,10 @@ export type CreateEntreesResult = {
   // matches it against its own cards' current values to decide which one
   // (of possibly two) to jump to
   duplicateReference?: string;
+  // which card failed a non-duplicate validation (bad longueur/largeur/
+  // nombrePieces/etc) so the client can jump straight to it instead of
+  // leaving the user to guess which of several cards is at fault
+  invalidCardId?: string;
 };
 
 // creates every card under one shared designation in a single transaction:
@@ -162,7 +212,7 @@ export async function createEntrees(
   }[] = [];
   for (const cardId of cardIds) {
     const parsed = readEntreeFormData(formData, cardId, designation);
-    if (parsed.error) return { error: parsed.error };
+    if (parsed.error) return { error: parsed.error, invalidCardId: cardId };
     parsedCards.push({ cardId, data: parsed.data });
   }
 
@@ -176,21 +226,28 @@ export async function createEntrees(
     referencesSoFar.add(data.reference);
   }
 
-  const existing = await prisma.entree.findMany({
-    where: { reference: { in: [...referencesSoFar] } },
-    select: { reference: true },
+  const outcome = await runEntreeTransaction(async (tx) => {
+    const existing = await tx.entree.findMany({
+      where: { reference: { in: [...referencesSoFar] } },
+      select: { reference: true },
+    });
+    if (existing.length > 0)
+      throw new EntreeValidationError(
+        `La référence "${existing[0].reference}" existe déjà.`,
+        existing[0].reference,
+      );
+
+    return Promise.all(
+      parsedCards.map(({ data }) => tx.entree.create({ data })),
+    );
   });
-  if (existing.length > 0)
+  if (outcome.result === null)
     return {
-      error: `La référence "${existing[0].reference}" existe déjà.`,
-      duplicateReference: existing[0].reference,
+      error: outcome.error,
+      duplicateReference: outcome.duplicateReference,
     };
 
-  const created = await prisma.$transaction(
-    parsedCards.map(({ data }) => prisma.entree.create({ data })),
-  );
-
-  for (const entree of created)
+  for (const entree of outcome.result)
     await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(entree));
   revalidatePath("/entrees");
   revalidatePath("/sorties");
@@ -209,32 +266,36 @@ export async function updateEntree(
   const parsed = readEntreeFormData(formData);
   if (parsed.error) return { error: parsed.error };
 
-  const existing = await prisma.entree.findUnique({
-    where: { reference: originalReference },
-    include: { sorties: { select: { id: true } } },
-  });
-  if (!existing) return { error: "Cette entrée n'existe pas." };
-  if (existing.sorties.length > 0)
-    return {
-      error:
+  const outcome = await runEntreeTransaction(async (tx) => {
+    const existing = await tx.entree.findUnique({
+      where: { reference: originalReference },
+      include: { sorties: { select: { id: true } } },
+    });
+    if (!existing)
+      throw new EntreeValidationError("Cette entrée n'existe pas.");
+    if (existing.sorties.length > 0)
+      throw new EntreeValidationError(
         "Cette entrée a déjà une sortie associée, elle ne peut plus être modifiée.",
-    };
+      );
 
-  const updated = await prisma.entree.update({
-    where: { reference: originalReference },
-    data: {
-      designation: parsed.data.designation,
-      origine: parsed.data.origine,
-      date: parsed.data.date,
-      longueur: parsed.data.longueur,
-      largeur: parsed.data.largeur,
-      nombrePieces: parsed.data.nombrePieces,
-    },
+    const updated = await tx.entree.update({
+      where: { reference: originalReference },
+      data: {
+        designation: parsed.data.designation,
+        origine: parsed.data.origine,
+        date: parsed.data.date,
+        longueur: parsed.data.longueur,
+        largeur: parsed.data.largeur,
+        nombrePieces: parsed.data.nombrePieces,
+      },
+    });
+    return { existing, updated };
   });
+  if (outcome.result === null) return { error: outcome.error };
 
   await logHistory(HistoryItemType.UPDATE_INPUT, {
-    before: toEntreeSnapshot(existing),
-    after: toEntreeSnapshot(updated),
+    before: toEntreeSnapshot(outcome.result.existing),
+    after: toEntreeSnapshot(outcome.result.updated),
   });
   revalidatePath("/entrees");
   revalidatePath("/sorties");
@@ -248,20 +309,27 @@ export async function deleteEntree(
 ): Promise<{ error: string | null }> {
   await requireAuth();
 
-  const existing = await prisma.entree.findUnique({
-    where: { reference },
-    include: { sorties: { select: { id: true } } },
-  });
-  if (!existing) return { error: null };
-  if (existing.sorties.length > 0)
-    return {
-      error:
+  const outcome = await runEntreeTransaction(async (tx) => {
+    const existing = await tx.entree.findUnique({
+      where: { reference },
+      include: { sorties: { select: { id: true } } },
+    });
+    if (!existing) return null;
+    if (existing.sorties.length > 0)
+      throw new EntreeValidationError(
         "Cette entrée a déjà une sortie associée, elle ne peut pas être supprimée.",
-    };
+      );
 
-  await prisma.entree.delete({ where: { reference } });
+    await tx.entree.delete({ where: { reference } });
+    return existing;
+  });
+  if (outcome.result === null && outcome.error) return { error: outcome.error };
+  if (!outcome.result) return { error: null };
 
-  await logHistory(HistoryItemType.DELETE_INPUT, toEntreeSnapshot(existing));
+  await logHistory(
+    HistoryItemType.DELETE_INPUT,
+    toEntreeSnapshot(outcome.result),
+  );
   revalidatePath("/entrees");
   revalidatePath("/sorties");
   revalidatePath("/stock");

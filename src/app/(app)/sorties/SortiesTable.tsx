@@ -88,7 +88,7 @@ function SortiesTableContent({
               size="icon-sm"
               className="corner-squircle"
             />
-            <EditSortieDialog sortie={row} />
+            <EditSortieDialog sortie={row} {...{ availableEntrees }} />
             <DeleteRowButton
               title="Supprimer cette sortie ?"
               content={`La sortie de l'entrée ${row.entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
@@ -108,7 +108,7 @@ function SortiesTableContent({
         ),
       },
     ],
-    [],
+    [availableEntrees],
   );
 
   return (

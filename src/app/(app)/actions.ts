@@ -101,8 +101,11 @@ function buildFakeSorties(entrees: ReturnType<typeof buildFakeEntrees>) {
     }));
 }
 
-// covers every HistoryItemType with a representative snapshot shape, so the
-// historique page can be reviewed against every combination at once
+// covers every entree/sortie HistoryItemType with a representative snapshot
+// shape, so the historique page can be reviewed against every combination
+// at once — deliberately excludes LOGIN/LOGOUT/CLEAR_EVERYTHING, since those
+// are meant to be a real security audit trail and faking them would make a
+// fabricated login/logout/wipe indistinguishable from a real one
 function buildFakeHistoryEvents(
   entrees: ReturnType<typeof buildFakeEntrees>,
   sorties: ReturnType<typeof buildFakeSorties>,
@@ -178,21 +181,6 @@ function buildFakeHistoryEvents(
         days: 3,
         refDate: updatedSortieBefore.dateSortie,
       }),
-    },
-    {
-      type: HistoryItemType.LOGIN,
-      data: { code: "pipi" },
-      createdAt: faker.date.recent({ days: 30 }),
-    },
-    {
-      type: HistoryItemType.LOGOUT,
-      data: {},
-      createdAt: faker.date.recent({ days: 30 }),
-    },
-    {
-      type: HistoryItemType.CLEAR_EVERYTHING,
-      data: { entreesCleared: 8, sortiesCleared: 3 },
-      createdAt: faker.date.recent({ days: 60 }),
     },
   ];
 }

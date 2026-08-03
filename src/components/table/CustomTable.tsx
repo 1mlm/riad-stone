@@ -397,6 +397,18 @@ export function CustomTable<T>({
 
     updateScrollFade();
     scrollContainer.addEventListener("scroll", updateScrollFade);
+
+    // ResizeObserver isn't available on older browsers (e.g. Firefox < 69) —
+    // falling back to a window resize listener still catches viewport
+    // changes, just not container-only resizes, rather than crashing the effect
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateScrollFade);
+      return () => {
+        scrollContainer.removeEventListener("scroll", updateScrollFade);
+        window.removeEventListener("resize", updateScrollFade);
+      };
+    }
+
     const resizeObserver = new ResizeObserver(updateScrollFade);
     resizeObserver.observe(scrollContainer);
     return () => {

@@ -25,7 +25,12 @@ import { ENTREE_FIELD_BY_KEY } from "./fields";
 
 type Card = { id: string };
 
-const newCardId = () => crypto.randomUUID();
+// crypto.randomUUID needs a secure context and a fairly recent browser —
+// falls back to a simple unique-enough id so card creation never breaks
+const newCardId = () =>
+  typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 function EntreeCard({
   card,
@@ -262,6 +267,11 @@ export function AddEntreeDialog({
         return result;
       }
       if (result.duplicateReference) jumpToDuplicate(result.duplicateReference);
+      else if (result.invalidCardId) {
+        const index = cards.findIndex((c) => c.id === result.invalidCardId);
+        setInvalidCardId(result.invalidCardId);
+        if (index !== -1) scrollToCard(result.invalidCardId, index);
+      }
       restoreFormValues(values);
       return result;
     },
