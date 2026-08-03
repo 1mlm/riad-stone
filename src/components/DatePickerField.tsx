@@ -11,8 +11,6 @@ import {
 } from "@/shadcn/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 
-const toDateInputValue = (date: Date) => date.toISOString().slice(0, 10);
-
 export function DatePickerField({
   name,
   defaultValue = new Date(),
@@ -48,7 +46,7 @@ export function DatePickerField({
           }}
         />
       </PopoverContent>
-      <input type="hidden" {...{ name }} value={toDateInputValue(date)} />
+      <input type="hidden" {...{ name }} value={date.toISOString()} />
     </Popover>
   );
 }
