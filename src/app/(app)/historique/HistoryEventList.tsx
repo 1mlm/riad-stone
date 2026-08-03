@@ -137,9 +137,11 @@ function formatFieldValue(field: string, value: unknown): string {
 }
 
 function HistoryDataTable({
+  eventId,
   current,
   before,
 }: {
+  eventId: number;
   current: HistorySnapshot;
   before?: HistorySnapshot;
 }) {
@@ -175,7 +177,7 @@ function HistoryDataTable({
                 )}
               >
                 {field === "code" && current[field] ? (
-                  <RevealSecretValue value={String(current[field])} />
+                  <RevealSecretValue {...{ eventId }} />
                 ) : (
                   formatFieldValue(field, current[field])
                 )}
@@ -235,7 +237,10 @@ export function HistoryEventList({
                         {reference && ` — ${reference}`}
                       </span>
                     </div>
-                    <HistoryDataTable {...{ current, before }} />
+                    <HistoryDataTable
+                      eventId={event.id}
+                      {...{ current, before }}
+                    />
                   </li>
                 );
               })}

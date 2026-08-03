@@ -11,30 +11,31 @@ import {
   InputGroupInput,
 } from "@/shadcn/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
-import { verifyRevealCode } from "./actions";
+import { revealHistoryCode } from "./actions";
 
-// the login code shown here is the same shared secret that unlocks the app,
-// so leaving it in plain view would let anyone glancing at this page forge a
-// permanent session cookie — blur it until the viewer re-enters the code
-export function RevealSecretValue({ value }: { value: string }) {
-  const [revealed, setRevealed] = useState(false);
+// the login code this reveals is the same shared secret that unlocks the
+// app, so the server never sends the plaintext down until the viewer proves
+// they already know it — a CSS blur on a value already in the page wouldn't
+// actually stop anyone from reading it via devtools/view-source
+export function RevealSecretValue({ eventId }: { eventId: number }) {
+  const [revealedValue, setRevealedValue] = useState<string>();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
 
-  if (revealed) return <span>{value}</span>;
+  if (revealedValue !== undefined) return <span>{revealedValue}</span>;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setPending(true);
-    const correct = await verifyRevealCode(input);
+    const code = await revealHistoryCode(eventId, input);
     setPending(false);
-    if (!correct) {
+    if (code === null) {
       setError(true);
       return;
     }
-    setRevealed(true);
+    setRevealedValue(code);
     setOpen(false);
   };
 
@@ -52,9 +53,9 @@ export function RevealSecretValue({ value }: { value: string }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="select-none rounded-sm text-left blur-[3px] transition-[filter] hover:blur-[1.5px] focus-visible:blur-none"
+          className="select-none rounded-sm text-left tracking-widest"
         >
-          {value}
+          ••••••••
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64">
