@@ -110,10 +110,10 @@ function CardsCarousel({
   setCardRef: (id: string) => (el: HTMLDivElement | null) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <div
         ref={scrollRef}
-        className="mask-x-from-88% flex snap-x snap-mandatory gap-3 overflow-x-auto px-[6%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mask-x-from-88% flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto px-[6%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {cards.map((card, index) => (
           <EntreeCard
@@ -300,7 +300,7 @@ export function AddEntreeDialog({
             une même désignation.
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction} className="flex flex-col gap-4">
+        <form action={formAction} className="flex min-w-0 flex-col gap-4">
           <input
             type="hidden"
             name="cardIds"
