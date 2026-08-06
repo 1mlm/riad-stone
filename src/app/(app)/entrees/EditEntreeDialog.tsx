@@ -4,6 +4,7 @@ import { EditIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -49,10 +50,9 @@ export function EditEntreeDialog({ entree }: { entree: EntreeRow }) {
           <FormError>{state.error}</FormError>
 
           <DialogFooter>
-            <Button type="submit" variant="warning" disabled={pending}>
-              <Icon icon={EditIcon} />
+            <SubmitButton variant="warning" icon={EditIcon} {...{ pending }}>
               Enregistrer
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

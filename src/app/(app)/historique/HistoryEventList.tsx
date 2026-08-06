@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Delete02Icon,
   EditIcon,
@@ -6,79 +8,80 @@ import {
   NuclearPowerIcon,
   Plant01Icon,
   PlusSignIcon,
-  ScrollIcon,
 } from "@hugeicons/core-free-icons";
+import { Suspense, useState } from "react";
 import {
   ENTREE_FIELD_BY_KEY,
   toDisplayLength,
 } from "@/app/(app)/entrees/fields";
-import type { HugeIcon } from "@/components/Icon";
-import { Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
-import { DateCell } from "@/components/table/CustomTableCell";
+import { SearchBar } from "@/components/SearchBar";
+import {
+  CustomTable,
+  type CustomTableColumn,
+  type CustomTableEnumValue,
+} from "@/components/table/CustomTable";
 import type { HistoryEvent } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { cn } from "@/shadcn/utils";
-import { getRelativeBucket, type RelativeBucket } from "@/utils/date";
+import type { DeviceInfo } from "@/utils/deviceInfo";
 import {
   getEventReference,
   getEventSnapshots,
   type HistorySnapshot,
 } from "@/utils/historySnapshot";
+import { ICONS } from "@/utils/icon";
 import { RevealSecretValue } from "./RevealSecretValue";
 
-const TYPE_META: Record<
-  HistoryItemType,
-  { icon: HugeIcon; className: string; label: string }
-> = {
+const TYPE_META: Record<HistoryItemType, CustomTableEnumValue> = {
   [HistoryItemType.CREATE_INPUT]: {
     icon: PlusSignIcon,
-    className: "text-green-500",
+    color: "green",
     label: "Entrée ajoutée",
   },
   [HistoryItemType.UPDATE_INPUT]: {
     icon: EditIcon,
-    className: "text-amber-500",
+    color: "amber",
     label: "Entrée modifiée",
   },
   [HistoryItemType.DELETE_INPUT]: {
     icon: Delete02Icon,
-    className: "text-destructive",
+    color: "red",
     label: "Entrée supprimée",
   },
   [HistoryItemType.CREATE_OUTPUT]: {
     icon: PlusSignIcon,
-    className: "text-green-500",
+    color: "green",
     label: "Sortie ajoutée",
   },
   [HistoryItemType.UPDATE_OUTPUT]: {
     icon: EditIcon,
-    className: "text-amber-500",
+    color: "amber",
     label: "Sortie modifiée",
   },
   [HistoryItemType.DELETE_OUTPUT]: {
     icon: Delete02Icon,
-    className: "text-destructive",
+    color: "red",
     label: "Sortie supprimée",
   },
   [HistoryItemType.CLEAR_EVERYTHING]: {
     icon: NuclearPowerIcon,
-    className: "text-destructive",
+    color: "red",
     label: "Toutes les données effacées",
   },
   [HistoryItemType.SEED_FAKE_DATA]: {
     icon: Plant01Icon,
-    className: "text-green-500",
+    color: "green",
     label: "Données fictives ajoutées",
   },
   [HistoryItemType.LOGIN]: {
     icon: Key01Icon,
-    className: "text-muted-foreground",
+    color: "gray",
     label: "Connexion",
   },
   [HistoryItemType.LOGOUT]: {
     icon: LogoutIcon,
-    className: "text-muted-foreground",
+    color: "gray",
     label: "Déconnexion",
   },
 };
@@ -102,21 +105,6 @@ const FIELD_LABELS: Record<string, string> = {
   sortiesCleared: "Sorties supprimées",
 };
 
-const BUCKET_LABELS: Record<RelativeBucket, string> = {
-  today: "Aujourd'hui",
-  yesterday: "Hier",
-  week: "Cette semaine",
-  month: "Ce mois-ci",
-  earlier: "Plus ancien",
-};
-const BUCKET_ORDER: RelativeBucket[] = [
-  "today",
-  "yesterday",
-  "week",
-  "month",
-  "earlier",
-];
-
 // jsonb doesn't preserve key insertion order on round-trip, so a snapshot's
 // field order can't be trusted — sort against FIELD_LABELS' order instead,
 // which mirrors ENTREE_FIELDS
@@ -128,12 +116,54 @@ function orderFields(fields: string[]): string[] {
 }
 
 function formatFieldValue(field: string, value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "-";
   if (field === "date" || field === "dateSortie")
     return new Date(value as string).toLocaleDateString("fr-FR");
   if (field === "longueur" || field === "largeur")
     return `${toDisplayLength(Number(value)).toFixed(2)} cm`;
   return String(value);
+}
+
+// best-effort: renders whatever shows up. Legacy rows stored a plain string,
+// current ones a DeviceInfo blob — every field in that blob is itself
+// optional since browser/os/device/geo only fill in when detectable
+function DeviceInfoCell({ value }: { value: unknown }) {
+  if (typeof value === "string") return <>{value}</>;
+  if (!value || typeof value !== "object") return <>-</>;
+
+  const info = value as Partial<DeviceInfo>;
+  const summary = [
+    info.browser?.name &&
+      `${info.browser.name} ${info.browser.version ?? ""}`.trim(),
+    info.os?.name && `${info.os.name} ${info.os.version ?? ""}`.trim(),
+    info.device?.type &&
+      (info.device.model
+        ? `${info.device.model} (${info.device.type})`
+        : info.device.type),
+  ].filter(Boolean);
+  const location = [info.geo?.city, info.geo?.country].filter(Boolean);
+
+  return (
+    <div className="flex flex-col gap-0.5 py-1">
+      {summary.length > 0 && <span>{summary.join(" · ")}</span>}
+      {(location.length > 0 || info.geo?.flag) && (
+        <span className="text-muted-foreground">
+          {info.geo?.flag} {location.join(", ")}
+        </span>
+      )}
+      {info.ip && (
+        <span className="font-mono text-muted-foreground">{info.ip}</span>
+      )}
+      {info.userAgent && (
+        <span
+          className="block max-w-64 truncate text-muted-foreground"
+          title={info.userAgent}
+        >
+          {info.userAgent}
+        </span>
+      )}
+    </div>
+  );
 }
 
 function HistoryDataTable({
@@ -178,6 +208,8 @@ function HistoryDataTable({
               >
                 {field === "code" && current[field] ? (
                   <RevealSecretValue {...{ eventId }} />
+                ) : field === "userAgent" ? (
+                  <DeviceInfoCell value={current[field]} />
                 ) : (
                   formatFieldValue(field, current[field])
                 )}
@@ -190,6 +222,79 @@ function HistoryDataTable({
   );
 }
 
+function HistoryEventListContent({
+  events,
+  emptyTitle,
+  emptySubtitle,
+}: {
+  events: HistoryEvent[];
+  emptyTitle: string;
+  emptySubtitle: string;
+}) {
+  const [resultCount, setResultCount] = useState(events.length);
+
+  if (events.length === 0)
+    return (
+      <MetaPage
+        icon={ICONS.history}
+        title={emptyTitle}
+        subtitle={emptySubtitle}
+      />
+    );
+
+  const columns: CustomTableColumn<HistoryEvent>[] = [
+    {
+      id: "type",
+      label: "Type",
+      icon: ICONS.history,
+      type: "enum",
+      enumOptions: TYPE_META,
+      getValue: (event) => event.type,
+      getPopoverContent: (event) => {
+        const { before, current } = getEventSnapshots(event.type, event.data);
+        return <HistoryDataTable eventId={event.id} {...{ current, before }} />;
+      },
+    },
+    {
+      id: "reference",
+      label: "Référence",
+      icon: ICONS.reference,
+      type: "string",
+      monospace: true,
+      getString: (event) => getEventReference(event.type, event.data) ?? "",
+    },
+    {
+      id: "date",
+      label: "Date",
+      icon: ICONS.date,
+      type: "date",
+      getDate: (event) => event.createdAt,
+    },
+  ];
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <SearchBar
+        placeholder="Rechercher dans l'historique..."
+        queryKey="hq"
+        {...{ resultCount }}
+      />
+      <CustomTable
+        items={events}
+        {...{ columns }}
+        getItemId={(event) => String(event.id)}
+        exportFilePrefix="historique"
+        filterable={false}
+        searchQueryKey="hq"
+        pageQueryKey="hpage"
+        sortQueryKey="hsort"
+        defaultSort={[{ columnId: "date", dir: "desc" }]}
+        onVisibleCountChange={setResultCount}
+      />
+    </div>
+  );
+}
+
 export function HistoryEventList({
   events,
   emptyTitle = "Aucun historique",
@@ -199,55 +304,9 @@ export function HistoryEventList({
   emptyTitle?: string;
   emptySubtitle?: string;
 }) {
-  if (events.length === 0)
-    return (
-      <MetaPage icon={ScrollIcon} title={emptyTitle} subtitle={emptySubtitle} />
-    );
-
-  const eventsByBucket = Object.groupBy(events, (event) =>
-    getRelativeBucket(event.createdAt),
-  );
-
   return (
-    <div className="flex w-full flex-col gap-6">
-      {BUCKET_ORDER.filter((bucket) => eventsByBucket[bucket]?.length).map(
-        (bucket) => (
-          <div key={bucket} className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              {BUCKET_LABELS[bucket]}
-            </h2>
-            <ul className="flex flex-col gap-2">
-              {eventsByBucket[bucket]?.map((event) => {
-                const { icon, className, label } = TYPE_META[event.type];
-                const { before, current } = getEventSnapshots(
-                  event.type,
-                  event.data,
-                );
-                const reference = getEventReference(event.type, event.data);
-                return (
-                  <li
-                    key={event.id}
-                    className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon icon={icon} className={className} />
-                      <DateCell date={event.createdAt} />
-                      <span className="text-sm font-medium">
-                        {label}
-                        {reference && ` — ${reference}`}
-                      </span>
-                    </div>
-                    <HistoryDataTable
-                      eventId={event.id}
-                      {...{ current, before }}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ),
-      )}
-    </div>
+    <Suspense>
+      <HistoryEventListContent {...{ events, emptyTitle, emptySubtitle }} />
+    </Suspense>
   );
 }

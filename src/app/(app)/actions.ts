@@ -7,15 +7,15 @@ import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { AUTH_COOKIE_NAME } from "@/utils/auth";
+import { buildDeviceInfo } from "@/utils/deviceInfo";
 import { logHistory } from "@/utils/history";
 import { prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
-import { describeUserAgent } from "@/utils/userAgent";
 
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE_NAME);
-  const userAgent = describeUserAgent((await headers()).get("user-agent"));
+  const userAgent = buildDeviceInfo(await headers());
   await logHistory(HistoryItemType.LOGOUT, { userAgent });
   redirect("/gate");
 }

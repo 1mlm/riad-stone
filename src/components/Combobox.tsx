@@ -73,7 +73,7 @@ export function Combobox({
           {selectedOption ? (
             <span className="truncate">
               <span className="font-mono">{selectedOption.value}</span>
-              {" — "}
+              {": "}
               {selectedOption.label}
             </span>
           ) : (

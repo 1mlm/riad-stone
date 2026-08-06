@@ -26,6 +26,7 @@ import {
   SortingZA01Icon,
   SquareIcon,
   Tag01Icon,
+  Tag02Icon,
 } from "@hugeicons/core-free-icons";
 import type { HugeIcon } from "@/components/Icon";
 
@@ -35,6 +36,7 @@ export const ICONS = {
   designation: Tag01Icon,
   date: Calendar04Icon,
   location: Location06Icon,
+  conteneur: Tag02Icon,
   length: ArrowHorizontalIcon,
   width: ArrowVerticalIcon,
   pieces: HashIcon,

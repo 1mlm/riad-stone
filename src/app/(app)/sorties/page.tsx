@@ -16,6 +16,7 @@ export default async function SortiesPage() {
     entreeReference: sortie.entreeReference,
     designation: sortie.entree.designation,
     origine: sortie.entree.origine,
+    conteneur: sortie.entree.conteneur,
     dateEntree: sortie.entree.date,
     longueur: Number(sortie.entree.longueur),
     largeur: Number(sortie.entree.largeur),

@@ -104,6 +104,13 @@
     @apply corner-squircle;
     }
 
+  /* Inputs sat flush with everything else around them — a hint of shadow
+     makes them read as raised, tappable fields instead of flat rectangles */
+  [data-slot="input"],
+  [data-slot="input-group"] {
+    @apply shadow-xs shadow-black/5 dark:shadow-black/20;
+    }
+
   /* Chrome autofill tints only the input; tint the whole group to match */
   [data-slot="input-group"]:has(input:autofill) {
     background-color: #e8f0fe;

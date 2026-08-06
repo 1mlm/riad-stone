@@ -8,8 +8,8 @@ import {
   getExpectedAuthCookieValue,
   isCodeCorrect,
 } from "@/utils/auth";
+import { buildDeviceInfo } from "@/utils/deviceInfo";
 import { logHistory } from "@/utils/history";
-import { describeUserAgent } from "@/utils/userAgent";
 
 export async function unlockWithCode(
   _prevState: { error: boolean },
@@ -28,7 +28,7 @@ export async function unlockWithCode(
     path: "/",
   });
 
-  const userAgent = describeUserAgent((await headers()).get("user-agent"));
+  const userAgent = buildDeviceInfo(await headers());
   await logHistory(HistoryItemType.LOGIN, { code, userAgent });
   redirect("/");
 }

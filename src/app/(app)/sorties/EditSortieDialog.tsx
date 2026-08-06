@@ -6,6 +6,7 @@ import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -111,10 +112,9 @@ export function EditSortieDialog({
           <FormError>{state.error}</FormError>
 
           <DialogFooter>
-            <Button type="submit" variant="warning" disabled={pending}>
-              <Icon icon={EditIcon} />
+            <SubmitButton variant="warning" icon={EditIcon} {...{ pending }}>
               Enregistrer
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

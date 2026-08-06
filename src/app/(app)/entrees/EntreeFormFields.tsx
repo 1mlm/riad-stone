@@ -1,13 +1,23 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { DatePickerField } from "@/components/DatePickerField";
 import { FieldLabel } from "@/components/FieldLabel";
+import { Icon } from "@/components/Icon";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { Separator } from "@/shadcn/ui/separator";
+import { cn } from "@/shadcn/utils";
+import { ICONS } from "@/utils/icon";
 import { ENTREE_FIELDS, type EntreeField, toDisplayLength } from "./fields";
 import type { EntreeRow } from "./types";
 import { UnitLengthInput } from "./UnitLengthInput";
+
+// past values for text fields worth suggesting — keyed by field key, only
+// populated for fields the caller actually has suggestions for (origine,
+// conteneur). Feeds a native <datalist> since the multi-card add form
+// namespaces every input's name under a per-card uuid, which defeats the
+// browser's own name-based autofill history
+type FieldSuggestions = Partial<Record<EntreeField["key"], string[]>>;
 
 // everything a field renderer needs beyond the field definition itself,
 // passed around as one bag so each renderer keeps a two-prop signature
@@ -17,6 +27,7 @@ type FieldContext = {
   // namespaces every id/name under this prefix — needed when several
   // EntreeFormFields instances share one <form> (the multi-card add flow)
   namePrefix?: string;
+  suggestions?: FieldSuggestions;
 };
 
 // with no namePrefix, id/name are the bare field key (single-instance forms:
@@ -38,15 +49,22 @@ function FieldInput({
   field: EntreeField;
   context: FieldContext;
 }) {
-  const { mode, entree } = context;
+  const { mode, entree, suggestions } = context;
 
   if (field.kind === "text") {
     const locked = mode === "edit" && field.lockedOnEdit;
+    const fieldSuggestions = suggestions?.[field.key];
+    const datalistId = fieldSuggestions
+      ? `${getInputId(field.key, context)}-suggestions`
+      : undefined;
     return (
       <InputGroup className={locked ? "bg-input/50 opacity-70" : undefined}>
         <InputGroupInput
           id={getInputId(field.key, context)}
           name={getInputName(field.key, context)}
+          type="text"
+          autoComplete={locked ? "off" : "on"}
+          list={datalistId}
           placeholder={field.placeholder}
           defaultValue={
             entree ? ((entree[field.key] as string | null) ?? "") : undefined
@@ -57,6 +75,13 @@ function FieldInput({
           }
           required={field.required}
         />
+        {fieldSuggestions && (
+          <datalist id={datalistId}>
+            {fieldSuggestions.map((value) => (
+              <option key={value} {...{ value }} />
+            ))}
+          </datalist>
+        )}
       </InputGroup>
     );
   }
@@ -77,7 +102,9 @@ function FieldInput({
         placeholder="0"
         defaultValue={
           entree
-            ? toDisplayLength(entree[field.key as "longueur" | "largeur"])
+            ? Math.round(
+                toDisplayLength(entree[field.key as "longueur" | "largeur"]),
+              )
             : undefined
         }
       />
@@ -89,6 +116,7 @@ function FieldInput({
         id={getInputId(field.key, context)}
         name={getInputName(field.key, context)}
         type="number"
+        inputMode="numeric"
         min="1"
         step="1"
         required={field.required}
@@ -139,13 +167,20 @@ export function EntreeFormFields({
   entree,
   namePrefix,
   excludeKeys,
+  suggestions,
 }: FieldContext & { excludeKeys?: EntreeField["key"][] }) {
-  const context = { mode, entree, namePrefix };
-  const fields = ENTREE_FIELDS.filter(
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const context = { mode, entree, namePrefix, suggestions };
+  const fields: EntreeField[] = ENTREE_FIELDS.filter(
     (field) => !excludeKeys?.includes(field.key),
   );
   const requiredFields = fields.filter((field) => field.required);
-  const optionalFields = fields.filter((field) => !field.required);
+  const visibleOptionalFields = fields.filter(
+    (field) => !field.required && !field.collapsedByDefault,
+  );
+  const collapsedFields = fields.filter(
+    (field) => !field.required && field.collapsedByDefault,
+  );
 
   const renderItem = (item: EntreeField | EntreeField[]): ReactNode =>
     Array.isArray(item) ? (
@@ -164,10 +199,25 @@ export function EntreeFormFields({
   return (
     <>
       {groupFields(requiredFields).map(renderItem)}
-      {optionalFields.length > 0 && (
+      {groupFields(visibleOptionalFields).map(renderItem)}
+      {collapsedFields.length > 0 && (
         <>
           <Separator />
-          {groupFields(optionalFields).map(renderItem)}
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((open) => !open)}
+            className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Détails supplémentaires
+            <Icon
+              icon={ICONS.chevronDown}
+              className={cn(
+                "size-3.5 transition-transform",
+                detailsOpen && "rotate-180",
+              )}
+            />
+          </button>
+          {detailsOpen && groupFields(collapsedFields).map(renderItem)}
         </>
       )}
     </>

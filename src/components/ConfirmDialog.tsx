@@ -87,7 +87,7 @@ export function ConfirmDialog({
             variant={confirmVariant}
             className="rounded-full corner-squircle"
             waitSeconds={waitSeconds}
-            disabled={pending}
+            {...{ pending }}
             onClick={handleConfirm}
           >
             <Icon icon={confirmIcon} />

@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import {
+  createConteneurColumn,
   createDesignationColumn,
   createLengthColumn,
   createNombrePiecesColumn,
@@ -70,6 +71,7 @@ function SortiesTableContent({
         getDate: (row) => row.dateEntree,
       },
       createOrigineColumn(),
+      createConteneurColumn(),
       createLengthColumn("longueur"),
       createLengthColumn("largeur"),
       createSurfacePieceColumn(),

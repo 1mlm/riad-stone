@@ -24,7 +24,12 @@ function getSummaryRows(details: EntreeDetails) {
       label: "Date d'entrée",
       value: new Date(details.date).toLocaleDateString("fr-FR"),
     },
-    { icon: ICONS.location, label: "Origine", value: details.origine ?? "—" },
+    { icon: ICONS.location, label: "Origine", value: details.origine ?? "-" },
+    {
+      icon: ICONS.conteneur,
+      label: "N° de contenaire",
+      value: details.conteneur ?? "-",
+    },
     {
       icon: ICONS.length,
       label: "Longueur",
@@ -68,7 +73,7 @@ function SortiesList({ sorties }: { sorties: EntreeDetails["sorties"] }) {
               {sortie.nombrePieces} pièce{sortie.nombrePieces > 1 ? "s" : ""}
             </td>
             <td className="py-1.5 font-mono text-muted-foreground">
-              {sortie.bonCommande ?? "—"}
+              {sortie.bonCommande ?? "-"}
             </td>
           </tr>
         ))}

@@ -13,6 +13,7 @@ export default async function StockPage() {
       designation: entree.designation,
       date: entree.date,
       origine: entree.origine,
+      conteneur: entree.conteneur,
       longueur: Number(entree.longueur),
       largeur: Number(entree.largeur),
       nombrePieces:

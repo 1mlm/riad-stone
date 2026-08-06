@@ -13,13 +13,13 @@ import { ICONS } from "@/utils/icon";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
 import {
+  createConteneurColumn,
   createDateColumn,
   createDesignationColumn,
   createLengthColumn,
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
-  createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
   DESIGNATION_THEN_REFERENCE_SORT,
@@ -30,9 +30,11 @@ import type { EntreeRow } from "./types";
 function EntreesTableContent({
   items,
   designationSuggestions,
+  fieldSuggestions,
 }: {
   items: EntreeRow[];
   designationSuggestions: string[];
+  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   const [resultCount, setResultCount] = useState(items.length);
   // hides a row the moment its delete is confirmed, instead of waiting on
@@ -51,12 +53,12 @@ function EntreesTableContent({
       createReferenceColumn((row) => row.reference),
       createDateColumn(),
       createOrigineColumn(),
+      createConteneurColumn(),
       createLengthColumn("longueur"),
       createLengthColumn("largeur"),
       createSurfacePieceColumn(),
       createNombrePiecesColumn(),
       createSurfaceTotaleColumn(),
-      createSurfaceDesignationColumn(visibleItems),
       {
         id: "actions",
         label: "Actions",
@@ -103,7 +105,7 @@ function EntreesTableContent({
           placeholder="Rechercher une entrée..."
           {...{ resultCount }}
         />
-        <AddEntreeDialog {...{ designationSuggestions }} />
+        <AddEntreeDialog {...{ designationSuggestions, fieldSuggestions }} />
       </div>
       <CustomTable
         items={visibleItems}
@@ -139,6 +141,7 @@ function EntreesTableContent({
 export function EntreesTable(props: {
   items: EntreeRow[];
   designationSuggestions: string[];
+  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   return (
     <Suspense>

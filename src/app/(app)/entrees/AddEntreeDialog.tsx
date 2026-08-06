@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -34,18 +35,16 @@ const newCardId = () =>
 
 function EntreeCard({
   card,
-  index,
-  count,
   invalid,
   onDelete,
   cardRef,
+  fieldSuggestions,
 }: {
   card: Card;
-  index: number;
-  count: number;
   invalid: boolean;
   onDelete: () => void;
   cardRef: (el: HTMLDivElement | null) => void;
+  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   return (
     <div
@@ -53,14 +52,11 @@ function EntreeCard({
       className={cn(
         // narrower than the scroll container so the next/previous card
         // peeks in on the sides instead of being fully clipped
-        "flex w-[88%] shrink-0 snap-center flex-col gap-4 rounded-lg border border-border p-3",
+        "flex w-[88%] shrink-0 snap-center flex-col gap-4 rounded-lg border border-border p-3 shadow-sm",
         invalid && "border-destructive",
       )}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          Fiche {index + 1} / {count}
-        </span>
+      <div className="flex justify-end">
         <ConfirmDialog
           trigger={
             <Button
@@ -87,6 +83,7 @@ function EntreeCard({
         mode="add"
         namePrefix={card.id}
         excludeKeys={["designation"]}
+        {...{ fieldSuggestions }}
       />
     </div>
   );
@@ -100,6 +97,7 @@ function CardsCarousel({
   onNavigate,
   scrollRef,
   setCardRef,
+  fieldSuggestions,
 }: {
   cards: Card[];
   activeIndex: number;
@@ -108,6 +106,7 @@ function CardsCarousel({
   onNavigate: (index: number) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   setCardRef: (id: string) => (el: HTMLDivElement | null) => void;
+  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
@@ -115,11 +114,10 @@ function CardsCarousel({
         ref={scrollRef}
         className="mask-x-from-88% flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto px-[6%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {cards.map((card, index) => (
+        {cards.map((card) => (
           <EntreeCard
             key={card.id}
-            {...{ card, index }}
-            count={cards.length}
+            {...{ card, fieldSuggestions }}
             invalid={card.id === invalidCardId}
             onDelete={() => onDeleteCard(card.id)}
             cardRef={setCardRef(card.id)}
@@ -157,8 +155,10 @@ function CardsCarousel({
 
 export function AddEntreeDialog({
   designationSuggestions,
+  fieldSuggestions,
 }: {
   designationSuggestions: string[];
+  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   const [open, setOpen] = useState(false);
   const [designation, setDesignation] = useState("");
@@ -338,6 +338,7 @@ export function AddEntreeDialog({
                   invalidCardId,
                   scrollRef,
                   setCardRef,
+                  fieldSuggestions,
                 }}
                 onDeleteCard={deleteCard}
                 onNavigate={navigateTo}
@@ -358,11 +359,14 @@ export function AddEntreeDialog({
           <FormError>{state.error}</FormError>
 
           <DialogFooter>
-            <Button type="submit" disabled={pending || cards.length === 0}>
-              <Icon icon={PlusSignIcon} />
+            <SubmitButton
+              icon={PlusSignIcon}
+              {...{ pending }}
+              disabled={cards.length === 0}
+            >
               Ajouter{" "}
               {cards.length > 1 ? `${cards.length} entrées` : "l'entrée"}
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

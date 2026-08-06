@@ -3,6 +3,7 @@ export type EntreeRow = {
   designation: string;
   date: Date;
   origine: string | null;
+  conteneur: string | null;
   // metres
   longueur: number;
   largeur: number;

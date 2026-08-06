@@ -7,6 +7,7 @@ import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -44,7 +45,7 @@ function EntreeReferenceField({
         onValueChange={onSelect}
         options={availableEntrees.map((entree) => ({
           value: entree.reference,
-          label: `${entree.designation} — ${entree.piecesRestantes} pièce(s) restante(s)`,
+          label: `${entree.designation}: ${entree.piecesRestantes} pièce(s) restante(s)`,
         }))}
         placeholder="Sélectionner une entrée..."
         searchPlaceholder="Rechercher une référence..."
@@ -167,10 +168,9 @@ export function AddSortieDialog({
           <FormError>{state.error}</FormError>
 
           <DialogFooter>
-            <Button type="submit" disabled={pending}>
-              <Icon icon={PlusSignIcon} />
+            <SubmitButton icon={PlusSignIcon} {...{ pending }}>
               Ajouter
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>
