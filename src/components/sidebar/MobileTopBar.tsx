@@ -29,6 +29,7 @@ import {
 } from "@/shadcn/ui/sheet";
 import { cn } from "@/shadcn/utils";
 import { haptic } from "@/utils/haptics";
+import type { NavCounts } from "./AppSidebar";
 import { APP_HEADER, NAV_ITEMS } from "./data";
 
 // hides the bar once the user has scrolled down a bit and is actively
@@ -156,10 +157,12 @@ function NavLinkContent({
   label,
   icon,
   isActive,
+  count,
 }: {
   label: string;
   icon: (typeof NAV_ITEMS)[number]["icon"];
   isActive: boolean;
+  count?: number;
 }) {
   const { pending } = useLinkStatus();
 
@@ -171,16 +174,28 @@ function NavLinkContent({
         pending && "opacity-60",
       )}
     >
-      <Icon
-        icon={pending ? Loading01Icon : icon}
-        className={cn("size-5", pending && "animate-spin")}
-      />
+      <div className="relative">
+        <Icon
+          icon={pending ? Loading01Icon : icon}
+          className={cn("size-5", pending && "animate-spin")}
+        />
+        {!pending && Boolean(count) && (
+          <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full corner-squircle bg-muted px-1 text-[0.6rem] text-muted-foreground">
+            {count}
+          </span>
+        )}
+      </div>
       <span className="text-[0.65rem]">{label}</span>
     </div>
   );
 }
 
-function NavLink({ href, label, icon }: (typeof NAV_ITEMS)[number]) {
+function NavLink({
+  href,
+  label,
+  icon,
+  count,
+}: (typeof NAV_ITEMS)[number] & { count?: number }) {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -190,12 +205,12 @@ function NavLink({ href, label, icon }: (typeof NAV_ITEMS)[number]) {
       onClick={() => haptic("light")}
       className="flex flex-1 flex-col items-center py-2.5"
     >
-      <NavLinkContent {...{ label, icon, isActive }} />
+      <NavLinkContent {...{ label, icon, isActive, count }} />
     </Link>
   );
 }
 
-export function MobileTopBar() {
+export function MobileTopBar({ counts }: { counts: NavCounts }) {
   const hidden = useHideOnScrollDown();
 
   return (
@@ -207,7 +222,11 @@ export function MobileTopBar() {
     >
       <MoreSheet />
       {NAV_ITEMS.map((item) => (
-        <NavLink key={item.href} {...item} />
+        <NavLink
+          key={item.href}
+          {...item}
+          count={item.countKey ? counts[item.countKey] : undefined}
+        />
       ))}
     </nav>
   );
