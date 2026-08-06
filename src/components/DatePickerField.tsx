@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar04Icon, Clock01Icon } from "@hugeicons/core-free-icons";
+import { Calendar04Icon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Calendar } from "@/shadcn/ui/calendar";
@@ -11,26 +11,18 @@ import {
 } from "@/shadcn/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 
-const setDayKeepingTime = (day: Date, previous: Date) => {
-  const next = new Date(day);
-  next.setHours(
-    previous.getHours(),
-    previous.getMinutes(),
-    previous.getSeconds(),
-    previous.getMilliseconds(),
-  );
-  return next;
-};
+// the calendar picks/highlights days using local-midnight Date objects, but
+// the server stores/returns UTC-midnight dates (a plain DATE column) — going
+// straight from one to the other through toISOString()/new Date() shifts the
+// day by one for any viewer not in UTC+0, so we convert explicitly at both
+// boundaries instead and keep local-midnight as the only value the calendar ever sees
+const utcDateToLocalMidnight = (date: Date) =>
+  new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 
-const dateToTimeInputValue = (date: Date) =>
-  `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-
-const setTimeFromInputValue = (date: Date, timeValue: string) => {
-  const [hours, minutes] = timeValue.split(":").map(Number);
-  const next = new Date(date);
-  next.setHours(hours, minutes, 0, 0);
-  return next;
-};
+const localMidnightToUtcIsoDate = (date: Date) =>
+  new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  ).toISOString();
 
 export function DatePickerField({
   name,
@@ -38,17 +30,15 @@ export function DatePickerField({
 }: {
   name: string;
   // left unset (add mode), the field submits empty and the server stamps
-  // the current time at submit — not whatever time this field happened to
+  // the current date at submit — not whatever date this field happened to
   // mount at. Edit mode passes the entree's real date, which stays fixed
   // until the user actually touches the picker.
   defaultValue?: Date;
 }) {
-  const [date, setDate] = useState<Date | undefined>(defaultValue);
+  const [date, setDate] = useState<Date | undefined>(
+    defaultValue ? utcDateToLocalMidnight(defaultValue) : undefined,
+  );
   const [open, setOpen] = useState(false);
-
-  // only used to render the calendar/time widgets before the user has
-  // picked anything — never written back into `date` on its own
-  const displayDate = date ?? new Date();
 
   return (
     <Popover {...{ open, onOpenChange: setOpen }}>
@@ -59,11 +49,7 @@ export function DatePickerField({
           </InputGroupAddon>
           <InputGroupInput
             readOnly
-            value={
-              date
-                ? `${date.toLocaleDateString("fr-FR")} ${dateToTimeInputValue(date)}`
-                : ""
-            }
+            value={date ? date.toLocaleDateString("fr-FR") : ""}
             placeholder="Maintenant"
             className="cursor-pointer"
           />
@@ -73,35 +59,18 @@ export function DatePickerField({
         <Calendar
           mode="single"
           selected={date}
-          defaultMonth={displayDate}
+          defaultMonth={date ?? new Date()}
           onSelect={(value) => {
             if (!value) return;
-            setDate((previous) =>
-              setDayKeepingTime(value, previous ?? new Date()),
-            );
+            setDate(value);
+            setOpen(false);
           }}
         />
-        <div className="flex items-center gap-1.5 border-t p-3">
-          <Icon icon={Clock01Icon} className="text-muted-foreground" />
-          <input
-            type="time"
-            value={dateToTimeInputValue(displayDate)}
-            onChange={(event) =>
-              setDate((previous) =>
-                setTimeFromInputValue(
-                  previous ?? new Date(),
-                  event.target.value,
-                ),
-              )
-            }
-            className="flex-1 rounded-md border bg-transparent px-2 py-1 text-sm outline-none"
-          />
-        </div>
       </PopoverContent>
       <input
         type="hidden"
         {...{ name }}
-        value={date ? date.toISOString() : ""}
+        value={date ? localMidnightToUtcIsoDate(date) : ""}
       />
     </Popover>
   );

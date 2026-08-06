@@ -12,7 +12,7 @@ model Entree {
   // consumes an entree lot by pointing at this reference directly
   reference    String   @id
   designation  String
-  date         DateTime @default(now())
+  date         DateTime @default(now()) @db.Date
   origine      String?
   conteneur    String?
   // stored in metres regardless of the unit picked in the UI (cm/mm/dm/m)
@@ -33,7 +33,7 @@ model Sortie {
   entree          Entree   @relation(fields: [entreeReference], references: [reference])
   // pieces taken by this specific sortie — may be less than the entree's total
   nombrePieces    Int
-  dateSortie      DateTime @default(now())
+  dateSortie      DateTime @default(now()) @db.Date
   bonCommande     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

@@ -10,6 +10,7 @@ import { AddSortieDialog } from "@/app/(app)/sorties/AddSortieDialog";
 import { Icon } from "@/components/Icon";
 import { LazyDialog } from "@/components/LazyDialog";
 import { Button } from "@/shadcn/ui/button";
+import { formatShortDate } from "@/utils/date";
 import { ICONS } from "@/utils/icon";
 
 function getSummaryRows(details: EntreeDetails) {
@@ -22,7 +23,7 @@ function getSummaryRows(details: EntreeDetails) {
     {
       icon: ICONS.date,
       label: "Date d'entrée",
-      value: new Date(details.date).toLocaleDateString("fr-FR"),
+      value: formatShortDate(details.date),
     },
     { icon: ICONS.location, label: "Origine", value: details.origine ?? "-" },
     {
@@ -67,7 +68,7 @@ function SortiesList({ sorties }: { sorties: EntreeDetails["sorties"] }) {
         {sorties.map((sortie) => (
           <tr key={sortie.id} className="border-t border-border/50">
             <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">
-              {new Date(sortie.dateSortie).toLocaleDateString("fr-FR")}
+              {formatShortDate(sortie.dateSortie)}
             </td>
             <td className="py-1.5 pr-3 font-medium">
               {sortie.nombrePieces} pièce{sortie.nombrePieces > 1 ? "s" : ""}

@@ -125,6 +125,18 @@ export function formatRelativeDate(
   return formatRelativeLabel(Math.abs(years), "an", "ans", years > 0);
 }
 
+// "06/08/2026" — used for date/dateSortie columns, which are stored as
+// UTC-midnight DATE values with no time component, so this must read the
+// UTC calendar day rather than the viewer's local one
+export function formatShortDate(date: Date | string | number): string {
+  return new Date(date).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 const DURATION_UNITS = [
   ["jour", "jours", 86400],
   ["heure", "heures", 3600],

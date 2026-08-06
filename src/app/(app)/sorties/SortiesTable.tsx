@@ -61,6 +61,7 @@ function SortiesTableContent({
         label: "Date de sortie",
         icon: ICONS.date,
         type: "date",
+        relative: false,
         getDate: (row) => row.dateSortie,
       },
       {
@@ -68,6 +69,7 @@ function SortiesTableContent({
         label: "Date d'entrée",
         icon: ICONS.date,
         type: "date",
+        relative: false,
         getDate: (row) => row.dateEntree,
       },
       createOrigineColumn(),
