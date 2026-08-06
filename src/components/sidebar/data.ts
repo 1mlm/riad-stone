@@ -1,8 +1,7 @@
 import {
-  Download02Icon,
-  PackageIcon,
+  Download01Icon, PackageIcon,
   ScrollIcon,
-  Upload01Icon,
+  Upload01Icon
 } from "@hugeicons/core-free-icons";
 import type { HugeIcon } from "@/components/Icon";
 
@@ -21,7 +20,7 @@ export const NAV_ITEMS: {
   {
     href: "/entrees",
     label: "Entrées",
-    icon: Download02Icon,
+    icon: Download01Icon,
     countKey: "entrees",
   },
   {
