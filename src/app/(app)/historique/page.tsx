@@ -8,7 +8,7 @@ export default async function HistoriquePage() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 p-5">
+    <div className="flex min-w-0 flex-col gap-4 p-5">
       <HistoryEventList {...{ events }} />
     </div>
   );

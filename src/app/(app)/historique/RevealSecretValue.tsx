@@ -4,7 +4,7 @@ import { Key01Icon, ViewIcon } from "@hugeicons/core-free-icons";
 import { type FormEvent, useState } from "react";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
-import { Button } from "@/shadcn/ui/button";
+import { SubmitButton } from "@/components/SubmitButton";
 import {
   InputGroup,
   InputGroupAddon,
@@ -76,10 +76,9 @@ export function RevealSecretValue({ eventId }: { eventId: number }) {
               aria-invalid={error}
             />
           </InputGroup>
-          <Button type="submit" size="sm" disabled={pending}>
-            <Icon icon={ViewIcon} />
+          <SubmitButton size="sm" icon={ViewIcon} {...{ pending }}>
             Afficher
-          </Button>
+          </SubmitButton>
           {error && <FormError>Code incorrect</FormError>}
         </form>
       </PopoverContent>

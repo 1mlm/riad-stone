@@ -5,6 +5,7 @@ import { ENTREE_FIELD_BY_KEY, toDisplayLength } from "./fields";
 type EntreeLikeRow = {
   designation: string;
   origine: string | null;
+  conteneur: string | null;
   longueur: number;
   largeur: number;
   nombrePieces: number;
@@ -72,6 +73,18 @@ export function createOrigineColumn<
   };
 }
 
+export function createConteneurColumn<
+  T extends EntreeLikeRow,
+>(): CustomTableColumn<T> {
+  return {
+    id: "conteneur",
+    label: ENTREE_FIELD_BY_KEY.conteneur.label,
+    icon: ENTREE_FIELD_BY_KEY.conteneur.icon,
+    type: "string",
+    getString: (row) => row.conteneur ?? "",
+  };
+}
+
 export function createLengthColumn<T extends EntreeLikeRow>(
   key: "longueur" | "largeur",
 ): CustomTableColumn<T> {
@@ -127,7 +140,7 @@ export function createSurfaceTotaleColumn<
 >(): CustomTableColumn<T> {
   return {
     id: "surfaceTotale",
-    label: "Surface totale",
+    label: "Surface d'entrée",
     icon: ICONS.surfaceTotale,
     type: "string",
     align: "right",
@@ -136,34 +149,5 @@ export function createSurfaceTotaleColumn<
     suffix: "m²",
     getString: (row) => getSurfaceTotaleM2(row).toFixed(4),
     getNumber: getSurfaceTotaleM2,
-  };
-}
-
-// one designation ⇒ one merged cell showing the sum of every row's surface
-// totale sharing that designation — computed once over all rows so it
-// doesn't shift as the user searches/filters
-export function createSurfaceDesignationColumn<T extends EntreeLikeRow>(
-  items: T[],
-): CustomTableColumn<T> {
-  const totalsByDesignation = new Map<string, number>();
-  for (const row of items)
-    totalsByDesignation.set(
-      row.designation,
-      (totalsByDesignation.get(row.designation) ?? 0) + getSurfaceTotaleM2(row),
-    );
-
-  return {
-    id: "surfaceDesignation",
-    label: "Surface de désignation",
-    icon: ICONS.surfaceDesignation,
-    type: "string",
-    align: "right",
-    filterType: "number",
-    decimals: 4,
-    suffix: "m²",
-    mergeAdjacent: true,
-    getString: (row) =>
-      (totalsByDesignation.get(row.designation) ?? 0).toFixed(4),
-    getNumber: (row) => totalsByDesignation.get(row.designation) ?? 0,
   };
 }

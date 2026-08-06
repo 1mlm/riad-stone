@@ -3,6 +3,7 @@ export type SortieRow = {
   entreeReference: string;
   designation: string;
   origine: string | null;
+  conteneur: string | null;
   dateEntree: Date;
   // metres
   longueur: number;

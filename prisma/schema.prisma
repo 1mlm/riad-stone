@@ -14,6 +14,7 @@ model Entree {
   designation  String
   date         DateTime @default(now())
   origine      String?
+  conteneur    String?
   // stored in metres regardless of the unit picked in the UI (cm/mm/dm/m)
   longueur     Decimal  @db.Decimal(10, 4)
   largeur      Decimal  @db.Decimal(10, 4)

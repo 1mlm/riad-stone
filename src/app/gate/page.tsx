@@ -47,7 +47,7 @@ export default function GatePage() {
           key={attempt}
           type="submit"
           className="rounded-full corner-squircle"
-          disabled={pending}
+          {...{ pending }}
           waitSeconds={attempt === 0 ? 0 : 7}
         >
           <Icon icon={SquareUnlock01Icon} />

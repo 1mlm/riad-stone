@@ -16,6 +16,11 @@ type BaseField = {
   lockedOnEdit?: boolean;
   // consecutive fields sharing a group render side by side instead of stacked
   group?: "dimensions";
+  // stays tucked away behind the "Détails supplémentaires" toggle until
+  // opened — for fields that are truly nice-to-have (origine, conteneur).
+  // a non-required field without this still renders inline (e.g. date),
+  // just without the required asterisk
+  collapsedByDefault?: boolean;
 };
 
 export type EntreeField =
@@ -46,13 +51,6 @@ export const ENTREE_FIELDS = [
     lockedOnEdit: true,
   },
   {
-    key: "date",
-    label: "Date",
-    icon: ICONS.date,
-    required: true,
-    kind: "date",
-  },
-  {
     key: "longueur",
     label: "Longueur",
     icon: ICONS.length,
@@ -76,11 +74,27 @@ export const ENTREE_FIELDS = [
     kind: "integer",
   },
   {
+    key: "date",
+    label: "Date",
+    icon: ICONS.date,
+    required: false,
+    kind: "date",
+  },
+  {
     key: "origine",
     label: "Origine",
     icon: ICONS.location,
     required: false,
     kind: "text",
+    collapsedByDefault: true,
+  },
+  {
+    key: "conteneur",
+    label: "N° de contenaire",
+    icon: ICONS.conteneur,
+    required: false,
+    kind: "text",
+    collapsedByDefault: true,
   },
 ] as const satisfies readonly EntreeField[];
 

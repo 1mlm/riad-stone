@@ -2,13 +2,13 @@
 
 import { Suspense, useMemo, useState } from "react";
 import {
+  createConteneurColumn,
   createDateColumn,
   createDesignationColumn,
   createLengthColumn,
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
-  createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
   DESIGNATION_THEN_REFERENCE_SORT,
@@ -34,12 +34,12 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
       createReferenceColumn((row) => row.reference),
       createDateColumn(),
       createOrigineColumn(),
+      createConteneurColumn(),
       createLengthColumn("longueur"),
       createLengthColumn("largeur"),
       createSurfacePieceColumn(),
       createNombrePiecesColumn("Pièces restantes"),
       createSurfaceTotaleColumn(),
-      createSurfaceDesignationColumn(items),
       {
         id: "actions",
         label: "Actions",

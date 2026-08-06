@@ -11,9 +11,17 @@ import { Button } from "@/shadcn/ui/button";
 export function DelayedButton({
   waitSeconds = 7,
   disabled,
+  // true while the click's own async work (the actual request) is in
+  // flight, distinct from `ready` — the artificial wait before the button
+  // can be clicked at all. Both states render the same spinner, they just
+  // guard different moments
+  pending,
   children,
   ...props
-}: React.ComponentProps<typeof Button> & { waitSeconds?: number }) {
+}: React.ComponentProps<typeof Button> & {
+  waitSeconds?: number;
+  pending?: boolean;
+}) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -22,8 +30,8 @@ export function DelayedButton({
   }, [waitSeconds]);
 
   return (
-    <Button disabled={!ready || disabled} {...props}>
-      {ready ? (
+    <Button disabled={!ready || pending || disabled} {...props}>
+      {ready && !pending ? (
         children
       ) : (
         <>

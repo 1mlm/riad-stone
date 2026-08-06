@@ -176,7 +176,7 @@ export function buildRowSummary<T>(
         column.type === "string" && column.suffix && value !== ""
           ? ` ${column.suffix}`
           : "";
-      return `${column.label}: ${value || "—"}${suffix}`;
+      return `${column.label}: ${value || "-"}${suffix}`;
     })
     .join("\n");
 }
@@ -212,6 +212,8 @@ export function CustomTable<T>({
   sortable = true,
   paginate = true,
   searchQueryKey = "q",
+  pageQueryKey = "page",
+  sortQueryKey = "sort",
   exportFilePrefix = "export",
   onVisibleCountChange,
   defaultSort,
@@ -229,6 +231,10 @@ export function CustomTable<T>({
   paginate?: boolean;
   // must match the queryKey given to the page's SearchBar
   searchQueryKey?: string;
+  // override when a second CustomTable can render on the same page/URL (e.g.
+  // one nested in a dialog) so their URL-synced state doesn't collide
+  pageQueryKey?: string;
+  sortQueryKey?: string;
   exportFilePrefix?: string;
   // reports how many rows survive the current search/filter, e.g. for a "12 results" indicator
   onVisibleCountChange?: (count: number) => void;
@@ -242,8 +248,13 @@ export function CustomTable<T>({
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
-  const [sortRaw, setSortRaw] = useQueryState("sort", { defaultValue: "" });
-  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [sortRaw, setSortRaw] = useQueryState(sortQueryKey, {
+    defaultValue: "",
+  });
+  const [page, setPage] = useQueryState(
+    pageQueryKey,
+    parseAsInteger.withDefault(1),
+  );
 
   const filterParsers = useMemo(
     () =>
@@ -525,6 +536,17 @@ export function CustomTable<T>({
             {!loading &&
               paginatedItems.map((item, index) => {
                 const id = getItemId(item);
+                // a mergeAdjacent column starting a new run here means a new
+                // designation group begins — a heavier top border separates
+                // it from the previous group, on top of the usual striping
+                const isGroupStart =
+                  index > 0 &&
+                  columns.some(
+                    (column) =>
+                      column.type === "string" &&
+                      column.mergeAdjacent &&
+                      mergeRuns.get(column.id)?.[index]?.start,
+                  );
                 return (
                   <TableRow
                     key={id}
@@ -532,6 +554,7 @@ export function CustomTable<T>({
                       "group/row",
                       index % 2 === 1 && "bg-foreground/5",
                       selectedIds.has(id) && "bg-green-500/15",
+                      isGroupStart && "border-t-2 border-t-border",
                     )}
                   >
                     {selectable && (

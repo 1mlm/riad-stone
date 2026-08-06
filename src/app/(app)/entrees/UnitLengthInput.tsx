@@ -29,8 +29,9 @@ export function UnitLengthInput({
       <InputGroupInput
         name={valueName}
         type="number"
-        step="any"
-        min="0.01"
+        inputMode="numeric"
+        step="1"
+        min="1"
         {...{ placeholder, defaultValue }}
       />
       <input type="hidden" name={unitName} value={unit} />

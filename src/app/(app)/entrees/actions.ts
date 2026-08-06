@@ -59,6 +59,7 @@ function toEntreeSnapshot(entree: Entree) {
     reference: entree.reference,
     designation: entree.designation,
     origine: entree.origine,
+    conteneur: entree.conteneur,
     date: entree.date.toISOString(),
     longueur: Number(entree.longueur),
     largeur: Number(entree.largeur),
@@ -75,11 +76,41 @@ export async function getDesignationSuggestions(): Promise<string[]> {
   return rows.map((row) => row.designation);
 }
 
+// the multi-card add form namespaces every field under a per-card uuid, which
+// defeats the browser's own name-based autofill history — a datalist fed by
+// past values is the fix, for the two free-text fields worth suggesting
+export async function getEntreeFieldSuggestions(): Promise<{
+  origine: string[];
+  conteneur: string[];
+}> {
+  const [origineRows, conteneurRows] = await Promise.all([
+    prisma.entree.findMany({
+      select: { origine: true },
+      distinct: ["origine"],
+      where: { origine: { not: null } },
+      orderBy: { origine: "asc" },
+    }),
+    prisma.entree.findMany({
+      select: { conteneur: true },
+      distinct: ["conteneur"],
+      where: { conteneur: { not: null } },
+      orderBy: { conteneur: "asc" },
+    }),
+  ]);
+  return {
+    origine: origineRows.map((row) => row.origine).filter((v) => v !== null),
+    conteneur: conteneurRows
+      .map((row) => row.conteneur)
+      .filter((v) => v !== null),
+  };
+}
+
 export type EntreeDetails = {
   reference: string;
   designation: string;
   date: string;
   origine: string | null;
+  conteneur: string | null;
   // metres
   longueur: number;
   largeur: number;
@@ -114,6 +145,7 @@ export async function getEntreeDetails(
     designation: entree.designation,
     date: entree.date.toISOString(),
     origine: entree.origine,
+    conteneur: entree.conteneur,
     longueur: Number(entree.longueur),
     largeur: Number(entree.largeur),
     nombrePieces: entree.nombrePieces,
@@ -145,6 +177,7 @@ function readEntreeFormData(
     String(formData.get(key("designation")) ?? "").trim();
   const reference = String(formData.get(key("reference")) ?? "").trim();
   const origine = String(formData.get(key("origine")) ?? "").trim();
+  const conteneur = String(formData.get(key("conteneur")) ?? "").trim();
   const date = String(formData.get(key("date")) ?? "");
   const longueurValue = Number(formData.get(key("longueurValue")));
   const longueurUnit = String(formData.get(key("longueurUnit")));
@@ -154,11 +187,11 @@ function readEntreeFormData(
 
   if (!designation) return { error: "La désignation est requise." as const };
   if (!reference) return { error: "La référence est requise." as const };
-  if (!Number.isFinite(longueurValue) || longueurValue <= 0)
+  if (!Number.isInteger(longueurValue) || longueurValue <= 0)
     return { error: "La longueur est invalide." as const };
   if (!isLengthUnit(longueurUnit))
     return { error: "L'unité de longueur est invalide." as const };
-  if (!Number.isFinite(largeurValue) || largeurValue <= 0)
+  if (!Number.isInteger(largeurValue) || largeurValue <= 0)
     return { error: "La largeur est invalide." as const };
   if (!isLengthUnit(largeurUnit))
     return { error: "L'unité de largeur est invalide." as const };
@@ -170,6 +203,7 @@ function readEntreeFormData(
       designation,
       reference,
       origine: origine || null,
+      conteneur: conteneur || null,
       date: date ? new Date(date) : new Date(),
       longueur: lengthToMeters(longueurValue, longueurUnit),
       largeur: lengthToMeters(largeurValue, largeurUnit),
@@ -283,6 +317,7 @@ export async function updateEntree(
       data: {
         designation: parsed.data.designation,
         origine: parsed.data.origine,
+        conteneur: parsed.data.conteneur,
         date: parsed.data.date,
         longueur: parsed.data.longueur,
         largeur: parsed.data.largeur,
