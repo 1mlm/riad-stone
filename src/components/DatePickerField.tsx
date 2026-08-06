@@ -10,6 +10,7 @@ import {
   InputGroupInput,
 } from "@/shadcn/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
+import { haptic } from "@/utils/haptics";
 
 // the calendar picks/highlights days using local-midnight Date objects, but
 // the server stores/returns UTC-midnight dates (a plain DATE column) — going
@@ -62,6 +63,7 @@ export function DatePickerField({
           defaultMonth={date ?? new Date()}
           onSelect={(value) => {
             if (!value) return;
+            haptic("selection");
             setDate(value);
             setOpen(false);
           }}

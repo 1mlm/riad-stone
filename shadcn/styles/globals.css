@@ -116,3 +116,15 @@
     background-color: #e8f0fe;
     }
 }
+
+/* Radix menu items and cmdk options ship with cursor-default baked into
+   their own class strings (a Tailwind utility, which sits in a cascade
+   layer after @layer base above) — !important is the only thing that
+   reliably wins over that without touching shadcn/ui sources */
+[data-slot="dropdown-menu-item"],
+[data-slot="dropdown-menu-checkbox-item"],
+[data-slot="dropdown-menu-radio-item"],
+[data-slot="dropdown-menu-sub-trigger"],
+[data-slot="command-item"] {
+  cursor: pointer !important;
+}

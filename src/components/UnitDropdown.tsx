@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shadcn/ui/dropdown-menu";
 import { InputGroupButton } from "@/shadcn/ui/input-group";
+import { haptic } from "@/utils/haptics";
 import { LENGTH_UNITS, type LengthUnit } from "@/utils/length";
 
 export function UnitDropdown({
@@ -28,7 +29,13 @@ export function UnitDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {LENGTH_UNITS.map((option) => (
-          <DropdownMenuItem key={option} onClick={() => onUnitChange(option)}>
+          <DropdownMenuItem
+            key={option}
+            onClick={() => {
+              haptic("selection");
+              onUnitChange(option);
+            }}
+          >
             {option}
           </DropdownMenuItem>
         ))}

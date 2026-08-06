@@ -58,7 +58,7 @@ export function ConfirmDialog({
       }
       setError(null);
       setOpen(false);
-      haptic("success");
+      haptic(confirmVariant === "destructive" ? "warning" : "success");
     });
 
   return (

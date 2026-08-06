@@ -11,6 +11,7 @@ import {
 } from "@/shadcn/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { cn } from "@/shadcn/utils";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
 
 type ComboboxOption = { value: string; label: string };
@@ -108,6 +109,7 @@ export function Combobox({
               key={option.value}
               type="button"
               onClick={() => {
+                haptic("selection");
                 onValueChange(option.value);
                 setOpen(false);
               }}
