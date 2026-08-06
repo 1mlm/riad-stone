@@ -291,20 +291,6 @@ function DateRangeFilterContent({
           setField("to", range?.to ? toDateInputValue(range.to) : "");
         }}
       />
-      {(from || to) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="justify-start"
-          onClick={() => {
-            setField("from", "");
-            setField("to", "");
-          }}
-        >
-          <Icon icon={ICONS.cancel} />
-          Effacer
-        </Button>
-      )}
     </div>
   );
 }
