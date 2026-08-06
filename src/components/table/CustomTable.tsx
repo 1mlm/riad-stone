@@ -115,7 +115,14 @@ export type CustomTableColumn<T> = {
       searchable?: boolean;
       getString: (item: T) => string;
     }
-  | { type: "date"; getDate: (item: T) => Date | undefined }
+  | {
+      type: "date";
+      getDate: (item: T) => Date | undefined;
+      // relative time with a hover tooltip for the exact date (default) vs.
+      // plain absolute "06/08/2026" — use absolute for dates with no time
+      // component, where relative phrasing ("il y a 2 jours") reads oddly
+      relative?: boolean;
+    }
   | { type: "boolean"; getBoolean: (item: T) => boolean; trueIcon?: HugeIcon }
   | {
       type: "enum";

@@ -28,6 +28,7 @@ import {
   formatDetailedDuration,
   formatExactDate,
   formatRelativeDate,
+  formatShortDate,
 } from "@/utils/date";
 import { haptic } from "@/utils/haptics";
 import { AlignedNumber } from "./AlignedNumber";
@@ -102,8 +103,17 @@ export function CopyButton({
   );
 }
 
-export function DateCell({ date }: { date: Date | undefined }) {
+export function DateCell({
+  date,
+  relative = true,
+}: {
+  date: Date | undefined;
+  relative?: boolean;
+}) {
   if (!date) return <CustomTableEmptyValue />;
+
+  if (!relative)
+    return <span className="font-normal">{formatShortDate(date)}</span>;
 
   return (
     <span className="font-normal italic inline-flex items-center gap-2 group/date">
@@ -258,7 +268,8 @@ export function CustomTableCell<T>({
   if (column.type === "copy") {
     return <CopyButton value={column.getString(item)} />;
   }
-  if (column.type === "date") return <DateCell date={column.getDate(item)} />;
+  if (column.type === "date")
+    return <DateCell date={column.getDate(item)} relative={column.relative} />;
   if (column.type === "buttons") return <>{column.getButtons(item)}</>;
   if (column.type === "boolean") {
     return column.getBoolean(item) ? (

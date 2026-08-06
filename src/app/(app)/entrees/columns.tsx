@@ -57,6 +57,7 @@ export function createDateColumn<
     label: ENTREE_FIELD_BY_KEY.date.label,
     icon: ENTREE_FIELD_BY_KEY.date.icon,
     type: "date",
+    relative: false,
     getDate: (row) => row.date,
   };
 }
