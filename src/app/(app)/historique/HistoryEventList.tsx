@@ -284,7 +284,6 @@ function HistoryEventListContent({
         {...{ columns }}
         getItemId={(event) => String(event.id)}
         exportFilePrefix="historique"
-        filterable={false}
         searchQueryKey="hq"
         pageQueryKey="hpage"
         sortQueryKey="hsort"
