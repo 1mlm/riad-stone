@@ -1,6 +1,6 @@
 "use client";
 
-import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { Loading01Icon } from "@hugeicons/core-free-icons";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
@@ -35,7 +35,7 @@ export function DelayedButton({
         children
       ) : (
         <>
-          <Icon icon={Loading03Icon} className="animate-spin" />
+          <Icon icon={Loading01Icon} className="animate-spin" />
           Patientez…
         </>
       )}

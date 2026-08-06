@@ -1,15 +1,15 @@
 import {
-  ArchiveArrowDownIcon,
-  ArchiveArrowUpIcon,
+  Download02Icon,
   PackageIcon,
   ScrollIcon,
+  Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import type { HugeIcon } from "@/components/Icon";
 
 export const APP_HEADER: { iconSrc: string; text: string; subtext?: string } = {
   iconSrc: "/icon.svg",
   text: "Riad Stone",
-  subtext: "Pour Blal 😋",
+  subtext: "Pour Blal par Malik 😋",
 };
 
 export const NAV_ITEMS: {
@@ -21,13 +21,13 @@ export const NAV_ITEMS: {
   {
     href: "/entrees",
     label: "Entrées",
-    icon: ArchiveArrowDownIcon,
+    icon: Download02Icon,
     countKey: "entrees",
   },
   {
     href: "/sorties",
     label: "Sorties",
-    icon: ArchiveArrowUpIcon,
+    icon: Upload01Icon,
     countKey: "sorties",
   },
   { href: "/stock", label: "Stock", icon: PackageIcon, countKey: "stock" },
