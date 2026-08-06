@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/shadcn/ui/table";
 import { cn } from "@/shadcn/utils";
+import { haptic } from "@/utils/haptics";
 import { CustomTableCell } from "./CustomTableCell";
 import { CustomTableColumnHeader } from "./CustomTableColumnHeader";
 import { ExtractButton } from "./ExtractButton";
@@ -440,6 +441,7 @@ export function CustomTable<T>({
   }, [columns, paginatedItems]);
 
   const toggleRow = (id: string) => {
+    haptic("selection");
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -455,6 +457,7 @@ export function CustomTable<T>({
   const allSelected =
     visibleItems.length > 0 && visibleSelectedCount === visibleItems.length;
   const toggleAll = () => {
+    haptic("selection");
     const next = new Set(selectedIds);
     for (const item of visibleItems) {
       if (allSelected) next.delete(getItemId(item));

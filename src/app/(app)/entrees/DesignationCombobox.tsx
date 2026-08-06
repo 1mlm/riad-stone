@@ -16,6 +16,7 @@ import {
   InputGroupInput,
 } from "@/shadcn/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
 
 export function DesignationCombobox({
@@ -35,6 +36,7 @@ export function DesignationCombobox({
   const [search, setSearch] = useState("");
 
   const select = (next: string) => {
+    haptic("selection");
     onValueChange(next);
     setSearch("");
     setOpen(false);

@@ -19,6 +19,7 @@ import {
 } from "@/shadcn/ui/dropdown-menu";
 import { Input } from "@/shadcn/ui/input";
 import { cn } from "@/shadcn/utils";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
 import { type LengthUnit, lengthToMeters, metersToUnit } from "@/utils/length";
 import type { CustomTableColumn } from "./CustomTable";
@@ -52,7 +53,13 @@ function CheckboxRow({
       htmlFor={id}
       className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
     >
-      <Checkbox {...{ id, checked, onCheckedChange }} />
+      <Checkbox
+        {...{ id, checked }}
+        onCheckedChange={() => {
+          haptic("selection");
+          onCheckedChange();
+        }}
+      />
       {children}
     </label>
   );
@@ -271,6 +278,7 @@ function DateRangeFilterContent({
             size="sm"
             className="h-6 px-2 text-xs"
             onClick={() => {
+              haptic("selection");
               const [start, end] = preset.getRange();
               setField("from", start.toISOString());
               setField("to", end.toISOString());
@@ -287,6 +295,7 @@ function DateRangeFilterContent({
           to: to ? new Date(to) : undefined,
         }}
         onSelect={(range) => {
+          haptic("selection");
           setField("from", range?.from ? toDateInputValue(range.from) : "");
           setField("to", range?.to ? toDateInputValue(range.to) : "");
         }}
