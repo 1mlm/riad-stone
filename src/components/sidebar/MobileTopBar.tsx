@@ -201,7 +201,7 @@ export function MobileTopBar() {
   return (
     <nav
       className={cn(
-        "fixed inset-x-4 top-4 z-20 flex overflow-hidden rounded-t-[1.75rem] rounded-b-full corner-squircle border border-border/50 bg-sidebar/90 shadow-lg backdrop-blur-sm transition-transform duration-200 ease-in-out sm:hidden",
+        "fixed inset-x-4 top-4 z-20 flex overflow-hidden rounded-t-[1.5rem]! rounded-b-[2rem]! corner-squircle border border-border/50 bg-sidebar/90 shadow-lg backdrop-blur-sm transition-transform duration-200 ease-in-out sm:hidden",
         hidden && "-translate-y-[calc(100%+2rem)]",
       )}
     >
