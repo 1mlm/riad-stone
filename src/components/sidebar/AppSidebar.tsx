@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
 } from "@/shadcn/ui/sidebar";
 import { APP_HEADER, NAV_ITEMS } from "./data";
 import { LogoutButton } from "./LogoutButton";
@@ -36,9 +37,9 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
                 <Image
                   src={APP_HEADER.iconSrc}
                   alt={APP_HEADER.text}
-                  width={32}
-                  height={32}
-                  className="size-6 shrink-0 group-data-[collapsible=icon]:size-8"
+                  width={40}
+                  height={40}
+                  className="size-8 shrink-0 group-data-[collapsible=icon]:size-10"
                 />
                 <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
                   <span className="font-semibold">{APP_HEADER.text}</span>
@@ -51,6 +52,7 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+          <SidebarTrigger className="rounded-full corner-squircle self-start" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu className="px-2">
