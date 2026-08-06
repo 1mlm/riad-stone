@@ -28,31 +28,33 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
     <>
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                size="lg"
-                className="rounded-full corner-squircle select-none! active:bg-sidebar hover:bg-sidebar cursor-auto"
-              >
-                <Image
-                  src={APP_HEADER.iconSrc}
-                  alt={APP_HEADER.text}
-                  width={40}
-                  height={40}
-                  className="size-8 shrink-0 group-data-[collapsible=icon]:size-10"
-                />
-                <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="font-semibold">{APP_HEADER.text}</span>
-                  {APP_HEADER.subtext && (
-                    <span className="text-xs text-muted-foreground">
-                      {APP_HEADER.subtext}
-                    </span>
-                  )}
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-          <SidebarTrigger className="rounded-full corner-squircle self-start" />
+          <div className="flex items-center justify-between gap-1 group-data-[collapsible=icon]:flex-col">
+            <SidebarMenu className="flex-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  size="lg"
+                  className="rounded-full corner-squircle select-none! active:bg-sidebar hover:bg-sidebar cursor-auto"
+                >
+                  <Image
+                    src={APP_HEADER.iconSrc}
+                    alt={APP_HEADER.text}
+                    width={40}
+                    height={40}
+                    className="size-8 shrink-0 group-data-[collapsible=icon]:size-10"
+                  />
+                  <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
+                    <span className="font-semibold">{APP_HEADER.text}</span>
+                    {APP_HEADER.subtext && (
+                      <span className="text-xs text-muted-foreground">
+                        {APP_HEADER.subtext}
+                      </span>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <SidebarTrigger className="rounded-full corner-squircle shrink-0" />
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu className="px-2">
