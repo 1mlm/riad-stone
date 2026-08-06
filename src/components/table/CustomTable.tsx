@@ -17,6 +17,7 @@ import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { Button } from "@/shadcn/ui/button";
 import { Checkbox } from "@/shadcn/ui/checkbox";
+import { Input } from "@/shadcn/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -24,6 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/shadcn/ui/pagination";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { Skeleton } from "@/shadcn/ui/skeleton";
 import {
   TableBody,
@@ -247,6 +249,8 @@ export function CustomTable<T>({
   onDeleteSelected?: (items: T[]) => Promise<{ error: string | null }>;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pageJumpOpen, setPageJumpOpen] = useState(false);
+  const [pageJumpValue, setPageJumpValue] = useState("");
   const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
   const [sortRaw, setSortRaw] = useQueryState(sortQueryKey, {
     defaultValue: "",
@@ -630,9 +634,47 @@ export function CustomTable<T>({
                   />
                 </PaginationItem>
                 <PaginationItem>
-                  <span className="px-2 text-sm whitespace-nowrap text-muted-foreground">
-                    Page {currentPage} sur {pageCount}
-                  </span>
+                  <Popover
+                    open={pageJumpOpen}
+                    onOpenChange={(open) => {
+                      setPageJumpOpen(open);
+                      if (open) setPageJumpValue(String(currentPage));
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="rounded-sm px-2 text-sm whitespace-nowrap text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        Page {currentPage} sur {pageCount}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto">
+                      <form
+                        className="flex items-center gap-2"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const target = Number(pageJumpValue);
+                          if (Number.isInteger(target))
+                            setPage(Math.min(Math.max(target, 1), pageCount));
+                          setPageJumpOpen(false);
+                        }}
+                      >
+                        <Input
+                          type="number"
+                          min={1}
+                          max={pageCount}
+                          autoFocus
+                          value={pageJumpValue}
+                          onChange={(e) => setPageJumpValue(e.target.value)}
+                          className="h-8 w-20"
+                        />
+                        <Button type="submit" size="sm">
+                          Aller
+                        </Button>
+                      </form>
+                    </PopoverContent>
+                  </Popover>
                 </PaginationItem>
                 <PaginationItem>
                   <PaginationNext
