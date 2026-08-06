@@ -49,18 +49,20 @@ export async function clearAllData(): Promise<void> {
   revalidatePath("/historique");
 }
 
-// designations are repeated on purpose (e.g. 6x Ibiza, 4x Granite Blanc) so
-// the stock table has enough duplicate rows to exercise cell-merge rendering
+// pool is small on purpose, drawn from repeatedly below — that's what
+// produces the duplicate designations the stock table's cell-merge
+// rendering needs to be exercised
 const DESIGNATION_POOL: { designation: string; origine: string }[] = [
-  ...Array(6).fill({ designation: "Marbre Ibiza", origine: "Espagne" }),
-  ...Array(4).fill({ designation: "Granite Blanc", origine: "Maroc" }),
-  ...Array(2).fill({ designation: "Granite Gris", origine: "Maroc" }),
+  { designation: "Marbre Ibiza", origine: "Espagne" },
+  { designation: "Granite Blanc", origine: "Maroc" },
+  { designation: "Granite Gris", origine: "Maroc" },
   { designation: "Travertin Beige", origine: "Turquie" },
   { designation: "Granite Noir", origine: "Inde" },
   { designation: "Marbre Carrare", origine: "Italie" },
   { designation: "Granite Tan Brown", origine: "Inde" },
   { designation: "Travertin Noce", origine: "Turquie" },
   { designation: "Marbre Emperador", origine: "Espagne" },
+  { designation: "Marbre Calacatta", origine: "Italie" },
 ];
 
 const DIMENSIONS: [number, number][] = [
@@ -71,28 +73,37 @@ const DIMENSIONS: [number, number][] = [
   [0.6, 0.6],
 ];
 
+// large enough that every table (entrees, sorties, historique) spans
+// several pages, so pagination/filtering/sorting can actually be exercised
+const ENTREE_COUNT = 140;
+const SORTIE_RATIO = 0.6;
+
 function buildFakeEntrees() {
   faker.seed(1312);
 
-  return faker.helpers
-    .shuffle(DESIGNATION_POOL)
-    .map(({ designation, origine }, index) => {
-      const [longueur, largeur] = faker.helpers.arrayElement(DIMENSIONS);
-      return {
-        reference: `TZ${String(index + 1).padStart(2, "0")}`,
-        designation,
-        origine,
-        date: faker.date.past({ years: 1 }),
-        longueur,
-        largeur,
-        nombrePieces: faker.number.int({ min: 15, max: 200 }),
-      };
-    });
+  return Array.from({ length: ENTREE_COUNT }, (_, index) => {
+    const { designation, origine } = faker.helpers.arrayElement(
+      DESIGNATION_POOL,
+    );
+    const [longueur, largeur] = faker.helpers.arrayElement(DIMENSIONS);
+    return {
+      reference: `TZ${String(index + 1).padStart(3, "0")}`,
+      designation,
+      origine,
+      conteneur: faker.datatype.boolean()
+        ? faker.string.alphanumeric(8).toUpperCase()
+        : null,
+      date: faker.date.past({ years: 1 }),
+      longueur,
+      largeur,
+      nombrePieces: faker.number.int({ min: 15, max: 200 }),
+    };
+  });
 }
 
 function buildFakeSorties(entrees: ReturnType<typeof buildFakeEntrees>) {
   return faker.helpers
-    .arrayElements(entrees, { min: 4, max: 6 })
+    .arrayElements(entrees, Math.round(entrees.length * SORTIE_RATIO))
     .map((entree) => ({
       entreeReference: entree.reference,
       nombrePieces: faker.number.int({ min: 1, max: entree.nombrePieces }),
@@ -101,18 +112,15 @@ function buildFakeSorties(entrees: ReturnType<typeof buildFakeEntrees>) {
     }));
 }
 
-// covers every entree/sortie HistoryItemType with a representative snapshot
-// shape, so the historique page can be reviewed against every combination
-// at once — deliberately excludes LOGIN/LOGOUT/CLEAR_EVERYTHING, since those
-// are meant to be a real security audit trail and faking them would make a
-// fabricated login/logout/wipe indistinguishable from a real one
+// one CREATE per entree/sortie plus a sprinkling of UPDATE/DELETE, so the
+// historique page gets as many pages of data as entrees/sorties do —
+// deliberately excludes LOGIN/LOGOUT/CLEAR_EVERYTHING, since those are meant
+// to be a real security audit trail and faking them would make a fabricated
+// login/logout/wipe indistinguishable from a real one
 function buildFakeHistoryEvents(
   entrees: ReturnType<typeof buildFakeEntrees>,
   sorties: ReturnType<typeof buildFakeSorties>,
 ): { type: HistoryItemType; data: Prisma.InputJsonObject; createdAt: Date }[] {
-  const [createdEntree, updatedEntreeBefore, deletedEntree] = entrees;
-  const [createdSortie, updatedSortieBefore] = sorties;
-
   const entreeSnapshot = (entree: (typeof entrees)[number]) => ({
     reference: entree.reference,
     designation: entree.designation,
@@ -130,59 +138,71 @@ function buildFakeHistoryEvents(
     dateSortie: sortie.dateSortie.toISOString(),
   });
 
-  return [
-    {
-      type: HistoryItemType.CREATE_INPUT,
-      data: entreeSnapshot(createdEntree),
-      createdAt: createdEntree.date,
-    },
-    {
-      type: HistoryItemType.UPDATE_INPUT,
-      data: {
-        before: entreeSnapshot(updatedEntreeBefore),
-        after: {
-          ...entreeSnapshot(updatedEntreeBefore),
-          nombrePieces: updatedEntreeBefore.nombrePieces + 7,
-        },
+  type FakeHistoryEvent = {
+    type: HistoryItemType;
+    data: Prisma.InputJsonObject;
+    createdAt: Date;
+  };
+
+  const entreeEvents = entrees.flatMap((entree, index) => {
+    const events: FakeHistoryEvent[] = [
+      {
+        type: HistoryItemType.CREATE_INPUT,
+        data: entreeSnapshot(entree),
+        createdAt: entree.date,
       },
-      createdAt: faker.date.soon({
-        days: 1,
-        refDate: updatedEntreeBefore.date,
-      }),
-    },
-    {
-      type: HistoryItemType.DELETE_INPUT,
-      data: entreeSnapshot(deletedEntree),
-      createdAt: faker.date.soon({ days: 2, refDate: deletedEntree.date }),
-    },
-    {
-      type: HistoryItemType.CREATE_OUTPUT,
-      data: sortieSnapshot(createdSortie),
-      createdAt: createdSortie.dateSortie,
-    },
-    {
-      type: HistoryItemType.UPDATE_OUTPUT,
-      data: {
-        before: sortieSnapshot(updatedSortieBefore),
-        after: {
-          ...sortieSnapshot(updatedSortieBefore),
-          bonCommande: `C1${faker.string.numeric(8)}`,
+    ];
+    if (index % 6 === 0)
+      events.push({
+        type: HistoryItemType.UPDATE_INPUT,
+        data: {
+          before: entreeSnapshot(entree),
+          after: {
+            ...entreeSnapshot(entree),
+            nombrePieces: entree.nombrePieces + 7,
+          },
         },
+        createdAt: faker.date.soon({ days: 1, refDate: entree.date }),
+      });
+    if (index % 11 === 0)
+      events.push({
+        type: HistoryItemType.DELETE_INPUT,
+        data: entreeSnapshot(entree),
+        createdAt: faker.date.soon({ days: 2, refDate: entree.date }),
+      });
+    return events;
+  });
+
+  const sortieEvents = sorties.flatMap((sortie, index) => {
+    const events: FakeHistoryEvent[] = [
+      {
+        type: HistoryItemType.CREATE_OUTPUT,
+        data: sortieSnapshot(sortie),
+        createdAt: sortie.dateSortie,
       },
-      createdAt: faker.date.soon({
-        days: 1,
-        refDate: updatedSortieBefore.dateSortie,
-      }),
-    },
-    {
-      type: HistoryItemType.DELETE_OUTPUT,
-      data: sortieSnapshot(updatedSortieBefore),
-      createdAt: faker.date.soon({
-        days: 3,
-        refDate: updatedSortieBefore.dateSortie,
-      }),
-    },
-  ];
+    ];
+    if (index % 7 === 0)
+      events.push({
+        type: HistoryItemType.UPDATE_OUTPUT,
+        data: {
+          before: sortieSnapshot(sortie),
+          after: {
+            ...sortieSnapshot(sortie),
+            bonCommande: `C1${faker.string.numeric(8)}`,
+          },
+        },
+        createdAt: faker.date.soon({ days: 1, refDate: sortie.dateSortie }),
+      });
+    if (index % 13 === 0)
+      events.push({
+        type: HistoryItemType.DELETE_OUTPUT,
+        data: sortieSnapshot(sortie),
+        createdAt: faker.date.soon({ days: 3, refDate: sortie.dateSortie }),
+      });
+    return events;
+  });
+
+  return [...entreeEvents, ...sortieEvents];
 }
 
 export async function seedFakeData(): Promise<void> {
