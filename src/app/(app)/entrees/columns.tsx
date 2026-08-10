@@ -152,3 +152,42 @@ export function createSurfaceTotaleColumn<
     getNumber: getSurfaceTotaleM2,
   };
 }
+
+// sum of every row's surface totale sharing that designation, repeated on
+// each of that designation's rows — computed once over all rows so it
+// doesn't shift as the user searches/filters. Left blank for designations
+// with a single lot, where it would just repeat surfaceTotale
+export function createSurfaceDesignationColumn<T extends EntreeLikeRow>(
+  items: T[],
+): CustomTableColumn<T> {
+  const totalsByDesignation = new Map<string, number>();
+  const countByDesignation = new Map<string, number>();
+  for (const row of items) {
+    totalsByDesignation.set(
+      row.designation,
+      (totalsByDesignation.get(row.designation) ?? 0) + getSurfaceTotaleM2(row),
+    );
+    countByDesignation.set(
+      row.designation,
+      (countByDesignation.get(row.designation) ?? 0) + 1,
+    );
+  }
+
+  return {
+    id: "surfaceDesignation",
+    label: "Surface de désignation",
+    icon: ICONS.surfaceDesignation,
+    type: "string",
+    align: "right",
+    filterType: "number",
+    decimals: 4,
+    suffix: "m²",
+    mergeAdjacent: true,
+    getMergeKey: (row) => row.designation,
+    getString: (row) =>
+      (countByDesignation.get(row.designation) ?? 0) > 1
+        ? (totalsByDesignation.get(row.designation) ?? 0).toFixed(4)
+        : "",
+    getNumber: (row) => totalsByDesignation.get(row.designation) ?? 0,
+  };
+}

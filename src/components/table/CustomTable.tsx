@@ -109,6 +109,10 @@ export type CustomTableColumn<T> = {
       // merges consecutive rows sharing the same getString value into one
       // rowspan-ed cell — only makes sense once rows are sorted by this column
       mergeAdjacent?: boolean;
+      // groups runs by this instead of getString — for a column whose display
+      // can be blank (e.g. a per-group total hidden for single-row groups),
+      // where two unrelated blank rows would otherwise look "equal" and merge
+      getMergeKey?: (item: T) => string;
     }
   | {
       type: "copy";
@@ -377,12 +381,12 @@ export function CustomTable<T>({
     const runs = new Map<string, { start: boolean; length: number }[]>();
     for (const column of columns) {
       if (column.type !== "string" || !column.mergeAdjacent) continue;
-      const getString = column.getString;
+      const getKey = column.getMergeKey ?? column.getString;
       const arr: { start: boolean; length: number }[] = [];
       for (let i = 0; i < paginatedItems.length; i++) {
         if (
           i > 0 &&
-          getString(paginatedItems[i - 1]) === getString(paginatedItems[i])
+          getKey(paginatedItems[i - 1]) === getKey(paginatedItems[i])
         ) {
           arr.push({ start: false, length: 0 });
           continue;
@@ -390,7 +394,7 @@ export function CustomTable<T>({
         let length = 1;
         while (
           i + length < paginatedItems.length &&
-          getString(paginatedItems[i + length]) === getString(paginatedItems[i])
+          getKey(paginatedItems[i + length]) === getKey(paginatedItems[i])
         )
           length++;
         arr.push({ start: true, length });

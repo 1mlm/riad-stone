@@ -20,6 +20,7 @@ import {
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
+  createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
   DESIGNATION_THEN_REFERENCE_SORT,
@@ -59,6 +60,7 @@ function EntreesTableContent({
       createSurfacePieceColumn(),
       createNombrePiecesColumn(),
       createSurfaceTotaleColumn(),
+      createSurfaceDesignationColumn(visibleItems),
       {
         id: "actions",
         label: "Actions",

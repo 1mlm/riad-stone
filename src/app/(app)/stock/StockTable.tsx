@@ -9,6 +9,7 @@ import {
   createNombrePiecesColumn,
   createOrigineColumn,
   createReferenceColumn,
+  createSurfaceDesignationColumn,
   createSurfacePieceColumn,
   createSurfaceTotaleColumn,
   DESIGNATION_THEN_REFERENCE_SORT,
@@ -40,6 +41,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
       createSurfacePieceColumn(),
       createNombrePiecesColumn("Pièces restantes"),
       createSurfaceTotaleColumn(),
+      createSurfaceDesignationColumn(items),
       {
         id: "actions",
         label: "Actions",
