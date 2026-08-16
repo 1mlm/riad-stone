@@ -16,6 +16,7 @@ import {
 import { Label } from "@/shadcn/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shadcn/ui/radio-group";
 import { type CustomTableColumn, getColumnExportValue } from "./CustomTable";
+import type { CustomTableLabels } from "./labels";
 
 type ExportFormat = "excel" | "csv";
 
@@ -116,12 +117,14 @@ export function ExtractDialog<T>({
   items,
   columns,
   filePrefix,
+  labels,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   items: T[];
   columns: CustomTableColumn<T>[];
   filePrefix: string;
+  labels: CustomTableLabels;
 }) {
   const [format, setFormat] = useState<ExportFormat>("excel");
 
@@ -137,12 +140,9 @@ export function ExtractDialog<T>({
     <Dialog {...{ open, onOpenChange }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            Extraire {items.length} élément{items.length > 1 ? "s" : ""}
-          </DialogTitle>
+          <DialogTitle>{labels.extractDialogTitle(items.length)}</DialogTitle>
           <DialogDescription>
-            Choisissez un format de fichier pour télécharger les lignes
-            sélectionnées.
+            {labels.extractDialogDescription}
           </DialogDescription>
         </DialogHeader>
         <RadioGroup
@@ -151,17 +151,17 @@ export function ExtractDialog<T>({
         >
           <div className="flex items-center gap-2">
             <RadioGroupItem value="excel" id="extract-format-excel" />
-            <Label htmlFor="extract-format-excel">Excel (.xlsx)</Label>
+            <Label htmlFor="extract-format-excel">{labels.excelFormat}</Label>
           </div>
           <div className="flex items-center gap-2">
             <RadioGroupItem value="csv" id="extract-format-csv" />
-            <Label htmlFor="extract-format-csv">CSV (.csv)</Label>
+            <Label htmlFor="extract-format-csv">{labels.csvFormat}</Label>
           </div>
         </RadioGroup>
         <DialogFooter>
           <Button onClick={handleConfirm}>
             <Icon icon={Download01Icon} />
-            Extraire {items.length} élément{items.length > 1 ? "s" : ""}
+            {labels.extractDialogTitle(items.length)}
           </Button>
         </DialogFooter>
       </DialogContent>

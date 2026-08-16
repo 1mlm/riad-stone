@@ -23,6 +23,7 @@ import {
 } from "@/components/table/CustomTable";
 import type { HistoryEvent } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
+import { fr } from "@/messages/fr";
 import { cn } from "@/shadcn/utils";
 import type { DeviceInfo } from "@/utils/deviceInfo";
 import {
@@ -277,6 +278,8 @@ function HistoryEventListContent({
       <SearchBar
         placeholder="Rechercher dans l'historique..."
         queryKey="hq"
+        resultLabelSingular={fr.searchBar.resultLabelSingular}
+        resultLabelPlural={fr.searchBar.resultLabelPlural}
         {...{ resultCount }}
       />
       <CustomTable
@@ -289,6 +292,7 @@ function HistoryEventListContent({
         sortQueryKey="hsort"
         defaultSort={[{ columnId: "date", dir: "desc" }]}
         onVisibleCountChange={setResultCount}
+        labels={fr.table}
       />
     </div>
   );

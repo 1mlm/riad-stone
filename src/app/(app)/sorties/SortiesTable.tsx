@@ -20,6 +20,7 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { CopyButton } from "@/components/table/CustomTableCell";
+import { fr } from "@/messages/fr";
 import { ICONS } from "@/utils/icon";
 import { AddSortieDialog } from "./AddSortieDialog";
 import { deleteSortie } from "./actions";
@@ -87,7 +88,7 @@ function SortiesTableContent({
         getButtons: (row) => (
           <div className="flex items-center justify-center gap-1">
             <CopyButton
-              value={buildRowSummary(columns, row)}
+              value={buildRowSummary(columns, row, fr.common.locale)}
               variant="outline"
               size="icon-sm"
               className="corner-squircle"
@@ -96,6 +97,9 @@ function SortiesTableContent({
             <DeleteRowButton
               title="Supprimer cette sortie ?"
               content={`La sortie de l'entrée ${row.entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
+              confirmLabel={fr.deleteRow.confirmLabel}
+              cancelLabel={fr.common.cancel}
+              waitingLabel={fr.common.pleaseWait}
               onConfirm={async () => {
                 setPendingRemovedIds((prev) => new Set(prev).add(row.id));
                 const result = await deleteSortie(row.id);
@@ -121,6 +125,8 @@ function SortiesTableContent({
         <SearchBar
           className="flex-1"
           placeholder="Rechercher une sortie..."
+          resultLabelSingular={fr.searchBar.resultLabelSingular}
+          resultLabelPlural={fr.searchBar.resultLabelPlural}
           {...{ resultCount }}
         />
         <AddSortieDialog {...{ availableEntrees }} />
@@ -151,6 +157,7 @@ function SortiesTableContent({
         }}
         defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
+        labels={fr.table}
       />
     </div>
   );

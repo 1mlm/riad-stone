@@ -24,9 +24,9 @@ export function Combobox({
   options,
   value,
   onValueChange,
-  placeholder = "Sélectionner...",
-  searchPlaceholder = "Rechercher...",
-  emptyLabel = "Aucun résultat.",
+  placeholder = "Select...",
+  searchPlaceholder = "Search...",
+  emptyLabel = "No results.",
   required,
   ariaInvalid,
 }: {

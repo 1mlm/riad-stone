@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { DatePickerField } from "@/components/DatePickerField";
 import { FieldLabel } from "@/components/FieldLabel";
 import { Icon } from "@/components/Icon";
+import { fr } from "@/messages/fr";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { Separator } from "@/shadcn/ui/separator";
 import { cn } from "@/shadcn/utils";
@@ -91,6 +92,8 @@ function FieldInput({
       <DatePickerField
         name={getInputName(field.key, context)}
         defaultValue={entree?.date}
+        placeholder={fr.datePicker.placeholder}
+        locale={fr.common.locale}
       />
     );
 

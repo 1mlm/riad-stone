@@ -28,6 +28,8 @@ const localMidnightToUtcIsoDate = (date: Date) =>
 export function DatePickerField({
   name,
   defaultValue,
+  placeholder = "Now",
+  locale = "en-US",
 }: {
   name: string;
   // left unset (add mode), the field submits empty and the server stamps
@@ -35,6 +37,8 @@ export function DatePickerField({
   // mount at. Edit mode passes the entree's real date, which stays fixed
   // until the user actually touches the picker.
   defaultValue?: Date;
+  placeholder?: string;
+  locale?: string;
 }) {
   const [date, setDate] = useState<Date | undefined>(
     defaultValue ? utcDateToLocalMidnight(defaultValue) : undefined,
@@ -50,8 +54,8 @@ export function DatePickerField({
           </InputGroupAddon>
           <InputGroupInput
             readOnly
-            value={date ? date.toLocaleDateString("fr-FR") : ""}
-            placeholder="Maintenant"
+            value={date ? date.toLocaleDateString(locale) : ""}
+            {...{ placeholder }}
             className="cursor-pointer"
           />
         </InputGroup>

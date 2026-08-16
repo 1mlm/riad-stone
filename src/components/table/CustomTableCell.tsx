@@ -34,6 +34,7 @@ import { haptic } from "@/utils/haptics";
 import { AlignedNumber } from "./AlignedNumber";
 import type { CustomTableColumn, CustomTableEnumValue } from "./CustomTable";
 import { CustomTableEmptyValue } from "./CustomTableEmptyValue";
+import type { CustomTableLabels } from "./labels";
 
 export function EnumBadge({ value }: { value: CustomTableEnumValue }) {
   const badge = (
@@ -106,9 +107,11 @@ export function CopyButton({
 export function DateCell({
   date,
   relative = true,
+  timestampLabel = "Timestamp: ",
 }: {
   date: Date | undefined;
   relative?: boolean;
+  timestampLabel?: string;
 }) {
   if (!date) return <CustomTableEmptyValue />;
 
@@ -138,7 +141,7 @@ export function DateCell({
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Icon icon={CodeIcon} />
-            <span className="font-semibold">Horodatage : </span>
+            <span className="font-semibold">{timestampLabel}</span>
             {date.getTime()}
           </span>
         </TooltipContent>
@@ -246,9 +249,11 @@ function renderStringContent<T>(
 export function CustomTableCell<T>({
   column,
   item,
+  labels,
 }: {
   column: CustomTableColumn<T>;
   item: T;
+  labels: CustomTableLabels;
 }) {
   if (column.type === "string") {
     const value = column.getString(item);
@@ -269,7 +274,13 @@ export function CustomTableCell<T>({
     return <CopyButton value={column.getString(item)} />;
   }
   if (column.type === "date")
-    return <DateCell date={column.getDate(item)} relative={column.relative} />;
+    return (
+      <DateCell
+        date={column.getDate(item)}
+        relative={column.relative}
+        timestampLabel={labels.timestamp}
+      />
+    );
   if (column.type === "buttons") return <>{column.getButtons(item)}</>;
   if (column.type === "boolean") {
     return column.getBoolean(item) ? (

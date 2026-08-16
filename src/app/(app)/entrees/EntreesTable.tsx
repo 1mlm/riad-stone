@@ -9,6 +9,7 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { CopyButton } from "@/components/table/CustomTableCell";
+import { fr } from "@/messages/fr";
 import { ICONS } from "@/utils/icon";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
@@ -69,7 +70,7 @@ function EntreesTableContent({
         getButtons: (row) => (
           <div className="flex items-center justify-center gap-1">
             <CopyButton
-              value={buildRowSummary(columns, row)}
+              value={buildRowSummary(columns, row, fr.common.locale)}
               variant="outline"
               size="icon-sm"
               className="corner-squircle"
@@ -78,6 +79,9 @@ function EntreesTableContent({
             <DeleteRowButton
               title="Supprimer cette entrée ?"
               content={`L'entrée ${row.reference} sera supprimée définitivement. Cette action est irréversible.`}
+              confirmLabel={fr.deleteRow.confirmLabel}
+              cancelLabel={fr.common.cancel}
+              waitingLabel={fr.common.pleaseWait}
               onConfirm={async () => {
                 setPendingRemovedRefs((prev) =>
                   new Set(prev).add(row.reference),
@@ -105,6 +109,8 @@ function EntreesTableContent({
         <SearchBar
           className="flex-1"
           placeholder="Rechercher une entrée..."
+          resultLabelSingular={fr.searchBar.resultLabelSingular}
+          resultLabelPlural={fr.searchBar.resultLabelPlural}
           {...{ resultCount }}
         />
         <AddEntreeDialog {...{ designationSuggestions, fieldSuggestions }} />
@@ -135,6 +141,7 @@ function EntreesTableContent({
         }}
         defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
+        labels={fr.table}
       />
     </div>
   );

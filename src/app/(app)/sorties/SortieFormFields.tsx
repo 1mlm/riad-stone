@@ -3,6 +3,7 @@
 import { Calendar04Icon, InvoiceIcon } from "@hugeicons/core-free-icons";
 import { DatePickerField } from "@/components/DatePickerField";
 import { FieldLabel } from "@/components/FieldLabel";
+import { fr } from "@/messages/fr";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import type { SortieRow } from "./types";
 
@@ -36,7 +37,12 @@ export function SortieFormFields({
         <FieldLabel icon={Calendar04Icon} required>
           Date de sortie
         </FieldLabel>
-        <DatePickerField name="dateSortie" defaultValue={sortie?.dateSortie} />
+        <DatePickerField
+          name="dateSortie"
+          defaultValue={sortie?.dateSortie}
+          placeholder={fr.datePicker.placeholder}
+          locale={fr.common.locale}
+        />
       </div>
     </>
   );

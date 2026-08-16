@@ -49,6 +49,7 @@ import {
   parseSort,
   serializeSort,
 } from "./filtering";
+import { type CustomTableLabels, resolveTableLabels } from "./labels";
 
 const PAGE_SIZE = 25;
 
@@ -176,13 +177,14 @@ export function getColumnExportValue<T>(
 export function buildRowSummary<T>(
   columns: CustomTableColumn<T>[],
   item: T,
+  locale = "en-US",
 ): string {
   return columns
     .filter((column) => column.type !== "buttons")
     .map((column) => {
       const value =
         column.type === "date"
-          ? (column.getDate(item)?.toLocaleDateString("fr-FR") ?? "")
+          ? (column.getDate(item)?.toLocaleDateString(locale) ?? "")
           : column.type === "string"
             ? column.getString(item)
             : getColumnExportValue(column, item);
@@ -232,6 +234,7 @@ export function CustomTable<T>({
   onVisibleCountChange,
   defaultSort,
   onDeleteSelected,
+  labels: labelOverrides,
 }: {
   items: T[];
   columns: CustomTableColumn<T>[];
@@ -259,7 +262,10 @@ export function CustomTable<T>({
   // enables the bulk-delete action in the selection bar; the table clears
   // its own selection once this resolves without an error
   onDeleteSelected?: (items: T[]) => Promise<{ error: string | null }>;
+  // English by default, override the keys you need to localize
+  labels?: Partial<CustomTableLabels>;
 }) {
+  const labels = resolveTableLabels(labelOverrides);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pageJumpOpen, setPageJumpOpen] = useState(false);
   const [pageJumpValue, setPageJumpValue] = useState("");
@@ -503,7 +509,7 @@ export function CustomTable<T>({
                         visibleItems.length,
                       )}
                       onCheckedChange={toggleAll}
-                      aria-label="Sélectionner toutes les lignes"
+                      aria-label={labels.selectAllRows}
                     />
                   </div>
                 </TableHead>
@@ -511,7 +517,7 @@ export function CustomTable<T>({
               {columns.map((column) => (
                 <TableHead key={column.id}>
                   <CustomTableColumnHeader
-                    {...{ column, items, filterable, sortable }}
+                    {...{ column, items, filterable, sortable, labels }}
                     getField={getColumnField(column.id)}
                     setField={(field: ColumnFilterField, value: string) =>
                       setColumnField(column.id, field, value)
@@ -581,7 +587,7 @@ export function CustomTable<T>({
                           <Checkbox
                             checked={selectedIds.has(id)}
                             onCheckedChange={() => toggleRow(id)}
-                            aria-label="Sélectionner la ligne"
+                            aria-label={labels.selectRow}
                           />
                         </div>
                       </TableCell>
@@ -611,7 +617,7 @@ export function CustomTable<T>({
                               "bg-foreground/5! align-middle",
                           )}
                         >
-                          <CustomTableCell {...{ column, item }} />
+                          <CustomTableCell {...{ column, item, labels }} />
                         </TableCell>
                       );
                     })}
@@ -624,7 +630,7 @@ export function CustomTable<T>({
       {!loading && visibleItems.length === 0 && (
         <MetaPage
           icon={InboxIcon}
-          title="Rien à afficher"
+          title={labels.emptyTitle}
           className="border-t border-border"
         />
       )}
@@ -660,7 +666,7 @@ export function CustomTable<T>({
                         type="button"
                         className="rounded-sm px-2 text-sm whitespace-nowrap text-muted-foreground hover:text-foreground hover:underline"
                       >
-                        Page {currentPage} sur {pageCount}
+                        {labels.pageOf(currentPage, pageCount)}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto">
@@ -684,7 +690,7 @@ export function CustomTable<T>({
                           className="h-8 w-20"
                         />
                         <Button type="submit" size="sm">
-                          Aller
+                          {labels.go}
                         </Button>
                       </form>
                     </PopoverContent>
@@ -714,10 +720,8 @@ export function CustomTable<T>({
               onClick={resetFilterAndSort}
             >
               <Icon icon={BrushCleaningIcon} />
-              <span className="hidden sm:inline">
-                Réinitialiser les filtres et le tri
-              </span>
-              <span className="sm:hidden">Réinitialiser</span>
+              <span className="hidden sm:inline">{labels.resetFilters}</span>
+              <span className="sm:hidden">{labels.resetFiltersShort}</span>
             </Button>
           )}
           {selectable && onDeleteSelected && selectedItems.length > 0 && (
@@ -726,17 +730,18 @@ export function CustomTable<T>({
                 <Button variant="destructive" className="shadow-lg">
                   <Icon icon={Delete02Icon} />
                   <span className="hidden sm:inline">
-                    Supprimer {selectedItems.length} élément
-                    {selectedItems.length > 1 ? "s" : ""}
+                    {labels.deleteSelected(selectedItems.length)}
                   </span>
                   <span className="sm:hidden">
-                    Supprimer {selectedItems.length}
+                    {labels.deleteSelectedShort(selectedItems.length)}
                   </span>
                 </Button>
               }
-              title={`Supprimer ${selectedItems.length} élément${selectedItems.length > 1 ? "s" : ""} ?`}
-              content="Ces lignes seront supprimées définitivement. Cette action est irréversible."
-              confirmLabel="Supprimer"
+              title={labels.deleteSelectedTitle(selectedItems.length)}
+              content={labels.deleteSelectedContent}
+              confirmLabel={labels.deleteSelected(selectedItems.length)}
+              cancelLabel={labels.cancel}
+              waitingLabel={labels.waiting}
               confirmIcon={Delete02Icon}
               onConfirm={async () => {
                 const result = await onDeleteSelected(selectedItems);
@@ -747,7 +752,7 @@ export function CustomTable<T>({
           )}
           {selectable && (
             <ExtractButton
-              {...{ selectedItems, columns }}
+              {...{ selectedItems, columns, labels }}
               filePrefix={exportFilePrefix}
             />
           )}

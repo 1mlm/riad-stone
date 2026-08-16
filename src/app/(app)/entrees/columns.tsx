@@ -1,3 +1,4 @@
+import type { HugeIcon } from "@/components/Icon";
 import type { CustomTableColumn } from "@/components/table/CustomTable";
 import { ICONS } from "@/utils/icon";
 import { ENTREE_FIELD_BY_KEY, toDisplayLength } from "./fields";
@@ -26,10 +27,11 @@ export const getSurfaceTotaleM2 = (row: EntreeLikeRow) =>
 export function createReferenceColumn<T>(
   getReference: (row: T) => string,
 ): CustomTableColumn<T> {
+  const { label, icon } = ENTREE_FIELD_BY_KEY.reference;
   return {
     id: "reference",
-    label: ENTREE_FIELD_BY_KEY.reference.label,
-    icon: ENTREE_FIELD_BY_KEY.reference.icon,
+    label,
+    icon,
     type: "string",
     monospace: true,
     getString: getReference,
@@ -39,10 +41,11 @@ export function createReferenceColumn<T>(
 export function createDesignationColumn<
   T extends EntreeLikeRow,
 >(): CustomTableColumn<T> {
+  const { label, icon } = ENTREE_FIELD_BY_KEY.designation;
   return {
     id: "designation",
-    label: ENTREE_FIELD_BY_KEY.designation.label,
-    icon: ENTREE_FIELD_BY_KEY.designation.icon,
+    label,
+    icon,
     type: "string",
     mergeAdjacent: true,
     getString: (row) => row.designation,
@@ -52,10 +55,11 @@ export function createDesignationColumn<
 export function createDateColumn<
   T extends { date: Date },
 >(): CustomTableColumn<T> {
+  const { label, icon } = ENTREE_FIELD_BY_KEY.date;
   return {
     id: "date",
-    label: ENTREE_FIELD_BY_KEY.date.label,
-    icon: ENTREE_FIELD_BY_KEY.date.icon,
+    label,
+    icon,
     type: "date",
     relative: false,
     getDate: (row) => row.date,
@@ -65,10 +69,11 @@ export function createDateColumn<
 export function createOrigineColumn<
   T extends EntreeLikeRow,
 >(): CustomTableColumn<T> {
+  const { label, icon } = ENTREE_FIELD_BY_KEY.origine;
   return {
     id: "origine",
-    label: ENTREE_FIELD_BY_KEY.origine.label,
-    icon: ENTREE_FIELD_BY_KEY.origine.icon,
+    label,
+    icon,
     type: "string",
     getString: (row) => row.origine ?? "",
   };
@@ -77,80 +82,112 @@ export function createOrigineColumn<
 export function createConteneurColumn<
   T extends EntreeLikeRow,
 >(): CustomTableColumn<T> {
+  const { label, icon } = ENTREE_FIELD_BY_KEY.conteneur;
   return {
     id: "conteneur",
-    label: ENTREE_FIELD_BY_KEY.conteneur.label,
-    icon: ENTREE_FIELD_BY_KEY.conteneur.icon,
+    label,
+    icon,
     type: "string",
     getString: (row) => row.conteneur ?? "",
+  };
+}
+
+// shared shape behind every right-aligned numeric column: decimal-aligned
+// rendering, a min/max range filter, and getString derived from getNumber
+// unless the column needs to show something other than its own number (e.g.
+// blank for single-lot groups) — decimals and getNumber must travel together
+// since CustomTableCell/getColumnExportValue key AlignedNumber rendering off
+// decimals alone
+function createNumericColumn<T>({
+  id,
+  label,
+  icon,
+  decimals,
+  suffix,
+  filterType = "number",
+  mergeAdjacent,
+  getMergeKey,
+  getNumber,
+  getString,
+}: {
+  id: string;
+  label: string;
+  icon: HugeIcon;
+  decimals: number;
+  suffix?: string;
+  filterType?: "number" | "length";
+  mergeAdjacent?: boolean;
+  getMergeKey?: (row: T) => string;
+  getNumber: (row: T) => number;
+  getString?: (row: T) => string;
+}): CustomTableColumn<T> {
+  return {
+    id,
+    label,
+    icon,
+    type: "string",
+    align: "right",
+    filterType,
+    decimals,
+    suffix,
+    mergeAdjacent,
+    getMergeKey,
+    getNumber,
+    getString: getString ?? ((row) => getNumber(row).toFixed(decimals)),
   };
 }
 
 export function createLengthColumn<T extends EntreeLikeRow>(
   key: "longueur" | "largeur",
 ): CustomTableColumn<T> {
-  return {
+  const { label, icon } = ENTREE_FIELD_BY_KEY[key];
+  return createNumericColumn({
     id: key,
-    label: ENTREE_FIELD_BY_KEY[key].label,
-    icon: ENTREE_FIELD_BY_KEY[key].icon,
-    type: "string",
-    align: "right",
+    label,
+    icon,
     filterType: "length",
     decimals: 2,
     suffix: "cm",
-    getString: (row) => toDisplayLength(row[key]).toFixed(2),
     getNumber: (row) => toDisplayLength(row[key]),
-  };
+  });
 }
 
 export function createSurfacePieceColumn<
   T extends EntreeLikeRow,
 >(): CustomTableColumn<T> {
-  return {
+  return createNumericColumn({
     id: "surfacePiece",
     label: "Surface de pièce",
     icon: ICONS.surfacePiece,
-    type: "string",
-    align: "right",
-    filterType: "number",
     decimals: 4,
     suffix: "m²",
-    getString: (row) => getSurfacePieceM2(row).toFixed(4),
     getNumber: getSurfacePieceM2,
-  };
+  });
 }
 
 export function createNombrePiecesColumn<T extends EntreeLikeRow>(
   labelOverride?: string,
 ): CustomTableColumn<T> {
-  return {
+  return createNumericColumn({
     id: "nombrePieces",
     label: labelOverride ?? ENTREE_FIELD_BY_KEY.nombrePieces.label,
     icon: ENTREE_FIELD_BY_KEY.nombrePieces.icon,
-    type: "string",
-    align: "right",
-    filterType: "number",
     decimals: 0,
-    getString: (row) => String(row.nombrePieces),
     getNumber: (row) => row.nombrePieces,
-  };
+  });
 }
 
 export function createSurfaceTotaleColumn<
   T extends EntreeLikeRow,
 >(): CustomTableColumn<T> {
-  return {
+  return createNumericColumn({
     id: "surfaceTotale",
     label: "Surface d'entrée",
     icon: ICONS.surfaceTotale,
-    type: "string",
-    align: "right",
-    filterType: "number",
     decimals: 4,
     suffix: "m²",
-    getString: (row) => getSurfaceTotaleM2(row).toFixed(4),
     getNumber: getSurfaceTotaleM2,
-  };
+  });
 }
 
 // sum of every row's surface totale sharing that designation, repeated on
@@ -173,21 +210,18 @@ export function createSurfaceDesignationColumn<T extends EntreeLikeRow>(
     );
   }
 
-  return {
+  return createNumericColumn({
     id: "surfaceDesignation",
     label: "Surface de désignation",
     icon: ICONS.surfaceDesignation,
-    type: "string",
-    align: "right",
-    filterType: "number",
     decimals: 4,
     suffix: "m²",
     mergeAdjacent: true,
     getMergeKey: (row) => row.designation,
+    getNumber: (row) => totalsByDesignation.get(row.designation) ?? 0,
     getString: (row) =>
       (countByDesignation.get(row.designation) ?? 0) > 1
         ? (totalsByDesignation.get(row.designation) ?? 0).toFixed(4)
         : "",
-    getNumber: (row) => totalsByDesignation.get(row.designation) ?? 0,
-  };
+  });
 }

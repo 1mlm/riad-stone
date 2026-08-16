@@ -18,6 +18,7 @@ import {
 } from "@/app/(app)/actions";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
+import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import {
   Sheet,
@@ -112,6 +113,8 @@ function MoreSheet() {
           title="Vider toutes les données ?"
           content="Toutes les entrées et sorties seront supprimées définitivement. Cette action est irréversible."
           confirmLabel="Tout supprimer"
+          cancelLabel={fr.common.cancel}
+          waitingLabel={fr.common.pleaseWait}
           confirmIcon={NuclearPowerIcon}
           onConfirm={handleClearAllData}
         />
@@ -129,6 +132,8 @@ function MoreSheet() {
             title="Ajouter des données fictives ?"
             content="Des entrées, sorties et un historique fictifs seront ajoutés au stock actuel."
             confirmLabel="Ajouter"
+            cancelLabel={fr.common.cancel}
+            waitingLabel={fr.common.pleaseWait}
             confirmIcon={Plant01Icon}
             confirmVariant="secondary"
             onConfirm={handleSeedFakeData}

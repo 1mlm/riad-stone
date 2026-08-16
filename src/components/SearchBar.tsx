@@ -12,18 +12,22 @@ import {
 } from "@/shadcn/ui/input-group";
 
 export function SearchBar({
-  placeholder = "Rechercher...",
+  placeholder = "Search...",
   icon = Search02Icon,
   // pass a matching searchQueryKey to CustomTable when overriding this
   queryKey = "q",
   resultCount,
+  resultLabelSingular = "result",
+  resultLabelPlural = "results",
   className,
 }: {
   placeholder?: string;
   icon?: HugeIcon;
   queryKey?: string;
-  // shown right-aligned inside the bar, e.g. "12 résultats"
+  // shown right-aligned inside the bar, e.g. "12 results"
   resultCount?: number;
+  resultLabelSingular?: string;
+  resultLabelPlural?: string;
   className?: string;
 }) {
   const [search, setSearch] = useQueryState(queryKey, { defaultValue: "" });
@@ -41,7 +45,8 @@ export function SearchBar({
       {resultCount !== undefined && (
         <InputGroupAddon align="inline-end">
           <InputGroupText>
-            {resultCount} {resultCount === 1 ? "résultat" : "résultats"}
+            {resultCount}{" "}
+            {resultCount === 1 ? resultLabelSingular : resultLabelPlural}
           </InputGroupText>
         </InputGroupAddon>
       )}

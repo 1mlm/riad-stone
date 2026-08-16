@@ -16,11 +16,13 @@ export function DelayedButton({
   // can be clicked at all. Both states render the same spinner, they just
   // guard different moments
   pending,
+  waitingLabel = "Please wait…",
   children,
   ...props
 }: React.ComponentProps<typeof Button> & {
   waitSeconds?: number;
   pending?: boolean;
+  waitingLabel?: string;
 }) {
   const [ready, setReady] = useState(false);
 
@@ -36,7 +38,7 @@ export function DelayedButton({
       ) : (
         <>
           <Icon icon={Loading01Icon} className="animate-spin" />
-          Patientez…
+          {waitingLabel}
         </>
       )}
     </Button>

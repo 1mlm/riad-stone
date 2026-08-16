@@ -8,10 +8,16 @@ import { Button } from "@/shadcn/ui/button";
 export function DeleteRowButton({
   title,
   content,
+  confirmLabel = "Delete",
+  cancelLabel,
+  waitingLabel,
   onConfirm,
 }: {
   title: string;
   content: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  waitingLabel?: string;
   onConfirm: () => Promise<{ error: string | null }>;
 }) {
   return (
@@ -25,9 +31,15 @@ export function DeleteRowButton({
           <Icon icon={Delete02Icon} />
         </Button>
       }
-      confirmLabel="Supprimer"
       confirmIcon={Delete02Icon}
-      {...{ title, content, onConfirm }}
+      {...{
+        title,
+        content,
+        confirmLabel,
+        cancelLabel,
+        waitingLabel,
+        onConfirm,
+      }}
     />
   );
 }

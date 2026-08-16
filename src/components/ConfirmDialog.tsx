@@ -26,8 +26,9 @@ export function ConfirmDialog({
   trigger,
   title,
   content,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  waitingLabel,
   confirmIcon,
   cancelIcon = ICONS.cancel,
   confirmVariant = "destructive",
@@ -39,6 +40,7 @@ export function ConfirmDialog({
   content: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
+  waitingLabel?: string;
   confirmIcon: HugeIcon;
   cancelIcon?: HugeIcon;
   confirmVariant?: ComponentProps<typeof Button>["variant"];
@@ -87,7 +89,7 @@ export function ConfirmDialog({
             variant={confirmVariant}
             className="rounded-full corner-squircle"
             waitSeconds={waitSeconds}
-            {...{ pending }}
+            {...{ pending, waitingLabel }}
             onClick={handleConfirm}
           >
             <Icon icon={confirmIcon} />

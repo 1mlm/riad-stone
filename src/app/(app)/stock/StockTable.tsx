@@ -24,6 +24,7 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { CopyButton } from "@/components/table/CustomTableCell";
+import { fr } from "@/messages/fr";
 import { ICONS } from "@/utils/icon";
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
@@ -50,7 +51,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         getButtons: (row) => (
           <div className="flex items-center justify-center gap-1">
             <CopyButton
-              value={buildRowSummary(columns, row)}
+              value={buildRowSummary(columns, row, fr.common.locale)}
               variant="outline"
               size="icon-sm"
               className="corner-squircle"
@@ -68,6 +69,8 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
     <div className="flex min-w-0 flex-col gap-4 p-5">
       <SearchBar
         placeholder="Rechercher dans le stock..."
+        resultLabelSingular={fr.searchBar.resultLabelSingular}
+        resultLabelPlural={fr.searchBar.resultLabelPlural}
         {...{ resultCount }}
       />
       <CustomTable
@@ -77,6 +80,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         selectable
         defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
+        labels={fr.table}
       />
     </div>
   );

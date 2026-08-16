@@ -7,6 +7,7 @@ import { FieldLabel } from "@/components/FieldLabel";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import { SubmitButton } from "@/components/SubmitButton";
+import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -71,6 +72,8 @@ function EntreeCard({
           title="Supprimer cette fiche ?"
           content="Les informations saisies dans cette fiche seront perdues."
           confirmLabel="Supprimer"
+          cancelLabel={fr.common.cancel}
+          waitingLabel={fr.common.pleaseWait}
           confirmIcon={Delete02Icon}
           waitSeconds={0}
           onConfirm={async () => {

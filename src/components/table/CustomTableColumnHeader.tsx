@@ -35,6 +35,7 @@ import {
   isEnumOptionExcluded,
   toggleEnumOption,
 } from "./filtering";
+import type { CustomTableLabels } from "./labels";
 
 // one consistent checkbox+label row, reused by every filter menu (enum options, "select all", tag picks...)
 function CheckboxRow({
@@ -69,17 +70,19 @@ function SelectAllRow({
   selectedCount,
   totalCount,
   onToggle,
+  labels,
 }: {
   selectedCount: number;
   totalCount: number;
   onToggle: () => void;
+  labels: CustomTableLabels;
 }) {
   return (
     <CheckboxRow
       checked={getTriState(selectedCount, totalCount)}
       onCheckedChange={onToggle}
     >
-      Tout sélectionner
+      {labels.selectAll}
     </CheckboxRow>
   );
 }
@@ -92,6 +95,7 @@ function MinMaxInputs({
   maxField = "max",
   className = "h-7 w-20",
   showToLabel = false,
+  labels,
 }: {
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
@@ -99,20 +103,23 @@ function MinMaxInputs({
   maxField?: ColumnFilterField;
   className?: string;
   showToLabel?: boolean;
+  labels: CustomTableLabels;
 }) {
   return (
     <>
       <Input
         type="number"
-        placeholder="Min"
+        placeholder={labels.min}
         value={getField(minField)}
         onChange={(e) => setField(minField, e.target.value)}
         {...{ className }}
       />
-      {showToLabel && <span className="text-muted-foreground text-xs">to</span>}
+      {showToLabel && (
+        <span className="text-muted-foreground text-xs">{labels.to}</span>
+      )}
       <Input
         type="number"
-        placeholder="Max"
+        placeholder={labels.max}
         value={getField(maxField)}
         onChange={(e) => setField(maxField, e.target.value)}
         {...{ className }}
@@ -125,10 +132,12 @@ function EnumFilterContent<T>({
   column,
   getField,
   setField,
+  labels,
 }: {
   column: Extract<CustomTableColumn<T>, { type: "enum" }>;
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   const options = Object.entries(column.enumOptions);
   const allKeys = [...options.map(([key]) => key), ENUM_FILTER_NONE_KEY];
@@ -150,6 +159,7 @@ function EnumFilterContent<T>({
         selectedCount={includedCount}
         totalCount={allKeys.length}
         onToggle={toggleAll}
+        {...{ labels }}
       />
       <DropdownMenuSeparator />
       {options.map(([key, value]) => (
@@ -166,7 +176,7 @@ function EnumFilterContent<T>({
         onCheckedChange={() => toggle(ENUM_FILTER_NONE_KEY)}
       >
         <Icon icon={ICONS.cancel} className="size-3.5 opacity-50" />
-        <span className="text-sm">Aucune valeur</span>
+        <span className="text-sm">{labels.noValue}</span>
       </CheckboxRow>
     </div>
   );
@@ -176,9 +186,11 @@ function EnumFilterContent<T>({
 function BooleanFilterContent({
   getField,
   setField,
+  labels,
 }: {
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   const keys = ["true", "false"];
   const toggle = (key: string) =>
@@ -195,6 +207,7 @@ function BooleanFilterContent({
         selectedCount={includedCount}
         totalCount={keys.length}
         onToggle={toggleAll}
+        {...{ labels }}
       />
       <DropdownMenuSeparator />
       <CheckboxRow
@@ -202,14 +215,14 @@ function BooleanFilterContent({
         onCheckedChange={() => toggle("true")}
       >
         <Icon icon={ICONS.check} className="size-3.5 text-green-500" />
-        <span className="text-sm">Oui</span>
+        <span className="text-sm">{labels.yes}</span>
       </CheckboxRow>
       <CheckboxRow
         checked={!isEnumOptionExcluded(getField, "false")}
         onCheckedChange={() => toggle("false")}
       >
         <Icon icon={ICONS.cancel} className="size-3.5 opacity-50" />
-        <span className="text-sm">Non</span>
+        <span className="text-sm">{labels.no}</span>
       </CheckboxRow>
     </div>
   );
@@ -217,13 +230,17 @@ function BooleanFilterContent({
 
 const toDateInputValue = (date: Date) => date.toISOString().slice(0, 10);
 
-const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
+// stable ids so a caller can override just one preset's label without
+// redefining the range logic — the range math never needs localizing
+const getDatePresets = (
+  labels: CustomTableLabels,
+): { label: string; getRange: () => [Date, Date] }[] => [
   {
-    label: "Dernière heure",
+    label: labels.lastHour,
     getRange: () => [new Date(Date.now() - 3_600_000), new Date()],
   },
   {
-    label: "Aujourd'hui",
+    label: labels.today,
     getRange: () => {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
@@ -231,7 +248,7 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
     },
   },
   {
-    label: "Hier",
+    label: labels.yesterday,
     getRange: () => {
       const start = new Date();
       start.setDate(start.getDate() - 1);
@@ -241,7 +258,7 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
     },
   },
   {
-    label: "Cette semaine",
+    label: labels.thisWeek,
     getRange: () => {
       const start = new Date();
       start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
@@ -250,7 +267,7 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
     },
   },
   {
-    label: "Ce mois-ci",
+    label: labels.thisMonth,
     getRange: () => [
       new Date(new Date().getFullYear(), new Date().getMonth(), 1),
       new Date(),
@@ -261,17 +278,20 @@ const DATE_PRESETS: { label: string; getRange: () => [Date, Date] }[] = [
 function DateRangeFilterContent({
   getField,
   setField,
+  labels,
 }: {
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   const from = getField("from");
   const to = getField("to");
+  const datePresets = getDatePresets(labels);
 
   return (
     <div className="flex flex-col gap-1 p-1">
       <div className="flex flex-wrap gap-1 px-1 pb-1">
-        {DATE_PRESETS.map((preset) => (
+        {datePresets.map((preset) => (
           <Button
             key={preset.label}
             variant="outline"
@@ -307,13 +327,15 @@ function DateRangeFilterContent({
 function NumberRangeFilterContent({
   getField,
   setField,
+  labels,
 }: {
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   return (
     <div className="flex items-center gap-1.5 p-2">
-      <MinMaxInputs {...{ getField, setField }} showToLabel />
+      <MinMaxInputs {...{ getField, setField, labels }} showToLabel />
     </div>
   );
 }
@@ -324,9 +346,11 @@ function NumberRangeFilterContent({
 function LengthRangeFilterContent({
   getField,
   setField,
+  labels,
 }: {
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   const [unit, setUnit] = useState<LengthUnit>("cm");
 
@@ -340,18 +364,18 @@ function LengthRangeFilterContent({
   return (
     <div className="flex flex-col gap-1.5 p-2">
       <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground text-xs">Entre</span>
+        <span className="text-muted-foreground text-xs">{labels.between}</span>
         <Input
           type="number"
-          placeholder="Min"
+          placeholder={labels.min}
           value={toDisplay(getField("min"))}
           onChange={(e) => setField("min", toStoredCm(e.target.value))}
           className="h-7 w-16"
         />
-        <span className="text-muted-foreground text-xs">et</span>
+        <span className="text-muted-foreground text-xs">{labels.and}</span>
         <Input
           type="number"
-          placeholder="Max"
+          placeholder={labels.max}
           value={toDisplay(getField("max"))}
           onChange={(e) => setField("max", toStoredCm(e.target.value))}
           className="h-7 w-16"
@@ -365,14 +389,16 @@ function LengthRangeFilterContent({
 function TextFilterContent({
   getField,
   setField,
+  labels,
 }: {
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   return (
     <div className="p-2">
       <Input
-        placeholder="Rechercher..."
+        placeholder={labels.search}
         value={getField("search")}
         onChange={(e) => setField("search", e.target.value)}
         className="h-7"
@@ -386,11 +412,13 @@ function TagsFilterContent<T>({
   items,
   getField,
   setField,
+  labels,
 }: {
   column: Extract<CustomTableColumn<T>, { type: "tags" }>;
   items: T[];
   getField: GetFilterField;
   setField: (field: ColumnFilterField, value: string) => void;
+  labels: CustomTableLabels;
 }) {
   const only = getField("only")
     ? getField("only").split(",").filter(Boolean)
@@ -415,9 +443,9 @@ function TagsFilterContent<T>({
   return (
     <div className="flex flex-col gap-1 p-1">
       <div className="flex items-center gap-1.5 p-1">
-        <span className="text-muted-foreground text-xs">Nombre</span>
+        <span className="text-muted-foreground text-xs">{labels.count}</span>
         <MinMaxInputs
-          {...{ getField, setField }}
+          {...{ getField, setField, labels }}
           minField="countMin"
           maxField="countMax"
           className="h-7 w-16"
@@ -426,7 +454,7 @@ function TagsFilterContent<T>({
       <DropdownMenuSeparator />
       <div className="p-1">
         <Input
-          placeholder="Rechercher des tags..."
+          placeholder={labels.searchTags}
           value={getField("search")}
           onChange={(e) => setField("search", e.target.value)}
           className="h-7"
@@ -437,6 +465,7 @@ function TagsFilterContent<T>({
         selectedCount={only.length}
         totalCount={allLabels.length}
         onToggle={toggleAll}
+        {...{ labels }}
       />
       <DropdownMenuSeparator />
       <div className="flex max-h-48 flex-col gap-0.5 overflow-y-auto p-1">
@@ -470,23 +499,25 @@ function SortSubmenuContent({
   numeric,
   sort,
   onSortChange,
+  labels,
 }: {
   numeric: boolean;
   sort: "asc" | "desc" | null;
   onSortChange: (dir: "asc" | "desc" | null) => void;
+  labels: CustomTableLabels;
 }) {
   return (
     <>
       <DropdownMenuItem onClick={() => onSortChange("asc")}>
         <Icon icon={getSortIcon("asc", numeric)} />
-        Croissant
+        {labels.ascending}
         {sort === "asc" && (
           <span className="ml-auto text-muted-foreground text-xs">✓</span>
         )}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => onSortChange("desc")}>
         <Icon icon={getSortIcon("desc", numeric)} />
-        Décroissant
+        {labels.descending}
         {sort === "desc" && (
           <span className="ml-auto text-muted-foreground text-xs">✓</span>
         )}
@@ -496,7 +527,7 @@ function SortSubmenuContent({
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onSortChange(null)}>
             <Icon icon={ICONS.cancel} />
-            Annuler
+            {labels.cancel}
           </DropdownMenuItem>
         </>
       )}
@@ -513,6 +544,7 @@ export function CustomTableColumnHeader<T>({
   setField,
   sort,
   onSortChange,
+  labels,
 }: {
   column: CustomTableColumn<T>;
   items: T[];
@@ -522,6 +554,7 @@ export function CustomTableColumnHeader<T>({
   setField: (field: ColumnFilterField, value: string) => void;
   sort: "asc" | "desc" | null;
   onSortChange: (dir: "asc" | "desc" | null) => void;
+  labels: CustomTableLabels;
 }) {
   const columnEligible = isColumnFilterableOrSortable(column);
   const canFilter = filterable && columnEligible;
@@ -574,7 +607,7 @@ export function CustomTableColumnHeader<T>({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Icon icon={ICONS.filter} />
-              Filtrer
+              {labels.filter}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent
@@ -586,29 +619,35 @@ export function CustomTableColumnHeader<T>({
                 )}
               >
                 {column.type === "enum" && (
-                  <EnumFilterContent {...{ column, getField, setField }} />
+                  <EnumFilterContent
+                    {...{ column, getField, setField, labels }}
+                  />
                 )}
                 {column.type === "date" && (
-                  <DateRangeFilterContent {...{ getField, setField }} />
+                  <DateRangeFilterContent {...{ getField, setField, labels }} />
                 )}
                 {column.type === "string" && column.filterType === "number" && (
-                  <NumberRangeFilterContent {...{ getField, setField }} />
+                  <NumberRangeFilterContent
+                    {...{ getField, setField, labels }}
+                  />
                 )}
                 {column.type === "string" && column.filterType === "length" && (
-                  <LengthRangeFilterContent {...{ getField, setField }} />
+                  <LengthRangeFilterContent
+                    {...{ getField, setField, labels }}
+                  />
                 )}
                 {column.type === "string" &&
                   column.filterType !== "number" &&
                   column.filterType !== "length" && (
-                    <TextFilterContent {...{ getField, setField }} />
+                    <TextFilterContent {...{ getField, setField, labels }} />
                   )}
                 {column.type === "tags" && (
                   <TagsFilterContent
-                    {...{ column, items, getField, setField }}
+                    {...{ column, items, getField, setField, labels }}
                   />
                 )}
                 {column.type === "boolean" && (
-                  <BooleanFilterContent {...{ getField, setField }} />
+                  <BooleanFilterContent {...{ getField, setField, labels }} />
                 )}
                 {hasActiveFilter && (
                   <>
@@ -619,7 +658,7 @@ export function CustomTableColumnHeader<T>({
                       }}
                     >
                       <Icon icon={ICONS.cancel} />
-                      Annuler
+                      {labels.cancel}
                     </DropdownMenuItem>
                   </>
                 )}
@@ -631,11 +670,13 @@ export function CustomTableColumnHeader<T>({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Icon icon={ICONS.sort} />
-              Trier
+              {labels.sort}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                <SortSubmenuContent {...{ numeric, sort, onSortChange }} />
+                <SortSubmenuContent
+                  {...{ numeric, sort, onSortChange, labels }}
+                />
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

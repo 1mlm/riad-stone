@@ -6,15 +6,18 @@ import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import type { CustomTableColumn } from "./CustomTable";
 import { ExtractDialog } from "./ExtractDialog";
+import type { CustomTableLabels } from "./labels";
 
 export function ExtractButton<T>({
   selectedItems,
   columns,
   filePrefix,
+  labels,
 }: {
   selectedItems: T[];
   columns: CustomTableColumn<T>[];
   filePrefix: string;
+  labels: CustomTableLabels;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -29,13 +32,14 @@ export function ExtractButton<T>({
       >
         <Icon icon={Download01Icon} />
         <span className="hidden sm:inline">
-          Extraire {selectedItems.length} élément
-          {selectedItems.length > 1 ? "s" : ""}
+          {labels.extractSelected(selectedItems.length)}
         </span>
-        <span className="sm:hidden">Extraire {selectedItems.length}</span>
+        <span className="sm:hidden">
+          {labels.extractSelectedShort(selectedItems.length)}
+        </span>
       </Button>
       <ExtractDialog
-        {...{ open, columns, filePrefix }}
+        {...{ open, columns, filePrefix, labels }}
         onOpenChange={setOpen}
         items={selectedItems}
       />

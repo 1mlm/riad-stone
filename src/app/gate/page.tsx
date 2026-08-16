@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { DelayedButton } from "@/components/DelayedButton";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
+import { fr } from "@/messages/fr";
 import {
   InputGroup,
   InputGroupAddon,
@@ -47,6 +48,7 @@ export default function GatePage() {
           key={attempt}
           type="submit"
           className="rounded-full corner-squircle"
+          waitingLabel={fr.common.pleaseWait}
           {...{ pending }}
           waitSeconds={attempt === 0 ? 0 : 7}
         >
