@@ -310,13 +310,15 @@ function HistoryEventListContent({
 
   return (
     <div className="flex w-full flex-col gap-3">
-      <SearchBar
-        placeholder="Rechercher dans l'historique..."
-        queryKey="hq"
-        resultLabelSingular={fr.searchBar.resultLabelSingular}
-        resultLabelPlural={fr.searchBar.resultLabelPlural}
-        {...{ resultCount }}
-      />
+      <div className="sticky top-20 z-10 bg-background py-1 sm:top-0">
+        <SearchBar
+          placeholder="Rechercher dans l'historique..."
+          queryKey="hq"
+          resultLabelSingular={fr.searchBar.resultLabelSingular}
+          resultLabelPlural={fr.searchBar.resultLabelPlural}
+          {...{ resultCount }}
+        />
+      </div>
       <CustomTable
         items={events}
         {...{ columns }}

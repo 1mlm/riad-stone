@@ -121,7 +121,7 @@ function SortiesTableContent({
 
   return (
     <div className="flex min-w-0 flex-col gap-4 p-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="sticky top-20 z-10 flex flex-col gap-2 bg-background py-1 sm:top-0 sm:flex-row sm:items-center">
         <SearchBar
           className="flex-1"
           placeholder="Rechercher une sortie..."

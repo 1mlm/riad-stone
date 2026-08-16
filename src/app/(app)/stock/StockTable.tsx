@@ -67,12 +67,14 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
 
   return (
     <div className="flex min-w-0 flex-col gap-4 p-5">
-      <SearchBar
-        placeholder="Rechercher dans le stock..."
-        resultLabelSingular={fr.searchBar.resultLabelSingular}
-        resultLabelPlural={fr.searchBar.resultLabelPlural}
-        {...{ resultCount }}
-      />
+      <div className="sticky top-20 z-10 bg-background py-1 sm:top-0">
+        <SearchBar
+          placeholder="Rechercher dans le stock..."
+          resultLabelSingular={fr.searchBar.resultLabelSingular}
+          resultLabelPlural={fr.searchBar.resultLabelPlural}
+          {...{ resultCount }}
+        />
+      </div>
       <CustomTable
         {...{ items, columns }}
         getItemId={(row) => row.reference}

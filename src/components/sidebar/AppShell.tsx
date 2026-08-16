@@ -12,7 +12,7 @@ export function AppShell({
   return (
     <SidebarProvider>
       <AppSidebar {...{ counts }} />
-      <SidebarInset>
+      <SidebarInset className="md:h-svh md:overflow-y-auto">
         <MobileTopBar {...{ counts }} />
         <div className="pt-20 sm:pt-0">{children}</div>
       </SidebarInset>
