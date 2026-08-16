@@ -718,7 +718,7 @@ export function CustomTable<T>({
                           </PopoverTrigger>
                           <PopoverContent
                             align="start"
-                            className="flex w-auto flex-col gap-1"
+                            className="flex max-h-(--radix-popover-content-available-height) w-auto flex-col gap-1 overflow-y-auto"
                           >
                             {actionsColumn.getButtons(item)}
                           </PopoverContent>

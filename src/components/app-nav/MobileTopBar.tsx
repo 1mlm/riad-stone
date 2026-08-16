@@ -56,7 +56,7 @@ function MoreSheet({
           <span className="text-[0.65rem]">{brand.text}</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="gap-3 p-4">
+      <SheetContent side="bottom" className="gap-3 p-4" showCloseButton={false}>
         <SheetHeader className="sr-only p-0">
           <SheetTitle>{sheetTitle}</SheetTitle>
           <SheetDescription>{sheetDescription}</SheetDescription>

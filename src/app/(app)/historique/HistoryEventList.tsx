@@ -269,7 +269,7 @@ function HistoryEventListContent({
                   <Icon icon={ExpandIcon} />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto">
+              <PopoverContent className="w-auto max-h-(--radix-popover-content-available-height) overflow-y-auto">
                 <HistoryDataTable eventId={event.id} {...{ current, before }} />
               </PopoverContent>
             </Popover>
