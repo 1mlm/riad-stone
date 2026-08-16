@@ -487,6 +487,21 @@ export function CustomTable<T>({
 
   const scrollFadeMask = getScrollFadeMask(scrollFade.left, scrollFade.right);
 
+  // the row-select checkbox and the "actions" column both belong on one
+  // sticky leading cell instead of two separate columns — the actions
+  // column is matched by id/type convention rather than a dedicated prop
+  // so existing column arrays don't need to opt in
+  const actionsColumn = columns.find(
+    (column): column is Extract<CustomTableColumn<T>, { type: "buttons" }> =>
+      column.id === "actions" && column.type === "buttons",
+  );
+  const bodyColumns = actionsColumn
+    ? columns.filter((column) => column !== actionsColumn)
+    : columns;
+  const hasStickyLeadColumn = selectable || Boolean(actionsColumn);
+  const leadCheckboxClassName =
+    "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
+
   return (
     <div className="rounded-md overflow-clip">
       <div
@@ -500,21 +515,47 @@ export function CustomTable<T>({
         <table className="w-full caption-bottom text-sm">
           <TableHeader>
             <TableRow className="*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4">
-              {selectable && (
-                <TableHead>
-                  <div className="flex justify-center pr-2!">
-                    <Checkbox
-                      checked={getTriState(
-                        visibleSelectedCount,
-                        visibleItems.length,
-                      )}
-                      onCheckedChange={toggleAll}
-                      aria-label={labels.selectAllRows}
-                    />
+              {hasStickyLeadColumn && (
+                <TableHead className="left-0 z-20">
+                  <div className="flex items-center justify-center gap-2">
+                    {selectable && (
+                      <Checkbox
+                        checked={getTriState(
+                          visibleSelectedCount,
+                          visibleItems.length,
+                        )}
+                        onCheckedChange={toggleAll}
+                        aria-label={labels.selectAllRows}
+                        className={leadCheckboxClassName}
+                      />
+                    )}
+                    {actionsColumn && (
+                      <CustomTableColumnHeader
+                        column={actionsColumn}
+                        {...{ items, filterable, sortable, labels }}
+                        getField={getColumnField(actionsColumn.id)}
+                        setField={(field: ColumnFilterField, value: string) =>
+                          setColumnField(actionsColumn.id, field, value)
+                        }
+                        sort={
+                          sort?.columnId === actionsColumn.id ? sort.dir : null
+                        }
+                        onSortChange={(dir: "asc" | "desc" | null) =>
+                          setSortRaw(
+                            dir
+                              ? serializeSort({
+                                  columnId: actionsColumn.id,
+                                  dir,
+                                })
+                              : "",
+                          )
+                        }
+                      />
+                    )}
                   </div>
                 </TableHead>
               )}
-              {columns.map((column) => (
+              {bodyColumns.map((column) => (
                 <TableHead key={column.id}>
                   <CustomTableColumnHeader
                     {...{ column, items, filterable, sortable, labels }}
@@ -540,14 +581,19 @@ export function CustomTable<T>({
                   key={key}
                   className={cn(index % 2 === 1 && "bg-foreground/5")}
                 >
-                  {selectable && (
-                    <TableCell className="border-r border-border/50">
+                  {hasStickyLeadColumn && (
+                    <TableCell
+                      className={cn(
+                        "sticky left-0 z-10 border-r border-border/50",
+                        index % 2 === 1 ? "bg-foreground/5" : "bg-background",
+                      )}
+                    >
                       <div className="flex justify-center pr-2!">
-                        <Skeleton className="size-4" />
+                        <Skeleton className="size-7" />
                       </div>
                     </TableCell>
                   )}
-                  {columns.map((column) => (
+                  {bodyColumns.map((column) => (
                     <TableCell
                       key={column.id}
                       className="border-r border-border/50 last:border-r-0"
@@ -571,28 +617,45 @@ export function CustomTable<T>({
                       column.mergeAdjacent &&
                       mergeRuns.get(column.id)?.[index]?.start,
                   );
+                const isSelected = selectedIds.has(id);
+                // the sticky lead cell paints its own opaque background
+                // instead of relying on the row's, since a transparent
+                // sticky cell would show other columns sliding underneath
+                // it as the table scrolls horizontally
+                const rowBackgroundClassName = cn(
+                  index % 2 === 1 ? "bg-foreground/5" : "bg-background",
+                  isSelected && "bg-green-500/15",
+                );
                 return (
                   <TableRow
                     key={id}
                     className={cn(
                       "group/row",
-                      index % 2 === 1 && "bg-foreground/5",
-                      selectedIds.has(id) && "bg-green-500/15",
+                      rowBackgroundClassName,
                       isGroupStart && "border-t-2 border-t-border",
                     )}
                   >
-                    {selectable && (
-                      <TableCell className="border-r border-border/50 text-center">
-                        <div className="flex justify-center pr-2!">
-                          <Checkbox
-                            checked={selectedIds.has(id)}
-                            onCheckedChange={() => toggleRow(id)}
-                            aria-label={labels.selectRow}
-                          />
+                    {hasStickyLeadColumn && (
+                      <TableCell
+                        className={cn(
+                          "sticky left-0 z-10 border-r border-border/50 text-center",
+                          rowBackgroundClassName,
+                        )}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {selectable && (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleRow(id)}
+                              aria-label={labels.selectRow}
+                              className={leadCheckboxClassName}
+                            />
+                          )}
+                          {actionsColumn?.getButtons(item)}
                         </div>
                       </TableCell>
                     )}
-                    {columns.map((column) => {
+                    {bodyColumns.map((column) => {
                       const run =
                         column.type === "string" && column.mergeAdjacent
                           ? mergeRuns.get(column.id)?.[index]
