@@ -1,7 +1,6 @@
 "use server";
 
 import { faker } from "@faker-js/faker";
-import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
@@ -11,6 +10,7 @@ import { buildDeviceInfo } from "@/utils/deviceInfo";
 import { logHistory } from "@/utils/history";
 import { prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
+import { revalidateStockPaths } from "@/utils/revalidate";
 
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
@@ -43,10 +43,7 @@ export async function clearAllData(): Promise<void> {
     entreesCleared,
     sortiesCleared,
   });
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
 }
 
 // pool is small on purpose, drawn from repeatedly below — that's what
@@ -82,9 +79,8 @@ function buildFakeEntrees() {
   faker.seed(1312);
 
   return Array.from({ length: ENTREE_COUNT }, (_, index) => {
-    const { designation, origine } = faker.helpers.arrayElement(
-      DESIGNATION_POOL,
-    );
+    const { designation, origine } =
+      faker.helpers.arrayElement(DESIGNATION_POOL);
     const [longueur, largeur] = faker.helpers.arrayElement(DIMENSIONS);
     return {
       reference: `TZ${String(index + 1).padStart(3, "0")}`,
@@ -222,8 +218,5 @@ export async function seedFakeData(): Promise<void> {
     entreesCreated: entrees.length,
     sortiesCreated: sorties.length,
   });
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
 }

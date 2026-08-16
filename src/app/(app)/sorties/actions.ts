@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { Sortie } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { logHistory } from "@/utils/history";
 import { prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
+import { revalidateStockPaths } from "@/utils/revalidate";
 import type { AvailableEntree } from "./types";
 
 function toSortieSnapshot(sortie: Sortie) {
@@ -133,10 +133,7 @@ export async function createSortie(
     HistoryItemType.CREATE_OUTPUT,
     toSortieSnapshot(outcome.result),
   );
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
   return { error: null };
 }
 
@@ -179,10 +176,7 @@ export async function updateSortie(
     before: toSortieSnapshot(outcome.result.existing),
     after: toSortieSnapshot(outcome.result.updated),
   });
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
   return { error: null };
 }
 
@@ -197,9 +191,6 @@ export async function deleteSortie(
   await prisma.sortie.delete({ where: { id } });
 
   await logHistory(HistoryItemType.DELETE_OUTPUT, toSortieSnapshot(existing));
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
   return { error: null };
 }

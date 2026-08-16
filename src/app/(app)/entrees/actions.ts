@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { Entree } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
@@ -8,6 +7,7 @@ import { logHistory } from "@/utils/history";
 import { LENGTH_UNITS, type LengthUnit, lengthToMeters } from "@/utils/length";
 import { prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
+import { revalidateStockPaths } from "@/utils/revalidate";
 
 // thrown inside a transaction to surface a validation message to the caller
 // without it being mistaken for a real (retry-worthy) database error
@@ -283,10 +283,7 @@ export async function createEntrees(
 
   for (const entree of outcome.result)
     await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(entree));
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
   return { error: null };
 }
 
@@ -332,10 +329,7 @@ export async function updateEntree(
     before: toEntreeSnapshot(outcome.result.existing),
     after: toEntreeSnapshot(outcome.result.updated),
   });
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
   return { error: null };
 }
 
@@ -365,9 +359,6 @@ export async function deleteEntree(
     HistoryItemType.DELETE_INPUT,
     toEntreeSnapshot(outcome.result),
   );
-  revalidatePath("/entrees");
-  revalidatePath("/sorties");
-  revalidatePath("/stock");
-  revalidatePath("/historique");
+  revalidateStockPaths();
   return { error: null };
 }
