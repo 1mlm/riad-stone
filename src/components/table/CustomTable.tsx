@@ -523,7 +523,7 @@ export function CustomTable<T>({
     <div className="rounded-md overflow-clip">
       <div
         ref={scrollContainerRef}
-        className="w-full overflow-x-auto"
+        className="w-full overflow-x-auto md:max-h-[calc(100svh-14rem)] md:overflow-y-auto"
         style={{
           maskImage: scrollFadeMask,
           WebkitMaskImage: scrollFadeMask,
