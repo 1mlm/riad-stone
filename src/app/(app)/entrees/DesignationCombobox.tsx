@@ -48,9 +48,8 @@ export function DesignationCombobox({
         <InputGroup className="cursor-pointer corner-squircle">
           <InputGroupInput
             readOnly
-            value={value}
             className="cursor-pointer"
-            {...{ placeholder }}
+            {...{ value, placeholder }}
           />
           <InputGroupAddon align="inline-end">
             <Icon icon={ICONS.chevronDown} className="opacity-50" />

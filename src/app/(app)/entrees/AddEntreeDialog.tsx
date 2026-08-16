@@ -283,7 +283,7 @@ export function AddEntreeDialog({
 
   return (
     <Dialog
-      open={open}
+      {...{ open }}
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) resetState();

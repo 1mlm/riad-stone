@@ -22,7 +22,7 @@ export function MetaPage({
         className,
       )}
     >
-      <Icon icon={icon} className="size-8" />
+      <Icon {...{ icon }} className="size-8" />
       <span className="text-sm font-medium text-foreground">{title}</span>
       {subtitle && <span className="text-xs">{subtitle}</span>}
     </div>

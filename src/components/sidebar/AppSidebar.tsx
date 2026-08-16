@@ -64,7 +64,7 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={isActive}
+                    {...{ isActive }}
                     tooltip={item.label}
                     className="rounded-full corner-squircle"
                   >

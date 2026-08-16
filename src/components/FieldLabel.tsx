@@ -16,7 +16,7 @@ export function FieldLabel({
       className={cn("gap-1.5 text-xs text-muted-foreground", className)}
       {...props}
     >
-      <Icon icon={icon} />
+      <Icon {...{ icon }} />
       {children}
       {required && <span className="text-destructive">*</span>}
     </Label>

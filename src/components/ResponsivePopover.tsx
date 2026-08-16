@@ -27,7 +27,7 @@ export function ResponsivePopover({
     return (
       <Sheet {...{ open, onOpenChange }}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent side="bottom" className={className}>
+        <SheetContent side="bottom" {...{ className }}>
           {children}
         </SheetContent>
       </Sheet>
@@ -36,7 +36,7 @@ export function ResponsivePopover({
   return (
     <Popover {...{ open, onOpenChange }}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent side="right" align="end" className={className}>
+      <PopoverContent side="right" align="end" {...{ className }}>
         {children}
       </PopoverContent>
     </Popover>

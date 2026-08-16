@@ -311,5 +311,5 @@ export function CustomTableCell<T>({
 
   const tags = column.getTags(item);
   if (tags.length === 0) return <CustomTableEmptyValue />;
-  return <TagsCell tags={tags} itemLabel={column.label.toLowerCase()} />;
+  return <TagsCell {...{ tags }} itemLabel={column.label.toLowerCase()} />;
 }

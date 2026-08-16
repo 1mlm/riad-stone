@@ -65,7 +65,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog
-      open={open}
+      {...{ open }}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
         if (nextOpen) setError(null);
@@ -88,8 +88,7 @@ export function ConfirmDialog({
           <DelayedButton
             variant={confirmVariant}
             className="rounded-full corner-squircle"
-            waitSeconds={waitSeconds}
-            {...{ pending, waitingLabel }}
+            {...{ waitSeconds, pending, waitingLabel }}
             onClick={handleConfirm}
           >
             <Icon icon={confirmIcon} />

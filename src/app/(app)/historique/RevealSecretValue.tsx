@@ -41,7 +41,7 @@ export function RevealSecretValue({ eventId }: { eventId: number }) {
 
   return (
     <Popover
-      open={open}
+      {...{ open }}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
         if (nextOpen) {

@@ -57,7 +57,7 @@ export function Combobox({
 
   return (
     <Popover
-      open={open}
+      {...{ open }}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
         if (nextOpen) setSearch("");
