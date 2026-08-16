@@ -3,6 +3,7 @@
 import {
   Delete02Icon,
   EditIcon,
+  ExpandIcon,
   Key01Icon,
   LogoutIcon,
   NuclearPowerIcon,
@@ -14,16 +15,21 @@ import {
   ENTREE_FIELD_BY_KEY,
   toDisplayLength,
 } from "@/app/(app)/entrees/fields";
+import { Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { SearchBar } from "@/components/SearchBar";
 import {
+  buildRowSummary,
   CustomTable,
   type CustomTableColumn,
   type CustomTableEnumValue,
 } from "@/components/table/CustomTable";
+import { CopyButton } from "@/components/table/CustomTableCell";
 import type { HistoryEvent } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { fr } from "@/messages/fr";
+import { Button } from "@/shadcn/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { cn } from "@/shadcn/utils";
 import type { DeviceInfo } from "@/utils/deviceInfo";
 import {
@@ -245,16 +251,45 @@ function HistoryEventListContent({
 
   const columns: CustomTableColumn<HistoryEvent>[] = [
     {
+      id: "actions",
+      label: "Actions",
+      icon: ICONS.actions,
+      type: "buttons",
+      getButtons: (event) => {
+        const { before, current } = getEventSnapshots(event.type, event.data);
+        return (
+          <div className="flex items-center justify-center gap-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  className="corner-squircle"
+                >
+                  <Icon icon={ExpandIcon} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto">
+                <HistoryDataTable eventId={event.id} {...{ current, before }} />
+              </PopoverContent>
+            </Popover>
+            <CopyButton
+              value={buildRowSummary(columns, event, fr.common.locale)}
+              variant="outline"
+              size="icon-sm"
+              className="corner-squircle"
+            />
+          </div>
+        );
+      },
+    },
+    {
       id: "type",
       label: "Type",
       icon: ICONS.history,
       type: "enum",
       enumOptions: TYPE_META,
       getValue: (event) => event.type,
-      getPopoverContent: (event) => {
-        const { before, current } = getEventSnapshots(event.type, event.data);
-        return <HistoryDataTable eventId={event.id} {...{ current, before }} />;
-      },
     },
     {
       id: "reference",
