@@ -42,14 +42,9 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
                     height={40}
                     className="size-8 shrink-0 group-data-[collapsible=icon]:size-10"
                   />
-                  <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
-                    <span className="font-semibold">{APP_HEADER.text}</span>
-                    {APP_HEADER.subtext && (
-                      <span className="text-xs text-muted-foreground">
-                        {APP_HEADER.subtext}
-                      </span>
-                    )}
-                  </div>
+                  <span className="font-semibold group-data-[collapsible=icon]:hidden">
+                    {APP_HEADER.text}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -90,6 +85,11 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
             </SidebarMenuItem>
             <LogoutButton />
           </SidebarMenu>
+          {APP_HEADER.subtext && (
+            <span className="px-2 pt-1 text-center text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+              {APP_HEADER.subtext}
+            </span>
+          )}
         </SidebarFooter>
       </Sidebar>
       <SidebarRail />

@@ -1,24 +1,12 @@
 "use client";
 
-import {
-  Loading01Icon,
-  LogoutIcon,
-  NuclearPowerIcon,
-  Plant01Icon,
-} from "@hugeicons/core-free-icons";
+import { Loading01Icon, LogoutIcon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import {
-  clearAllData,
-  isStockEmpty,
-  logout,
-  seedFakeData,
-} from "@/app/(app)/actions";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { logout } from "@/app/(app)/actions";
 import { Icon } from "@/components/Icon";
-import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import {
   Sheet,
@@ -31,6 +19,7 @@ import {
 import { cn } from "@/shadcn/utils";
 import { haptic } from "@/utils/haptics";
 import type { NavCounts } from "./AppSidebar";
+import { DevDataActions } from "./DevDataActions";
 import { APP_HEADER, NAV_ITEMS } from "./data";
 
 // hides the bar once the user has scrolled down a bit and is actively
@@ -58,24 +47,7 @@ function useHideOnScrollDown() {
 
 function MoreSheet() {
   const [open, setOpen] = useState(false);
-  const [stockEmpty, setStockEmpty] = useState(false);
   const [loggingOut, startLogoutTransition] = useTransition();
-
-  useEffect(() => {
-    if (open) isStockEmpty().then(setStockEmpty);
-  }, [open]);
-
-  const handleClearAllData = async () => {
-    await clearAllData();
-    setStockEmpty(true);
-    return undefined;
-  };
-
-  const handleSeedFakeData = async () => {
-    await seedFakeData();
-    setOpen(false);
-    return undefined;
-  };
 
   return (
     <Sheet {...{ open, onOpenChange: setOpen }}>
@@ -92,7 +64,7 @@ function MoreSheet() {
             height={20}
             className="size-5"
           />
-          <span className="text-[0.65rem]">More</span>
+          <span className="text-[0.65rem]">{APP_HEADER.text}</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="gap-3 p-4">
@@ -100,45 +72,6 @@ function MoreSheet() {
           <SheetTitle>Plus d'options</SheetTitle>
           <SheetDescription>Paramètres et déconnexion</SheetDescription>
         </SheetHeader>
-        <ConfirmDialog
-          trigger={
-            <Button
-              variant="destructive"
-              className="w-full rounded-full corner-squircle"
-            >
-              <Icon icon={NuclearPowerIcon} />
-              Vider toutes les données
-            </Button>
-          }
-          title="Vider toutes les données ?"
-          content="Toutes les entrées et sorties seront supprimées définitivement. Cette action est irréversible."
-          confirmLabel="Tout supprimer"
-          cancelLabel={fr.common.cancel}
-          waitingLabel={fr.common.pleaseWait}
-          confirmIcon={NuclearPowerIcon}
-          onConfirm={handleClearAllData}
-        />
-        {stockEmpty && (
-          <ConfirmDialog
-            trigger={
-              <Button
-                variant="secondary"
-                className="w-full rounded-full corner-squircle"
-              >
-                <Icon icon={Plant01Icon} />
-                Ajouter des données fictives
-              </Button>
-            }
-            title="Ajouter des données fictives ?"
-            content="Des entrées, sorties et un historique fictifs seront ajoutés au stock actuel."
-            confirmLabel="Ajouter"
-            cancelLabel={fr.common.cancel}
-            waitingLabel={fr.common.pleaseWait}
-            confirmIcon={Plant01Icon}
-            confirmVariant="secondary"
-            onConfirm={handleSeedFakeData}
-          />
-        )}
         <Button
           variant="outline"
           disabled={loggingOut}
@@ -151,6 +84,12 @@ function MoreSheet() {
           />
           Déconnexion
         </Button>
+        <DevDataActions
+          {...{ open }}
+          onSeeded={() => setOpen(false)}
+          buttonClassName="w-full"
+          leadingSeparator
+        />
       </SheetContent>
     </Sheet>
   );

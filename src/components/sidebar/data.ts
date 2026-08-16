@@ -1,14 +1,15 @@
 import {
-  Download01Icon, PackageIcon,
+  Download01Icon,
+  PackageIcon,
   ScrollIcon,
-  Upload01Icon
+  Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import type { HugeIcon } from "@/components/Icon";
 
 export const APP_HEADER: { iconSrc: string; text: string; subtext?: string } = {
   iconSrc: "/icon.svg",
   text: "Riad Stone",
-  subtext: "Pour Blal par Malik 😋",
+  subtext: "Pour Blal 😋",
 };
 
 export const NAV_ITEMS: {
