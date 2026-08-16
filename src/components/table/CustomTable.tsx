@@ -4,7 +4,8 @@ import {
   BrushCleaningIcon,
   Delete02Icon,
   InboxIcon,
-  MoreHorizontalIcon,
+  MouseRightClick04Icon,
+  Tap04Icon,
 } from "@hugeicons/core-free-icons";
 import {
   parseAsInteger,
@@ -18,6 +19,10 @@ import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { Button } from "@/shadcn/ui/button";
 import { Checkbox } from "@/shadcn/ui/checkbox";
+import {
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from "@/shadcn/ui/context-menu";
 import { Input } from "@/shadcn/ui/input";
 import {
   Pagination,
@@ -37,6 +42,7 @@ import {
 } from "@/shadcn/ui/table";
 import { cn } from "@/shadcn/utils";
 import { haptic } from "@/utils/haptics";
+import { ICONS } from "@/utils/icon";
 import { CustomTableCell } from "./CustomTableCell";
 import { CustomTableColumnHeader } from "./CustomTableColumnHeader";
 import { ExtractButton } from "./ExtractButton";
@@ -51,6 +57,7 @@ import {
   serializeSort,
 } from "./filtering";
 import { type CustomTableLabels, resolveTableLabels } from "./labels";
+import { RowContextMenu } from "./RowContextMenu";
 
 const PAGE_SIZE = 25;
 
@@ -66,9 +73,8 @@ const clampToUnit = (value: number) => Math.min(1, Math.max(0, value));
 // SCROLL_FADE_SIZE px of scroll instead of snapping on at 1px, so a tiny
 // scroll shows a faint fade and a bigger one shows the full fade — same
 // feel as shadcn's scroll-fade.
-// the sticky checkbox/actions columns stay fully opaque — they never scroll
-// out of view, so fading them would be misleading — the fade starts right
-// after them instead
+// the sticky checkbox column stays fully opaque — it never scrolls out of
+// view, so fading it would be misleading — the fade starts right after it
 function getScrollFadeMask(
   leftProgress: number,
   rightProgress: number,
@@ -423,10 +429,15 @@ export function CustomTable<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const checkboxColumnRef = useRef<HTMLTableCellElement>(null);
-  const actionsColumnRef = useRef<HTMLTableCellElement>(null);
   const [scrollFade, setScrollFade] = useState({ left: 0, right: 0 });
   const [checkboxColumnWidth, setCheckboxColumnWidth] = useState(0);
-  const [actionsColumnWidth, setActionsColumnWidth] = useState(0);
+  // long-press/right-click "Select" turns this on so every row's checkbox
+  // shows at once, instead of the user having to open the menu per row —
+  // clears itself once nothing is left selected
+  const [selectionMode, setSelectionMode] = useState(false);
+  useEffect(() => {
+    if (selectedIds.size === 0) setSelectionMode(false);
+  }, [selectedIds]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
   useEffect(() => {
@@ -444,7 +455,6 @@ export function CustomTable<T>({
         prev.left === left && prev.right === right ? prev : { left, right },
       );
       setCheckboxColumnWidth(checkboxColumnRef.current?.offsetWidth ?? 0);
-      setActionsColumnWidth(actionsColumnRef.current?.offsetWidth ?? 0);
     };
 
     updateScrollFade();
@@ -504,10 +514,9 @@ export function CustomTable<T>({
     selectedIds.has(getItemId(item)),
   );
 
-  // the row-select checkbox and the "actions" column each get their own
-  // sticky leading column, checkbox first — the actions column is matched
-  // by id/type convention rather than a dedicated prop so existing column
-  // arrays don't need to opt in
+  // the "actions" column is never rendered as a real table column — it's
+  // matched by id/type convention and used purely as the row context
+  // menu's content, alongside the "Select" item CustomTable adds itself
   const actionsColumn = columns.find(
     (column): column is Extract<CustomTableColumn<T>, { type: "buttons" }> =>
       column.id === "actions" && column.type === "buttons",
@@ -515,19 +524,29 @@ export function CustomTable<T>({
   const bodyColumns = actionsColumn
     ? columns.filter((column) => column !== actionsColumn)
     : columns;
-  const hasCheckboxColumn = Boolean(selectable);
-  const hasActionsColumn = Boolean(actionsColumn);
-  const actionsColumnLeft = hasCheckboxColumn ? checkboxColumnWidth : 0;
+  const hasCheckboxColumn = Boolean(selectable) && selectionMode;
+  const hasRowMenu = Boolean(actionsColumn) || Boolean(selectable);
   const leadCheckboxClassName =
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
   const scrollFadeMask = getScrollFadeMask(
     scrollFade.left,
     scrollFade.right,
-    checkboxColumnWidth + actionsColumnWidth,
+    checkboxColumnWidth,
   );
 
   return (
     <div className="rounded-md overflow-clip">
+      {hasRowMenu && (
+        <div className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted-foreground">
+          <Icon
+            icon={MouseRightClick04Icon}
+            className="hidden size-3.5 sm:inline"
+          />
+          <span className="hidden sm:inline">{labels.rightClickHint}</span>
+          <Icon icon={Tap04Icon} className="size-3.5 sm:hidden" />
+          <span className="sm:hidden">{labels.longPressHint}</span>
+        </div>
+      )}
       <div
         ref={scrollContainerRef}
         className="w-full overflow-x-auto md:max-h-[calc(100svh-14rem)] md:overflow-y-auto"
@@ -552,30 +571,6 @@ export function CustomTable<T>({
                       className={leadCheckboxClassName}
                     />
                   </div>
-                </TableHead>
-              )}
-              {hasActionsColumn && actionsColumn && (
-                <TableHead
-                  ref={actionsColumnRef}
-                  className="z-20"
-                  style={{ left: actionsColumnLeft }}
-                >
-                  <CustomTableColumnHeader
-                    column={actionsColumn}
-                    {...{ items, filterable, sortable, labels }}
-                    getField={getColumnField(actionsColumn.id)}
-                    setField={(field: ColumnFilterField, value: string) =>
-                      setColumnField(actionsColumn.id, field, value)
-                    }
-                    sort={sort?.columnId === actionsColumn.id ? sort.dir : null}
-                    onSortChange={(dir: "asc" | "desc" | null) =>
-                      setSortRaw(
-                        dir
-                          ? serializeSort({ columnId: actionsColumn.id, dir })
-                          : "",
-                      )
-                    }
-                  />
                 </TableHead>
               )}
               {bodyColumns.map((column) => (
@@ -621,19 +616,6 @@ export function CustomTable<T>({
                         </div>
                       </TableCell>
                     )}
-                    {hasActionsColumn && (
-                      <TableCell
-                        className={cn(
-                          "sticky z-10 border-r border-border/50",
-                          skeletonBg,
-                        )}
-                        style={{ left: actionsColumnLeft }}
-                      >
-                        <div className="flex justify-center pr-2!">
-                          <Skeleton className="size-7" />
-                        </div>
-                      </TableCell>
-                    )}
                     {bodyColumns.map((column) => (
                       <TableCell
                         key={column.id}
@@ -669,9 +651,9 @@ export function CustomTable<T>({
                   : index % 2 === 1
                     ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
                     : "bg-background";
-                return (
+                const row = (
                   <TableRow
-                    key={id}
+                    key={hasRowMenu ? undefined : id}
                     className={cn(
                       "group/row",
                       rowBackgroundClassName,
@@ -693,36 +675,6 @@ export function CustomTable<T>({
                             className={leadCheckboxClassName}
                           />
                         </div>
-                      </TableCell>
-                    )}
-                    {hasActionsColumn && actionsColumn && (
-                      <TableCell
-                        className={cn(
-                          "sticky z-10 border-r border-border/50 text-center",
-                          rowBackgroundClassName,
-                        )}
-                        style={{ left: actionsColumnLeft }}
-                      >
-                        <div className="hidden items-center justify-center gap-1 sm:flex">
-                          {actionsColumn.getButtons(item)}
-                        </div>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon-sm"
-                              className="corner-squircle sm:hidden"
-                            >
-                              <Icon icon={MoreHorizontalIcon} />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            align="start"
-                            className="flex max-h-(--radix-popover-content-available-height) w-auto flex-col gap-1 overflow-y-auto"
-                          >
-                            {actionsColumn.getButtons(item)}
-                          </PopoverContent>
-                        </Popover>
                       </TableCell>
                     )}
                     {bodyColumns.map((column) => {
@@ -755,6 +707,30 @@ export function CustomTable<T>({
                       );
                     })}
                   </TableRow>
+                );
+
+                if (!hasRowMenu) return row;
+
+                return (
+                  <RowContextMenu key={id} trigger={row}>
+                    {actionsColumn && (
+                      <div className="flex flex-col gap-1">
+                        {actionsColumn.getButtons(item)}
+                      </div>
+                    )}
+                    {actionsColumn && selectable && <ContextMenuSeparator />}
+                    {selectable && (
+                      <ContextMenuItem
+                        onSelect={() => {
+                          setSelectionMode(true);
+                          toggleRow(id);
+                        }}
+                      >
+                        <Icon icon={ICONS.check} />
+                        {labels.selectRow}
+                      </ContextMenuItem>
+                    )}
+                  </RowContextMenu>
                 );
               })}
           </TableBody>
@@ -855,6 +831,19 @@ export function CustomTable<T>({
               <Icon icon={BrushCleaningIcon} />
               <span className="hidden sm:inline">{labels.resetFilters}</span>
               <span className="sm:hidden">{labels.resetFiltersShort}</span>
+            </Button>
+          )}
+          {selectable && selectionMode && (
+            <Button
+              variant="outline"
+              className="shadow-lg"
+              onClick={() => {
+                setSelectionMode(false);
+                setSelectedIds(new Set());
+              }}
+            >
+              <Icon icon={ICONS.cancel} />
+              {labels.cancelSelection}
             </Button>
           )}
           {selectable && onDeleteSelected && selectedItems.length > 0 && (

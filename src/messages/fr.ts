@@ -20,6 +20,9 @@ export const fr = {
   table: {
     selectAllRows: "Sélectionner toutes les lignes",
     selectRow: "Sélectionner la ligne",
+    cancelSelection: "Annuler la sélection",
+    rightClickHint: "Clic droit sur une ligne pour ouvrir les actions",
+    longPressHint: "Reste appuyé sur une ligne pour ouvrir les actions",
     emptyTitle: "Rien à afficher",
     resetFilters: "Réinitialiser les filtres et le tri",
     resetFiltersShort: "Réinitialiser",
