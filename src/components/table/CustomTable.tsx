@@ -57,22 +57,25 @@ const SKELETON_ROW_KEYS = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`);
 
 const SCROLL_FADE_SIZE = 32;
 
+const clampToUnit = (value: number) => Math.min(1, Math.max(0, value));
+
 // alpha-masks the scroll container itself (not an overlay) so the fade
 // blends correctly over striped/merged row backgrounds and the sticky
-// header alike, and only appears on edges that still have more to scroll to.
+// header alike. leftProgress/rightProgress (0-1) ramp up over the first
+// SCROLL_FADE_SIZE px of scroll instead of snapping on at 1px, so a tiny
+// scroll shows a faint fade and a bigger one shows the full fade — same
+// feel as shadcn's scroll-fade.
 // the sticky lead column stays fully opaque — it never scrolls out of view,
 // so fading it would be misleading — the fade starts right after it instead
 function getScrollFadeMask(
-  canScrollLeft: boolean,
-  canScrollRight: boolean,
+  leftProgress: number,
+  rightProgress: number,
   leadColumnWidth: number,
 ) {
-  const left = canScrollLeft
-    ? `black ${leadColumnWidth}px, transparent ${leadColumnWidth}px, black ${leadColumnWidth + SCROLL_FADE_SIZE}px`
-    : "black 0px";
-  const right = canScrollRight
-    ? `black calc(100% - ${SCROLL_FADE_SIZE}px), transparent`
-    : "black 100%";
+  const leftAlpha = 1 - leftProgress;
+  const rightAlpha = 1 - rightProgress;
+  const left = `black ${leadColumnWidth}px, rgba(0,0,0,${leftAlpha}) ${leadColumnWidth}px, black ${leadColumnWidth + SCROLL_FADE_SIZE}px`;
+  const right = `black calc(100% - ${SCROLL_FADE_SIZE}px), rgba(0,0,0,${rightAlpha})`;
   return `linear-gradient(to right, ${left}, ${right})`;
 }
 
@@ -418,7 +421,7 @@ export function CustomTable<T>({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const leadColumnRef = useRef<HTMLTableCellElement>(null);
-  const [scrollFade, setScrollFade] = useState({ left: false, right: false });
+  const [scrollFade, setScrollFade] = useState({ left: 0, right: 0 });
   const [leadColumnWidth, setLeadColumnWidth] = useState(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
@@ -427,10 +430,12 @@ export function CustomTable<T>({
     if (!scrollContainer) return;
 
     const updateScrollFade = () => {
-      const left = scrollContainer.scrollLeft > 0;
-      const right =
-        scrollContainer.scrollLeft + scrollContainer.clientWidth <
-        scrollContainer.scrollWidth - 1;
+      const remainingRight =
+        scrollContainer.scrollWidth -
+        scrollContainer.clientWidth -
+        scrollContainer.scrollLeft;
+      const left = clampToUnit(scrollContainer.scrollLeft / SCROLL_FADE_SIZE);
+      const right = clampToUnit(remainingRight / SCROLL_FADE_SIZE);
       setScrollFade((prev) =>
         prev.left === left && prev.right === right ? prev : { left, right },
       );
