@@ -59,10 +59,16 @@ const SCROLL_FADE_SIZE = 32;
 
 // alpha-masks the scroll container itself (not an overlay) so the fade
 // blends correctly over striped/merged row backgrounds and the sticky
-// header alike, and only appears on edges that still have more to scroll to
-function getScrollFadeMask(canScrollLeft: boolean, canScrollRight: boolean) {
+// header alike, and only appears on edges that still have more to scroll to.
+// the sticky lead column stays fully opaque — it never scrolls out of view,
+// so fading it would be misleading — the fade starts right after it instead
+function getScrollFadeMask(
+  canScrollLeft: boolean,
+  canScrollRight: boolean,
+  leadColumnWidth: number,
+) {
   const left = canScrollLeft
-    ? `transparent, black ${SCROLL_FADE_SIZE}px`
+    ? `black ${leadColumnWidth}px, transparent ${leadColumnWidth}px, black ${leadColumnWidth + SCROLL_FADE_SIZE}px`
     : "black 0px";
   const right = canScrollRight
     ? `black calc(100% - ${SCROLL_FADE_SIZE}px), transparent`
@@ -411,7 +417,9 @@ export function CustomTable<T>({
   }, [columns, paginatedItems]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const leadColumnRef = useRef<HTMLTableCellElement>(null);
   const [scrollFade, setScrollFade] = useState({ left: false, right: false });
+  const [leadColumnWidth, setLeadColumnWidth] = useState(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
   useEffect(() => {
@@ -426,6 +434,7 @@ export function CustomTable<T>({
       setScrollFade((prev) =>
         prev.left === left && prev.right === right ? prev : { left, right },
       );
+      setLeadColumnWidth(leadColumnRef.current?.offsetWidth ?? 0);
     };
 
     updateScrollFade();
@@ -485,8 +494,6 @@ export function CustomTable<T>({
     selectedIds.has(getItemId(item)),
   );
 
-  const scrollFadeMask = getScrollFadeMask(scrollFade.left, scrollFade.right);
-
   // the row-select checkbox and the "actions" column both belong on one
   // sticky leading cell instead of two separate columns — the actions
   // column is matched by id/type convention rather than a dedicated prop
@@ -501,6 +508,11 @@ export function CustomTable<T>({
   const hasStickyLeadColumn = selectable || Boolean(actionsColumn);
   const leadCheckboxClassName =
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
+  const scrollFadeMask = getScrollFadeMask(
+    scrollFade.left,
+    scrollFade.right,
+    hasStickyLeadColumn ? leadColumnWidth : 0,
+  );
 
   return (
     <div className="rounded-md overflow-clip">
@@ -516,7 +528,7 @@ export function CustomTable<T>({
           <TableHeader>
             <TableRow className="*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4">
               {hasStickyLeadColumn && (
-                <TableHead className="left-0 z-20">
+                <TableHead ref={leadColumnRef} className="left-0 z-20">
                   <div className="flex items-center justify-center gap-2">
                     {selectable && (
                       <Checkbox
