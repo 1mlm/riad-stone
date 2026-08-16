@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME, isAuthCookieValid } from "@/utils/auth";
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|manifest.webmanifest|sw.js|icon.svg|icon-192.png|icon-512.png).*)",
+  ],
 };
 
 function redirectTo(request: NextRequest, pathname: string) {
