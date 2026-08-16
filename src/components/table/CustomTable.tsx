@@ -4,6 +4,7 @@ import {
   BrushCleaningIcon,
   Delete02Icon,
   InboxIcon,
+  MoreHorizontalIcon,
 } from "@hugeicons/core-free-icons";
 import {
   parseAsInteger,
@@ -65,16 +66,17 @@ const clampToUnit = (value: number) => Math.min(1, Math.max(0, value));
 // SCROLL_FADE_SIZE px of scroll instead of snapping on at 1px, so a tiny
 // scroll shows a faint fade and a bigger one shows the full fade — same
 // feel as shadcn's scroll-fade.
-// the sticky lead column stays fully opaque — it never scrolls out of view,
-// so fading it would be misleading — the fade starts right after it instead
+// the sticky checkbox/actions columns stay fully opaque — they never scroll
+// out of view, so fading them would be misleading — the fade starts right
+// after them instead
 function getScrollFadeMask(
   leftProgress: number,
   rightProgress: number,
-  leadColumnWidth: number,
+  stickyRegionWidth: number,
 ) {
   const leftAlpha = 1 - leftProgress;
   const rightAlpha = 1 - rightProgress;
-  const left = `black ${leadColumnWidth}px, rgba(0,0,0,${leftAlpha}) ${leadColumnWidth}px, black ${leadColumnWidth + SCROLL_FADE_SIZE}px`;
+  const left = `black ${stickyRegionWidth}px, rgba(0,0,0,${leftAlpha}) ${stickyRegionWidth}px, black ${stickyRegionWidth + SCROLL_FADE_SIZE}px`;
   const right = `black calc(100% - ${SCROLL_FADE_SIZE}px), rgba(0,0,0,${rightAlpha})`;
   return `linear-gradient(to right, ${left}, ${right})`;
 }
@@ -420,9 +422,11 @@ export function CustomTable<T>({
   }, [columns, paginatedItems]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const leadColumnRef = useRef<HTMLTableCellElement>(null);
+  const checkboxColumnRef = useRef<HTMLTableCellElement>(null);
+  const actionsColumnRef = useRef<HTMLTableCellElement>(null);
   const [scrollFade, setScrollFade] = useState({ left: 0, right: 0 });
-  const [leadColumnWidth, setLeadColumnWidth] = useState(0);
+  const [checkboxColumnWidth, setCheckboxColumnWidth] = useState(0);
+  const [actionsColumnWidth, setActionsColumnWidth] = useState(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
   useEffect(() => {
@@ -439,7 +443,8 @@ export function CustomTable<T>({
       setScrollFade((prev) =>
         prev.left === left && prev.right === right ? prev : { left, right },
       );
-      setLeadColumnWidth(leadColumnRef.current?.offsetWidth ?? 0);
+      setCheckboxColumnWidth(checkboxColumnRef.current?.offsetWidth ?? 0);
+      setActionsColumnWidth(actionsColumnRef.current?.offsetWidth ?? 0);
     };
 
     updateScrollFade();
@@ -499,10 +504,10 @@ export function CustomTable<T>({
     selectedIds.has(getItemId(item)),
   );
 
-  // the row-select checkbox and the "actions" column both belong on one
-  // sticky leading cell instead of two separate columns — the actions
-  // column is matched by id/type convention rather than a dedicated prop
-  // so existing column arrays don't need to opt in
+  // the row-select checkbox and the "actions" column each get their own
+  // sticky leading column, checkbox first — the actions column is matched
+  // by id/type convention rather than a dedicated prop so existing column
+  // arrays don't need to opt in
   const actionsColumn = columns.find(
     (column): column is Extract<CustomTableColumn<T>, { type: "buttons" }> =>
       column.id === "actions" && column.type === "buttons",
@@ -510,13 +515,15 @@ export function CustomTable<T>({
   const bodyColumns = actionsColumn
     ? columns.filter((column) => column !== actionsColumn)
     : columns;
-  const hasStickyLeadColumn = selectable || Boolean(actionsColumn);
+  const hasCheckboxColumn = Boolean(selectable);
+  const hasActionsColumn = Boolean(actionsColumn);
+  const actionsColumnLeft = hasCheckboxColumn ? checkboxColumnWidth : 0;
   const leadCheckboxClassName =
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
   const scrollFadeMask = getScrollFadeMask(
     scrollFade.left,
     scrollFade.right,
-    hasStickyLeadColumn ? leadColumnWidth : 0,
+    checkboxColumnWidth + actionsColumnWidth,
   );
 
   return (
@@ -532,44 +539,43 @@ export function CustomTable<T>({
         <table className="w-full caption-bottom text-sm">
           <TableHeader>
             <TableRow className="*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4">
-              {hasStickyLeadColumn && (
-                <TableHead ref={leadColumnRef} className="left-0 z-20">
-                  <div className="flex items-center justify-center gap-2">
-                    {selectable && (
-                      <Checkbox
-                        checked={getTriState(
-                          visibleSelectedCount,
-                          visibleItems.length,
-                        )}
-                        onCheckedChange={toggleAll}
-                        aria-label={labels.selectAllRows}
-                        className={leadCheckboxClassName}
-                      />
-                    )}
-                    {actionsColumn && (
-                      <CustomTableColumnHeader
-                        column={actionsColumn}
-                        {...{ items, filterable, sortable, labels }}
-                        getField={getColumnField(actionsColumn.id)}
-                        setField={(field: ColumnFilterField, value: string) =>
-                          setColumnField(actionsColumn.id, field, value)
-                        }
-                        sort={
-                          sort?.columnId === actionsColumn.id ? sort.dir : null
-                        }
-                        onSortChange={(dir: "asc" | "desc" | null) =>
-                          setSortRaw(
-                            dir
-                              ? serializeSort({
-                                  columnId: actionsColumn.id,
-                                  dir,
-                                })
-                              : "",
-                          )
-                        }
-                      />
-                    )}
+              {hasCheckboxColumn && (
+                <TableHead ref={checkboxColumnRef} className="left-0 z-20">
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={getTriState(
+                        visibleSelectedCount,
+                        visibleItems.length,
+                      )}
+                      onCheckedChange={toggleAll}
+                      aria-label={labels.selectAllRows}
+                      className={leadCheckboxClassName}
+                    />
                   </div>
+                </TableHead>
+              )}
+              {hasActionsColumn && actionsColumn && (
+                <TableHead
+                  ref={actionsColumnRef}
+                  className="z-20"
+                  style={{ left: actionsColumnLeft }}
+                >
+                  <CustomTableColumnHeader
+                    column={actionsColumn}
+                    {...{ items, filterable, sortable, labels }}
+                    getField={getColumnField(actionsColumn.id)}
+                    setField={(field: ColumnFilterField, value: string) =>
+                      setColumnField(actionsColumn.id, field, value)
+                    }
+                    sort={sort?.columnId === actionsColumn.id ? sort.dir : null}
+                    onSortChange={(dir: "asc" | "desc" | null) =>
+                      setSortRaw(
+                        dir
+                          ? serializeSort({ columnId: actionsColumn.id, dir })
+                          : "",
+                      )
+                    }
+                  />
                 </TableHead>
               )}
               {bodyColumns.map((column) => (
@@ -593,35 +599,52 @@ export function CustomTable<T>({
           </TableHeader>
           <TableBody>
             {loading &&
-              SKELETON_ROW_KEYS.map((key, index) => (
-                <TableRow
-                  key={key}
-                  className={cn(index % 2 === 1 && "bg-foreground/5")}
-                >
-                  {hasStickyLeadColumn && (
-                    <TableCell
-                      className={cn(
-                        "sticky left-0 z-10 border-r border-border/50",
-                        index % 2 === 1
-                          ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
-                          : "bg-background",
-                      )}
-                    >
-                      <div className="flex justify-center pr-2!">
-                        <Skeleton className="size-7" />
-                      </div>
-                    </TableCell>
-                  )}
-                  {bodyColumns.map((column) => (
-                    <TableCell
-                      key={column.id}
-                      className="border-r border-border/50 last:border-r-0"
-                    >
-                      <Skeleton className="h-4 w-full min-w-12" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+              SKELETON_ROW_KEYS.map((key, index) => {
+                const skeletonBg =
+                  index % 2 === 1
+                    ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
+                    : "bg-background";
+                return (
+                  <TableRow
+                    key={key}
+                    className={cn(index % 2 === 1 && "bg-foreground/5")}
+                  >
+                    {hasCheckboxColumn && (
+                      <TableCell
+                        className={cn(
+                          "sticky left-0 z-10 border-r border-border/50",
+                          skeletonBg,
+                        )}
+                      >
+                        <div className="flex justify-center pr-2!">
+                          <Skeleton className="size-7" />
+                        </div>
+                      </TableCell>
+                    )}
+                    {hasActionsColumn && (
+                      <TableCell
+                        className={cn(
+                          "sticky z-10 border-r border-border/50",
+                          skeletonBg,
+                        )}
+                        style={{ left: actionsColumnLeft }}
+                      >
+                        <div className="flex justify-center pr-2!">
+                          <Skeleton className="size-7" />
+                        </div>
+                      </TableCell>
+                    )}
+                    {bodyColumns.map((column) => (
+                      <TableCell
+                        key={column.id}
+                        className="border-r border-border/50 last:border-r-0"
+                      >
+                        <Skeleton className="h-4 w-full min-w-12" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
             {!loading &&
               paginatedItems.map((item, index) => {
                 const id = getItemId(item);
@@ -655,24 +678,51 @@ export function CustomTable<T>({
                       isGroupStart && "border-t-2 border-t-border",
                     )}
                   >
-                    {hasStickyLeadColumn && (
+                    {hasCheckboxColumn && (
                       <TableCell
                         className={cn(
                           "sticky left-0 z-10 border-r border-border/50 text-center",
                           rowBackgroundClassName,
                         )}
                       >
-                        <div className="flex items-center justify-center gap-1">
-                          {selectable && (
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={() => toggleRow(id)}
-                              aria-label={labels.selectRow}
-                              className={leadCheckboxClassName}
-                            />
-                          )}
-                          {actionsColumn?.getButtons(item)}
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleRow(id)}
+                            aria-label={labels.selectRow}
+                            className={leadCheckboxClassName}
+                          />
                         </div>
+                      </TableCell>
+                    )}
+                    {hasActionsColumn && actionsColumn && (
+                      <TableCell
+                        className={cn(
+                          "sticky z-10 border-r border-border/50 text-center",
+                          rowBackgroundClassName,
+                        )}
+                        style={{ left: actionsColumnLeft }}
+                      >
+                        <div className="hidden items-center justify-center gap-1 sm:flex">
+                          {actionsColumn.getButtons(item)}
+                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon-sm"
+                              className="corner-squircle sm:hidden"
+                            >
+                              <Icon icon={MoreHorizontalIcon} />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="start"
+                            className="flex w-auto flex-col gap-1"
+                          >
+                            {actionsColumn.getButtons(item)}
+                          </PopoverContent>
+                        </Popover>
                       </TableCell>
                     )}
                     {bodyColumns.map((column) => {
