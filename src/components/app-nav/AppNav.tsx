@@ -1,6 +1,6 @@
 "use client";
 
-import type { PropsWithChildren, ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, ViewTransition } from "react";
 import { SidebarInset, SidebarProvider } from "@/shadcn/ui/sidebar";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { MobileTopBar, type SheetFooterRenderer } from "./MobileTopBar";
@@ -43,7 +43,9 @@ export function AppNav({
             sheetFooter,
           }}
         />
-        <div className="pt-20 sm:pt-0">{children}</div>
+        <div className="pt-20 sm:pt-0">
+          <ViewTransition>{children}</ViewTransition>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
