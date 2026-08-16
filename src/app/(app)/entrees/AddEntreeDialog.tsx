@@ -4,20 +4,10 @@ import { Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FieldLabel } from "@/components/FieldLabel";
-import { FormError } from "@/components/FormError";
+import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
-import { SubmitButton } from "@/components/SubmitButton";
 import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/shadcn/ui/dialog";
 import { cn } from "@/shadcn/utils";
 import { ICONS } from "@/utils/icon";
 import { type CreateEntreesResult, createEntrees } from "./actions";
@@ -282,97 +272,81 @@ export function AddEntreeDialog({
   );
 
   return (
-    <Dialog
-      {...{ open }}
+    <FormDialog
+      {...{ open, formAction, pending }}
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) resetState();
       }}
-    >
-      <DialogTrigger asChild>
+      trigger={
         <Button className="rounded-full corner-squircle">
           <Icon icon={PlusSignIcon} />
           Ajouter une entrée
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Ajouter une entrée</DialogTitle>
-          <DialogDescription className="sr-only">
-            Formulaire d'ajout d'une ou plusieurs entrées en stock partageant
-            une même désignation.
-          </DialogDescription>
-        </DialogHeader>
-        <form action={formAction} className="flex min-w-0 flex-col gap-4">
-          <input
-            type="hidden"
-            name="cardIds"
-            value={cards.map((c) => c.id).join(",")}
+      }
+      title="Ajouter une entrée"
+      description="Formulaire d'ajout d'une ou plusieurs entrées en stock partageant une même désignation."
+      error={state.error}
+      submitIcon={PlusSignIcon}
+      submitDisabled={cards.length === 0}
+      submitLabel={
+        <>Ajouter {cards.length > 1 ? `${cards.length} entrées` : "l'entrée"}</>
+      }
+    >
+      <input
+        type="hidden"
+        name="cardIds"
+        value={cards.map((c) => c.id).join(",")}
+      />
+      <div className="flex flex-col gap-1.5">
+        <FieldLabel icon={ENTREE_FIELD_BY_KEY.designation.icon} required>
+          {ENTREE_FIELD_BY_KEY.designation.label}
+        </FieldLabel>
+        <DesignationCombobox
+          name="designation"
+          value={designation}
+          onValueChange={setDesignation}
+          suggestions={designationSuggestions}
+          placeholder="Granite, Ibiza..."
+        />
+      </div>
+
+      {cards.length === 0 ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-full corner-squircle"
+          onClick={addCard}
+        >
+          <Icon icon={PlusSignIcon} />
+          Ajouter une fiche
+        </Button>
+      ) : (
+        <>
+          <CardsCarousel
+            {...{
+              cards,
+              activeIndex,
+              invalidCardId,
+              scrollRef,
+              setCardRef,
+              fieldSuggestions,
+            }}
+            onDeleteCard={deleteCard}
+            onNavigate={navigateTo}
           />
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel icon={ENTREE_FIELD_BY_KEY.designation.icon} required>
-              {ENTREE_FIELD_BY_KEY.designation.label}
-            </FieldLabel>
-            <DesignationCombobox
-              name="designation"
-              value={designation}
-              onValueChange={setDesignation}
-              suggestions={designationSuggestions}
-              placeholder="Granite, Ibiza..."
-            />
-          </div>
-
-          {cards.length === 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full corner-squircle"
-              onClick={addCard}
-            >
-              <Icon icon={PlusSignIcon} />
-              Ajouter une fiche
-            </Button>
-          ) : (
-            <>
-              <CardsCarousel
-                {...{
-                  cards,
-                  activeIndex,
-                  invalidCardId,
-                  scrollRef,
-                  setCardRef,
-                  fieldSuggestions,
-                }}
-                onDeleteCard={deleteCard}
-                onNavigate={navigateTo}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="corner-squircle"
-                onClick={addCard}
-              >
-                <Icon icon={PlusSignIcon} />
-                Ajouter une autre fiche
-              </Button>
-            </>
-          )}
-
-          <FormError>{state.error}</FormError>
-
-          <DialogFooter>
-            <SubmitButton
-              icon={PlusSignIcon}
-              {...{ pending }}
-              disabled={cards.length === 0}
-            >
-              Ajouter{" "}
-              {cards.length > 1 ? `${cards.length} entrées` : "l'entrée"}
-            </SubmitButton>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="corner-squircle"
+            onClick={addCard}
+          >
+            <Icon icon={PlusSignIcon} />
+            Ajouter une autre fiche
+          </Button>
+        </>
+      )}
+    </FormDialog>
   );
 }

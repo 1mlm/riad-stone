@@ -5,19 +5,9 @@ import { type ReactNode, useActionState, useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
-import { FormError } from "@/components/FormError";
+import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
-import { SubmitButton } from "@/components/SubmitButton";
 import { Button } from "@/shadcn/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/shadcn/ui/dialog";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
 import { createSortie } from "./actions";
@@ -115,65 +105,55 @@ export function AddSortieDialog({
   );
 
   return (
-    <Dialog {...{ open, onOpenChange: setOpen }}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <FormDialog
+      {...{ open, formAction, pending }}
+      onOpenChange={setOpen}
+      trigger={
+        trigger ?? (
           <Button className="rounded-full corner-squircle">
             <Icon icon={PlusSignIcon} />
             Ajouter une sortie
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Ajouter une sortie</DialogTitle>
-          <DialogDescription className="sr-only">
-            Formulaire de sortie d'une entrée en stock.
-          </DialogDescription>
-        </DialogHeader>
-        <form action={formAction} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel icon={ICONS.reference} required>
-              Référence de l'entrée
-            </FieldLabel>
-            <EntreeReferenceField
-              {...{ availableEntrees, entreeReference }}
-              onSelect={setEntreeReference}
-              onClear={() => setEntreeReference("")}
-              invalid={Boolean(state.error) && !entreeReference}
-            />
-          </div>
+        )
+      }
+      title="Ajouter une sortie"
+      description="Formulaire de sortie d'une entrée en stock."
+      error={state.error}
+      submitIcon={PlusSignIcon}
+      submitLabel="Ajouter"
+    >
+      <div className="flex flex-col gap-1.5">
+        <FieldLabel icon={ICONS.reference} required>
+          Référence de l'entrée
+        </FieldLabel>
+        <EntreeReferenceField
+          {...{ availableEntrees, entreeReference }}
+          onSelect={setEntreeReference}
+          onClear={() => setEntreeReference("")}
+          invalid={Boolean(state.error) && !entreeReference}
+        />
+      </div>
 
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="nombrePieces" icon={ICONS.pieces} required>
-              Nombre de pièces
-              {selectedEntree && ` (max ${selectedEntree.piecesRestantes})`}
-            </FieldLabel>
-            <InputGroup>
-              <InputGroupInput
-                id="nombrePieces"
-                name="nombrePieces"
-                type="number"
-                min="1"
-                max={selectedEntree?.piecesRestantes}
-                step="1"
-                disabled={!selectedEntree}
-                required
-              />
-            </InputGroup>
-          </div>
+      <div className="flex flex-col gap-1.5">
+        <FieldLabel htmlFor="nombrePieces" icon={ICONS.pieces} required>
+          Nombre de pièces
+          {selectedEntree && ` (max ${selectedEntree.piecesRestantes})`}
+        </FieldLabel>
+        <InputGroup>
+          <InputGroupInput
+            id="nombrePieces"
+            name="nombrePieces"
+            type="number"
+            min="1"
+            max={selectedEntree?.piecesRestantes}
+            step="1"
+            disabled={!selectedEntree}
+            required
+          />
+        </InputGroup>
+      </div>
 
-          <SortieFormFields mode="add" />
-
-          <FormError>{state.error}</FormError>
-
-          <DialogFooter>
-            <SubmitButton icon={PlusSignIcon} {...{ pending }}>
-              Ajouter
-            </SubmitButton>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <SortieFormFields mode="add" />
+    </FormDialog>
   );
 }

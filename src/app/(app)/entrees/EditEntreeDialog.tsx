@@ -2,19 +2,9 @@
 
 import { EditIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
-import { FormError } from "@/components/FormError";
+import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
-import { SubmitButton } from "@/components/SubmitButton";
 import { Button } from "@/shadcn/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/shadcn/ui/dialog";
 import { updateEntree } from "./actions";
 import { EntreeFormFields } from "./EntreeFormFields";
 import type { EntreeRow } from "./types";
@@ -31,31 +21,22 @@ export function EditEntreeDialog({ entree }: { entree: EntreeRow }) {
   );
 
   return (
-    <Dialog {...{ open, onOpenChange: setOpen }}>
-      <DialogTrigger asChild>
+    <FormDialog
+      {...{ open, formAction, pending }}
+      onOpenChange={setOpen}
+      trigger={
         <Button variant="warning" size="icon-sm" className="corner-squircle">
           <Icon icon={EditIcon} />
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Modifier l'entrée</DialogTitle>
-          <DialogDescription className="sr-only">
-            Formulaire de modification d'une entrée en stock.
-          </DialogDescription>
-        </DialogHeader>
-        <form action={formAction} className="flex flex-col gap-4">
-          <EntreeFormFields mode="edit" {...{ entree }} />
-
-          <FormError>{state.error}</FormError>
-
-          <DialogFooter>
-            <SubmitButton variant="warning" icon={EditIcon} {...{ pending }}>
-              Enregistrer
-            </SubmitButton>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      }
+      title="Modifier l'entrée"
+      description="Formulaire de modification d'une entrée en stock."
+      error={state.error}
+      submitIcon={EditIcon}
+      submitVariant="warning"
+      submitLabel="Enregistrer"
+    >
+      <EntreeFormFields mode="edit" {...{ entree }} />
+    </FormDialog>
   );
 }
