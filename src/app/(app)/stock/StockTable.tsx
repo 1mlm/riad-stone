@@ -16,7 +16,6 @@ import {
 } from "@/app/(app)/entrees/columns";
 import type { EntreeRow } from "@/app/(app)/entrees/types";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
-import { ReferenceHistoryDialog } from "@/components/ReferenceHistoryDialog";
 import { SearchBar } from "@/components/SearchBar";
 import {
   buildRowSummary,
@@ -56,7 +55,6 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
               size="icon-sm"
               className="corner-squircle"
             />
-            <ReferenceHistoryDialog reference={row.reference} />
             <EntreeDetailsDialog reference={row.reference} />
           </div>
         ),

@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
+import { ExpandIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import {
   type EntreeDetails,
   getEntreeDetails,
@@ -95,7 +95,7 @@ export function EntreeDetailsDialog({
 }) {
   return (
     <LazyDialog
-      triggerIcon={ICONS.details}
+      triggerIcon={ExpandIcon}
       title={`Détails de l'entrée ${reference}`}
       load={() => getEntreeDetails(reference)}
     >
