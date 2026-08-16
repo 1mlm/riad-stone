@@ -585,7 +585,9 @@ export function CustomTable<T>({
                     <TableCell
                       className={cn(
                         "sticky left-0 z-10 border-r border-border/50",
-                        index % 2 === 1 ? "bg-foreground/5" : "bg-background",
+                        index % 2 === 1
+                          ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
+                          : "bg-background",
                       )}
                     >
                       <div className="flex justify-center pr-2!">
@@ -618,14 +620,15 @@ export function CustomTable<T>({
                       mergeRuns.get(column.id)?.[index]?.start,
                   );
                 const isSelected = selectedIds.has(id);
-                // the sticky lead cell paints its own opaque background
-                // instead of relying on the row's, since a transparent
-                // sticky cell would show other columns sliding underneath
-                // it as the table scrolls horizontally
-                const rowBackgroundClassName = cn(
-                  index % 2 === 1 ? "bg-foreground/5" : "bg-background",
-                  isSelected && "bg-green-500/15",
-                );
+                // opaque color-mix instead of a translucent bg-*/N utility —
+                // the sticky lead cell paints this same color on itself, and
+                // a translucent background there would show other columns
+                // sliding underneath it as the table scrolls horizontally
+                const rowBackgroundClassName = isSelected
+                  ? "bg-[color-mix(in_oklch,var(--background),var(--color-green-500)_15%)]"
+                  : index % 2 === 1
+                    ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
+                    : "bg-background";
                 return (
                   <TableRow
                     key={id}
