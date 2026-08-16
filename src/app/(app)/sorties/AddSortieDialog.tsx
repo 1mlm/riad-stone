@@ -10,6 +10,7 @@ import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
+import { playChime } from "@/utils/sound";
 import { createSortie } from "./actions";
 import { SortieFormFields } from "./SortieFormFields";
 import type { AvailableEntree } from "./types";
@@ -92,6 +93,7 @@ export function AddSortieDialog({
       if (!result.error) {
         setOpen(false);
         setEntreeReference("");
+        playChime("success");
       }
       return result;
     },

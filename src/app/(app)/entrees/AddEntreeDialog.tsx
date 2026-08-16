@@ -10,6 +10,7 @@ import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import { cn } from "@/shadcn/utils";
 import { ICONS } from "@/utils/icon";
+import { playChime } from "@/utils/sound";
 import { type CreateEntreesResult, createEntrees } from "./actions";
 import { DesignationCombobox } from "./DesignationCombobox";
 import { EntreeFormFields } from "./EntreeFormFields";
@@ -257,6 +258,7 @@ export function AddEntreeDialog({
       if (!result.error) {
         setOpen(false);
         resetState();
+        playChime("success");
         return result;
       }
       if (result.duplicateReference) jumpToDuplicate(result.duplicateReference);

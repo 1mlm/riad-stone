@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
+import { playChime } from "@/utils/sound";
 import { updateEntree } from "./actions";
 import { EntreeFormFields } from "./EntreeFormFields";
 import type { EntreeRow } from "./types";
@@ -14,7 +15,10 @@ export function EditEntreeDialog({ entree }: { entree: EntreeRow }) {
   const [state, formAction, pending] = useActionState(
     async (prevState: { error: string | null }, formData: FormData) => {
       const result = await updateEntree(entree.reference, prevState, formData);
-      if (!result.error) setOpen(false);
+      if (!result.error) {
+        setOpen(false);
+        playChime("success");
+      }
       return result;
     },
     { error: null },

@@ -21,6 +21,7 @@ import {
 } from "@/shadcn/ui/dialog";
 import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
+import { playChime } from "@/utils/sound";
 
 export function ConfirmDialog({
   trigger,
@@ -61,6 +62,7 @@ export function ConfirmDialog({
       setError(null);
       setOpen(false);
       haptic(confirmVariant === "destructive" ? "warning" : "success");
+      playChime("success");
     });
 
   return (

@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
+import { playChime } from "@/utils/sound";
 import { updateSortie } from "./actions";
 import { SortieFormFields } from "./SortieFormFields";
 import type { AvailableEntree, SortieRow } from "./types";
@@ -30,7 +31,10 @@ export function EditSortieDialog({
   const [state, formAction, pending] = useActionState(
     async (prevState: { error: string | null }, formData: FormData) => {
       const result = await updateSortie(sortie.id, prevState, formData);
-      if (!result.error) setOpen(false);
+      if (!result.error) {
+        setOpen(false);
+        playChime("success");
+      }
       return result;
     },
     { error: null },

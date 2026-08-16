@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { cn } from "@/shadcn/utils";
 import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
+import { playChime } from "@/utils/sound";
 
 export function FormError({
   children,
@@ -15,7 +16,10 @@ export function FormError({
 }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: only fires when the error appears, not on every children re-render
   useEffect(() => {
-    if (children) haptic("error");
+    if (children) {
+      haptic("error");
+      playChime("error");
+    }
   }, [Boolean(children)]);
 
   if (!children) return null;
