@@ -1,13 +1,12 @@
 "use client";
 
-import { Loading01Icon, LogoutIcon } from "@hugeicons/core-free-icons";
+import { Loading01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { logout } from "@/app/(app)/actions";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Button } from "@/shadcn/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -18,36 +17,26 @@ import {
 } from "@/shadcn/ui/sheet";
 import { cn } from "@/shadcn/utils";
 import { haptic } from "@/utils/haptics";
-import type { NavCounts } from "./AppSidebar";
-import { DevDataActions } from "./DevDataActions";
-import { APP_HEADER, NAV_ITEMS } from "./data";
+import type { AppNavBrand, AppNavItem } from "./types";
+import { useHideOnScrollDown } from "./useHideOnScrollDown";
 
-// hides the bar once the user has scrolled down a bit and is actively
-// scrolling further down, brings it back the moment they scroll up —
-// the same pattern most mobile apps use for a top bar that shouldn't eat
-// screen space while reading
-function useHideOnScrollDown() {
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
+export type SheetFooterRenderer = (context: {
+  open: boolean;
+  close: () => void;
+}) => ReactNode;
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const scrolledPastThreshold = currentScrollY > 64;
-      const scrollingDown = currentScrollY > lastScrollY.current;
-      setHidden(scrolledPastThreshold && scrollingDown);
-      lastScrollY.current = currentScrollY;
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  return hidden;
-}
-
-function MoreSheet() {
+function MoreSheet({
+  brand,
+  sheetTitle,
+  sheetDescription,
+  sheetFooter,
+}: {
+  brand: AppNavBrand;
+  sheetTitle: string;
+  sheetDescription: string;
+  sheetFooter: SheetFooterRenderer;
+}) {
   const [open, setOpen] = useState(false);
-  const [loggingOut, startLogoutTransition] = useTransition();
 
   return (
     <Sheet {...{ open, onOpenChange: setOpen }}>
@@ -58,38 +47,21 @@ function MoreSheet() {
           className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-muted-foreground"
         >
           <Image
-            src={APP_HEADER.iconSrc}
-            alt={APP_HEADER.text}
+            src={brand.iconSrc}
+            alt={brand.text}
             width={20}
             height={20}
             className="size-5"
           />
-          <span className="text-[0.65rem]">{APP_HEADER.text}</span>
+          <span className="text-[0.65rem]">{brand.text}</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="gap-3 p-4">
         <SheetHeader className="sr-only p-0">
-          <SheetTitle>Plus d'options</SheetTitle>
-          <SheetDescription>Paramètres et déconnexion</SheetDescription>
+          <SheetTitle>{sheetTitle}</SheetTitle>
+          <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
-        <Button
-          variant="outline"
-          disabled={loggingOut}
-          onClick={() => startLogoutTransition(() => logout())}
-          className="w-full rounded-full corner-squircle text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <Icon
-            icon={loggingOut ? Loading01Icon : LogoutIcon}
-            className={loggingOut ? "animate-spin" : undefined}
-          />
-          Déconnexion
-        </Button>
-        <DevDataActions
-          {...{ open }}
-          onSeeded={() => setOpen(false)}
-          buttonClassName="w-full"
-          leadingSeparator
-        />
+        {sheetFooter({ open, close: () => setOpen(false) })}
       </SheetContent>
     </Sheet>
   );
@@ -104,7 +76,7 @@ function NavLinkContent({
   count,
 }: {
   label: string;
-  icon: (typeof NAV_ITEMS)[number]["icon"];
+  icon: AppNavItem["icon"];
   isActive: boolean;
   count?: number;
 }) {
@@ -139,7 +111,7 @@ function NavLink({
   label,
   icon,
   count,
-}: (typeof NAV_ITEMS)[number] & { count?: number }) {
+}: AppNavItem & { count?: number }) {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -154,7 +126,21 @@ function NavLink({
   );
 }
 
-export function MobileTopBar({ counts }: { counts: NavCounts }) {
+export function MobileTopBar({
+  brand,
+  items,
+  counts,
+  sheetTitle = "More options",
+  sheetDescription = "Settings and account actions",
+  sheetFooter,
+}: {
+  brand: AppNavBrand;
+  items: AppNavItem[];
+  counts: Record<string, number>;
+  sheetTitle?: string;
+  sheetDescription?: string;
+  sheetFooter: SheetFooterRenderer;
+}) {
   const hidden = useHideOnScrollDown();
 
   return (
@@ -164,8 +150,8 @@ export function MobileTopBar({ counts }: { counts: NavCounts }) {
         hidden && "-translate-y-[calc(100%+2rem)]",
       )}
     >
-      <MoreSheet />
-      {NAV_ITEMS.map((item) => (
+      <MoreSheet {...{ brand, sheetTitle, sheetDescription, sheetFooter }} />
+      {items.map((item) => (
         <NavLink
           key={item.href}
           {...item}

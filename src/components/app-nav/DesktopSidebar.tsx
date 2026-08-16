@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import {
   Sidebar,
@@ -15,13 +16,19 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/shadcn/ui/sidebar";
-import { APP_HEADER, NAV_ITEMS } from "./data";
-import { LogoutButton } from "./LogoutButton";
-import { SettingsButton } from "./SettingsButton";
+import type { AppNavBrand, AppNavItem } from "./types";
 
-export type NavCounts = Record<"entrees" | "sorties" | "stock", number>;
-
-export function AppSidebar({ counts }: { counts: NavCounts }) {
+export function DesktopSidebar({
+  brand,
+  items,
+  counts,
+  footer,
+}: {
+  brand: AppNavBrand;
+  items: AppNavItem[];
+  counts: Record<string, number>;
+  footer: ReactNode;
+}) {
   const pathname = usePathname();
 
   return (
@@ -36,14 +43,14 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
                   className="rounded-full corner-squircle select-none! active:bg-sidebar hover:bg-sidebar cursor-auto"
                 >
                   <Image
-                    src={APP_HEADER.iconSrc}
-                    alt={APP_HEADER.text}
+                    src={brand.iconSrc}
+                    alt={brand.text}
                     width={40}
                     height={40}
                     className="size-8 shrink-0 group-data-[collapsible=icon]:size-10"
                   />
                   <span className="font-semibold group-data-[collapsible=icon]:hidden">
-                    {APP_HEADER.text}
+                    {brand.text}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -53,8 +60,9 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu className="px-2">
-            {NAV_ITEMS.map((item) => {
+            {items.map((item) => {
               const isActive = pathname.startsWith(item.href);
+              const count = item.countKey ? counts[item.countKey] : undefined;
               return (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
@@ -66,9 +74,9 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
                     <Link href={item.href}>
                       <Icon icon={item.icon} />
                       <span>{item.label}</span>
-                      {item.countKey && counts[item.countKey] > 0 && (
+                      {Boolean(count) && (
                         <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                          {counts[item.countKey]}
+                          {count}
                         </span>
                       )}
                     </Link>
@@ -79,15 +87,10 @@ export function AppSidebar({ counts }: { counts: NavCounts }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SettingsButton />
-            </SidebarMenuItem>
-            <LogoutButton />
-          </SidebarMenu>
-          {APP_HEADER.subtext && (
+          <SidebarMenu>{footer}</SidebarMenu>
+          {brand.subtext && (
             <span className="px-2 pt-1 text-center text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-              {APP_HEADER.subtext}
+              {brand.subtext}
             </span>
           )}
         </SidebarFooter>

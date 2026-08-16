@@ -4,20 +4,15 @@ import {
   ScrollIcon,
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
-import type { HugeIcon } from "@/components/Icon";
+import type { AppNavBrand, AppNavItem } from "@/components/app-nav/types";
 
-export const APP_HEADER: { iconSrc: string; text: string; subtext?: string } = {
+export const APP_HEADER: AppNavBrand = {
   iconSrc: "/icon.svg",
   text: "Riad Stone",
   subtext: "Pour Blal 😋",
 };
 
-export const NAV_ITEMS: {
-  href: string;
-  label: string;
-  icon: HugeIcon;
-  countKey?: "entrees" | "sorties" | "stock";
-}[] = [
+export const NAV_ITEMS: AppNavItem[] = [
   {
     href: "/entrees",
     label: "Entrées",
