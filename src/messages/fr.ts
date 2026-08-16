@@ -10,9 +10,6 @@ export const fr = {
     pleaseWait: "Patientez…",
     locale: "fr-FR",
   },
-  deleteRow: {
-    confirmLabel: "Supprimer",
-  },
   datePicker: {
     placeholder: "Maintenant",
   },

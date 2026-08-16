@@ -4,6 +4,7 @@ import "@/shadcn/styles/globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { PropsWithChildren } from "react";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { Toaster } from "@/shadcn/ui/sonner";
 import { TooltipProvider } from "@/shadcn/ui/tooltip";
 
 const outfit = Outfit();
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         <NuqsAdapter>
           <TooltipProvider>{children}</TooltipProvider>
         </NuqsAdapter>
+        <Toaster />
       </body>
     </html>
   );

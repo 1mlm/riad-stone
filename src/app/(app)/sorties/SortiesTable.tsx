@@ -95,22 +95,19 @@ function SortiesTableContent({
             />
             <EditSortieDialog sortie={row} {...{ availableEntrees }} />
             <DeleteRowButton
-              title="Supprimer cette sortie ?"
-              content={`La sortie de l'entrée ${row.entreeReference} sera supprimée définitivement. Cette action est irréversible.`}
-              confirmLabel={fr.deleteRow.confirmLabel}
-              cancelLabel={fr.common.cancel}
-              waitingLabel={fr.common.pleaseWait}
-              onConfirm={async () => {
-                setPendingRemovedIds((prev) => new Set(prev).add(row.id));
-                const result = await deleteSortie(row.id);
-                if (result.error)
-                  setPendingRemovedIds((prev) => {
-                    const next = new Set(prev);
-                    next.delete(row.id);
-                    return next;
-                  });
-                return result;
-              }}
+              message={`Sortie de l'entrée ${row.entreeReference} supprimée`}
+              undoLabel={fr.common.cancel}
+              onOptimisticRemove={() =>
+                setPendingRemovedIds((prev) => new Set(prev).add(row.id))
+              }
+              onRevert={() =>
+                setPendingRemovedIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(row.id);
+                  return next;
+                })
+              }
+              commit={() => deleteSortie(row.id)}
             />
           </div>
         ),

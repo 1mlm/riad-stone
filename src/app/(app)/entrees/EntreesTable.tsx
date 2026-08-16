@@ -77,24 +77,21 @@ function EntreesTableContent({
             />
             <EditEntreeDialog entree={row} />
             <DeleteRowButton
-              title="Supprimer cette entrée ?"
-              content={`L'entrée ${row.reference} sera supprimée définitivement. Cette action est irréversible.`}
-              confirmLabel={fr.deleteRow.confirmLabel}
-              cancelLabel={fr.common.cancel}
-              waitingLabel={fr.common.pleaseWait}
-              onConfirm={async () => {
+              message={`Entrée ${row.reference} supprimée`}
+              undoLabel={fr.common.cancel}
+              onOptimisticRemove={() =>
                 setPendingRemovedRefs((prev) =>
                   new Set(prev).add(row.reference),
-                );
-                const result = await deleteEntree(row.reference);
-                if (result.error)
-                  setPendingRemovedRefs((prev) => {
-                    const next = new Set(prev);
-                    next.delete(row.reference);
-                    return next;
-                  });
-                return result;
-              }}
+                )
+              }
+              onRevert={() =>
+                setPendingRemovedRefs((prev) => {
+                  const next = new Set(prev);
+                  next.delete(row.reference);
+                  return next;
+                })
+              }
+              commit={() => deleteEntree(row.reference)}
             />
           </div>
         ),

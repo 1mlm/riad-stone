@@ -9,6 +9,7 @@ import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import { Separator } from "@/shadcn/ui/separator";
 import { cn } from "@/shadcn/utils";
+import { runUndoableAction } from "@/utils/undoableAction";
 
 // dev-only seed/clear actions, shared between the desktop settings popover
 // and the mobile "more" sheet — never rendered in production
@@ -34,8 +35,16 @@ export function DevDataActions({
   if (process.env.NODE_ENV === "production") return null;
 
   const handleClearAllData = async () => {
-    await clearAllData();
-    setStockEmpty(true);
+    runUndoableAction({
+      commit: async () => {
+        await clearAllData();
+        setStockEmpty(true);
+        return undefined;
+      },
+      onRevert: () => {},
+      message: "Toutes les données seront supprimées",
+      undoLabel: fr.common.cancel,
+    });
     return undefined;
   };
 
