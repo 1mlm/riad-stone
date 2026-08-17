@@ -314,7 +314,7 @@ export function CustomTable<T>({
       )}
       <div
         ref={scrollContainerRef}
-        className="w-full max-h-[calc(100svh-18rem)] overflow-x-auto overflow-y-auto md:max-h-[calc(100svh-14rem)]"
+        className="w-full overflow-x-auto"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
         <table className="w-full border-separate border-spacing-0 caption-bottom text-sm">
@@ -325,7 +325,7 @@ export function CustomTable<T>({
             the two aren't drawn from the same origin */}
             <TableRow
               className={cn(
-                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
+                "*:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
                 isTableEmpty &&
                   "*:first:rounded-bl-(--radius-concentric) *:first:corner-squircle *:last:rounded-br-(--radius-concentric) *:last:corner-squircle",
               )}

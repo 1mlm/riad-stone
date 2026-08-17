@@ -110,6 +110,29 @@
     @apply font-sans;
     }
 
+  /* consistent thin scrollbar everywhere — otherwise most browsers
+     (Windows Chrome/Edge, Firefox with the flag off) fall back to their
+     default chunky one instead of the slim overlay style macOS/some
+     Chromium builds show natively */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+    }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+    }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+    }
+
   /* Squircles everywhere without touching shadcn/ui sources. Button uses
      the group/button class, not [data-slot="button"] — a button rendered
      as a Dialog/Popover/etc trigger's asChild target loses its own
