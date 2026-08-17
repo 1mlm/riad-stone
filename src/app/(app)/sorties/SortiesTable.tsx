@@ -42,8 +42,6 @@ function SortiesTableContent({
 
   const columns: CustomTableColumn<SortieRow>[] = useMemo(
     () => [
-      createReferenceColumn((row) => row.entreeReference),
-      createDesignationColumn(),
       {
         id: "bonCommande",
         label: "Bon de commande",
@@ -60,6 +58,15 @@ function SortiesTableContent({
         relative: false,
         getDate: (row) => row.dateSortie,
       },
+      createNombrePiecesColumn(),
+      createSurfacePieceColumn(),
+      createSurfaceTotaleColumn("Surface de sortie"),
+      {
+        ...createReferenceColumn<SortieRow>((row) => row.entreeReference),
+        dividerBefore: true,
+        dimmed: true,
+      },
+      { ...createDesignationColumn(), dimmed: true },
       {
         id: "dateEntree",
         label: "Date d'entrée",
@@ -67,14 +74,12 @@ function SortiesTableContent({
         type: "date",
         relative: false,
         getDate: (row) => row.dateEntree,
+        dimmed: true,
       },
-      createOrigineColumn(),
-      createConteneurColumn(),
-      createLengthColumn("longueur"),
-      createLengthColumn("largeur"),
-      createSurfacePieceColumn(),
-      createNombrePiecesColumn(),
-      createSurfaceTotaleColumn(),
+      { ...createOrigineColumn(), dimmed: true },
+      { ...createConteneurColumn(), dimmed: true },
+      { ...createLengthColumn("longueur"), dimmed: true },
+      { ...createLengthColumn("largeur"), dimmed: true },
       {
         id: "actions",
         label: "Actions",

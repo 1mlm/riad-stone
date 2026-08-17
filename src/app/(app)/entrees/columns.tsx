@@ -177,12 +177,12 @@ export function createNombrePiecesColumn<T extends EntreeLikeRow>(
   });
 }
 
-export function createSurfaceTotaleColumn<
-  T extends EntreeLikeRow,
->(): CustomTableColumn<T> {
+export function createSurfaceTotaleColumn<T extends EntreeLikeRow>(
+  labelOverride?: string,
+): CustomTableColumn<T> {
   return createNumericColumn({
     id: "surfaceTotale",
-    label: "Surface d'entrée",
+    label: labelOverride ?? "Surface d'entrée",
     icon: ICONS.surfaceTotale,
     decimals: 4,
     suffix: "m²",
