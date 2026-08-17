@@ -96,19 +96,31 @@
     @apply font-sans;
     }
 
-  /* Squircles everywhere without touching shadcn/ui sources */
-  [data-slot="button"],
+  /* Squircles everywhere without touching shadcn/ui sources. Button uses
+     the group/button class, not [data-slot="button"] — a button rendered
+     as a Dialog/Popover/etc trigger's asChild target loses its own
+     data-slot to the trigger's (verified: the dialog close button's own
+     data-slot reads "dialog-close", not "button"), but group/button is a
+     plain class from buttonVariants' base string and survives that merge */
+  [class*="group/button"],
   [data-slot="input"],
   [data-slot="input-group"],
   [data-slot="badge"] {
     @apply corner-squircle;
     }
 
-  /* Inputs sat flush with everything else around them — a hint of shadow
-     makes them read as raised, tappable fields instead of flat rectangles */
+  /* Inputs and buttons sat flush with everything else around them — a hint
+     of shadow makes them read as tappable surfaces instead of flat
+     rectangles. Inset gives the surface itself some depth; the outer shadow
+     on inputs keeps their existing raised-edge look on top of that */
   [data-slot="input"],
   [data-slot="input-group"] {
-    @apply shadow-xs shadow-black/5 dark:shadow-black/20;
+    @apply shadow-xs shadow-black/5 inset-shadow-sm inset-shadow-black/5 dark:shadow-black/20 dark:inset-shadow-white/5;
+    }
+
+  /* same [class*="group/button"] reasoning as the squircle rule above */
+  [class*="group/button"] {
+    @apply inset-shadow-sm inset-shadow-black/10 dark:inset-shadow-white/10;
     }
 
   /* Chrome autofill tints only the input; tint the whole group to match */
