@@ -1,35 +1,15 @@
 "use client";
 
 import {
-  BrushCleaningIcon,
-  Delete02Icon,
   InboxIcon,
   MouseRightClick04Icon,
   Tap04Icon,
 } from "@hugeicons/core-free-icons";
-import {
-  parseAsInteger,
-  parseAsString,
-  useQueryState,
-  useQueryStates,
-} from "nuqs";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { type ReactNode, useEffect } from "react";
 import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
-import { Button } from "@/shadcn/ui/button";
 import { Checkbox } from "@/shadcn/ui/checkbox";
 import { ContextMenuItem } from "@/shadcn/ui/context-menu";
-import { Input } from "@/shadcn/ui/input";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/shadcn/ui/pagination";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
-import { Skeleton } from "@/shadcn/ui/skeleton";
 import {
   TableBody,
   TableCell,
@@ -38,56 +18,20 @@ import {
   TableRow,
 } from "@/shadcn/ui/table";
 import { cn } from "@/shadcn/utils";
-import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
-import {
-  getRowMenuOpenCount,
-  recordRowMenuOpen,
-  shouldShowRowMenuHint,
-} from "@/utils/rowMenuHint";
+import { CustomTableActionBar } from "./CustomTableActionBar";
 import { CustomTableCell } from "./CustomTableCell";
 import { CustomTableColumnHeader } from "./CustomTableColumnHeader";
-import { ExtractButton } from "./ExtractButton";
-import {
-  type ColumnFilterField,
-  columnMatchesFilter,
-  compareColumnValues,
-  getColumnFilterFields,
-  getFilterKey,
-  getTriState,
-  parseSort,
-  serializeSort,
-} from "./filtering";
+import { CustomTableSkeletonRows } from "./CustomTableSkeletonRows";
+import type { ColumnFilterField } from "./filtering";
 import { type CustomTableLabels, resolveTableLabels } from "./labels";
 import { RowContextMenu } from "./RowContextMenu";
-
-const PAGE_SIZE = 25;
-
-const SKELETON_ROW_KEYS = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`);
-
-const SCROLL_FADE_SIZE = 32;
-
-const clampToUnit = (value: number) => Math.min(1, Math.max(0, value));
-
-// alpha-masks the scroll container itself (not an overlay) so the fade
-// blends correctly over striped/merged row backgrounds and the sticky
-// header alike. leftProgress/rightProgress (0-1) ramp up over the first
-// SCROLL_FADE_SIZE px of scroll instead of snapping on at 1px, so a tiny
-// scroll shows a faint fade and a bigger one shows the full fade — same
-// feel as shadcn's scroll-fade.
-// the sticky checkbox column stays fully opaque — it never scrolls out of
-// view, so fading it would be misleading — the fade starts right after it
-function getScrollFadeMask(
-  leftProgress: number,
-  rightProgress: number,
-  stickyRegionWidth: number,
-) {
-  const leftAlpha = 1 - leftProgress;
-  const rightAlpha = 1 - rightProgress;
-  const left = `black ${stickyRegionWidth}px, rgba(0,0,0,${leftAlpha}) ${stickyRegionWidth}px, black ${stickyRegionWidth + SCROLL_FADE_SIZE}px`;
-  const right = `black calc(100% - ${SCROLL_FADE_SIZE}px), rgba(0,0,0,${rightAlpha})`;
-  return `linear-gradient(to right, ${left}, ${right})`;
-}
+import { useMergeRuns } from "./useMergeRuns";
+import { useRowMenuHintState } from "./useRowMenuHintState";
+import { useRowSelection } from "./useRowSelection";
+import { useScrollFade } from "./useScrollFade";
+import { useTableFilterSort } from "./useTableFilterSort";
+import { useTablePagination } from "./useTablePagination";
 
 export type CustomTableEnumValue = {
   label: string;
@@ -223,27 +167,6 @@ export function buildRowSummary<T>(
     .join("\n");
 }
 
-// everything the global search box is allowed to match against for one row
-function getSearchableStrings<T>(
-  columns: CustomTableColumn<T>[],
-  item: T,
-): string[] {
-  return columns.flatMap((column) => {
-    if (column.type === "string") return [column.getString(item)];
-    if (column.type === "copy")
-      return column.searchable === false ? [] : [column.getString(item)];
-    if (column.type === "enum") {
-      const value = column.getValue(item);
-      return value !== undefined
-        ? [column.enumOptions[value]?.label ?? ""]
-        : [];
-    }
-    if (column.type === "tags")
-      return column.getTags(item).map((tag) => tag.label);
-    return [];
-  });
-}
-
 export function CustomTable<T>({
   items,
   columns,
@@ -292,245 +215,60 @@ export function CustomTable<T>({
   labels?: Partial<CustomTableLabels>;
 }) {
   const labels = resolveTableLabels(labelOverrides);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [pageJumpOpen, setPageJumpOpen] = useState(false);
-  const [pageJumpValue, setPageJumpValue] = useState("");
-  const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
-  const [sortRaw, setSortRaw] = useQueryState(sortQueryKey, {
-    defaultValue: "",
+
+  const {
+    visibleItems,
+    search,
+    sort,
+    sortRaw,
+    setSort,
+    filterValues,
+    getColumnField,
+    setColumnField,
+    hasActiveFilterOrSort,
+    resetFilterAndSort,
+  } = useTableFilterSort(items, columns, {
+    filterable,
+    sortable,
+    searchQueryKey,
+    sortQueryKey,
+    defaultSort,
   });
-  const [page, setPage] = useQueryState(
-    pageQueryKey,
-    parseAsInteger.withDefault(1),
-  );
-
-  const filterParsers = useMemo(
-    () =>
-      Object.fromEntries(
-        filterable
-          ? columns.flatMap((column) =>
-              getColumnFilterFields(column).map((field) => [
-                getFilterKey(column.id, field),
-                parseAsString.withDefault(""),
-              ]),
-            )
-          : [],
-      ),
-    [columns, filterable],
-  );
-  const [filterValues, setFilterValues] = useQueryStates(filterParsers);
-
-  const getColumnField =
-    (columnId: string) =>
-    (field: ColumnFilterField): string =>
-      filterValues[getFilterKey(columnId, field)] ?? "";
-  const setColumnField = (
-    columnId: string,
-    field: ColumnFilterField,
-    value: string,
-  ) => setFilterValues({ [getFilterKey(columnId, field)]: value });
-
-  const sort = sortable ? parseSort(sortRaw) : null;
-  const hasActiveFilterOrSort =
-    Object.values(filterValues).some(Boolean) || sort !== null;
-  const resetFilterAndSort = () => {
-    setFilterValues(
-      Object.fromEntries(Object.keys(filterValues).map((key) => [key, ""])),
-    );
-    setSortRaw("");
-  };
-
-  const visibleItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const filtered = items.filter((item) => {
-      if (
-        query &&
-        !getSearchableStrings(columns, item).some((s) =>
-          s.toLowerCase().includes(query),
-        )
-      )
-        return false;
-      if (!filterable) return true;
-      return columns.every((column) =>
-        columnMatchesFilter(
-          column,
-          item,
-          (field) => filterValues[getFilterKey(column.id, field)] ?? "",
-        ),
-      );
-    });
-    if (sort) {
-      const sortColumn = columns.find((column) => column.id === sort.columnId);
-      if (!sortColumn) return filtered;
-      const sorted = [...filtered].sort((a, b) =>
-        compareColumnValues(sortColumn, a, b),
-      );
-      return sort.dir === "desc" ? sorted.reverse() : sorted;
-    }
-    if (!defaultSort || defaultSort.length === 0) return filtered;
-    return [...filtered].sort((a, b) => {
-      for (const key of defaultSort) {
-        const sortColumn = columns.find((column) => column.id === key.columnId);
-        if (!sortColumn) continue;
-        const cmp = compareColumnValues(sortColumn, a, b);
-        if (cmp !== 0) return key.dir === "desc" ? -cmp : cmp;
-      }
-      return 0;
-    });
-  }, [items, columns, search, sort, defaultSort, filterValues, filterable]);
 
   useEffect(() => {
     onVisibleCountChange?.(visibleItems.length);
   }, [visibleItems, onVisibleCountChange]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger the reset, not read
-  useEffect(() => {
-    setPage(1);
-  }, [search, filterValues, sortRaw, setPage]);
+  const { currentPage, setPage, pageCount, paginatedItems } =
+    useTablePagination(visibleItems, {
+      paginate,
+      pageQueryKey,
+      resetDeps: [search, filterValues, sortRaw],
+    });
 
-  const pageCount = paginate
-    ? Math.max(1, Math.ceil(visibleItems.length / PAGE_SIZE))
-    : 1;
-  const currentPage = Math.min(Math.max(page, 1), pageCount);
-  // stable reference across renders — an unmemoized .slice() would return a
-  // new array every render, and effects keyed on it (scroll-fade below)
-  // would re-fire every render and loop forever
-  const paginatedItems = useMemo(
-    () =>
-      paginate
-        ? visibleItems.slice(
-            (currentPage - 1) * PAGE_SIZE,
-            currentPage * PAGE_SIZE,
-          )
-        : visibleItems,
-    [paginate, visibleItems, currentPage],
+  const mergeRuns = useMergeRuns(columns, paginatedItems);
+
+  const {
+    selectionMode,
+    setSelectionMode,
+    toggleRow,
+    toggleAll,
+    triState,
+    selectedItems,
+    isSelected,
+    clearSelection,
+  } = useRowSelection(items, visibleItems, getItemId, Boolean(selectable));
+
+  const { scrollContainerRef, checkboxColumnRef, maskImage } = useScrollFade(
+    columns,
+    paginatedItems,
   );
 
-  // consecutive-equal runs per mergeAdjacent column, computed over the
-  // rendered page only — a run split across a page boundary renders as two
-  // merged cells, which is correct given each page is its own <table>
-  const mergeRuns = useMemo(() => {
-    const runs = new Map<string, { start: boolean; length: number }[]>();
-    for (const column of columns) {
-      if (column.type !== "string" || !column.mergeAdjacent) continue;
-      const getKey = column.getMergeKey ?? column.getString;
-      const arr: { start: boolean; length: number }[] = [];
-      for (let i = 0; i < paginatedItems.length; i++) {
-        if (
-          i > 0 &&
-          getKey(paginatedItems[i - 1]) === getKey(paginatedItems[i])
-        ) {
-          arr.push({ start: false, length: 0 });
-          continue;
-        }
-        let length = 1;
-        while (
-          i + length < paginatedItems.length &&
-          getKey(paginatedItems[i + length]) === getKey(paginatedItems[i])
-        )
-          length++;
-        arr.push({ start: true, length });
-      }
-      runs.set(column.id, arr);
-    }
-    return runs;
-  }, [columns, paginatedItems]);
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const checkboxColumnRef = useRef<HTMLTableCellElement>(null);
-  const [scrollFade, setScrollFade] = useState({ left: 0, right: 0 });
-  const [checkboxColumnWidth, setCheckboxColumnWidth] = useState(0);
-  // long-press/right-click "Select" turns this on so every row's checkbox
-  // shows at once, instead of the user having to open the menu per row —
-  // clears itself once nothing is left selected
-  const [selectionMode, setSelectionMode] = useState(false);
-  useEffect(() => {
-    if (selectedIds.size === 0) setSelectionMode(false);
-  }, [selectedIds]);
-
-  // starts at 0 (matches SSR, which has no localStorage) and syncs the real
-  // count after mount — a returning user might see the hint flash briefly
-  // before disappearing rather than never render it, but avoids a
-  // hydration mismatch between server and client markup
-  const [menuOpenCount, setMenuOpenCount] = useState(0);
-  useEffect(() => {
-    setMenuOpenCount(getRowMenuOpenCount());
-  }, []);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const updateScrollFade = () => {
-      const remainingRight =
-        scrollContainer.scrollWidth -
-        scrollContainer.clientWidth -
-        scrollContainer.scrollLeft;
-      const left = clampToUnit(scrollContainer.scrollLeft / SCROLL_FADE_SIZE);
-      const right = clampToUnit(remainingRight / SCROLL_FADE_SIZE);
-      setScrollFade((prev) =>
-        prev.left === left && prev.right === right ? prev : { left, right },
-      );
-      setCheckboxColumnWidth(checkboxColumnRef.current?.offsetWidth ?? 0);
-    };
-
-    updateScrollFade();
-    scrollContainer.addEventListener("scroll", updateScrollFade);
-
-    // ResizeObserver isn't available on older browsers (e.g. Firefox < 69) —
-    // falling back to a window resize listener still catches viewport
-    // changes, just not container-only resizes, rather than crashing the effect
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateScrollFade);
-      return () => {
-        scrollContainer.removeEventListener("scroll", updateScrollFade);
-        window.removeEventListener("resize", updateScrollFade);
-      };
-    }
-
-    const resizeObserver = new ResizeObserver(updateScrollFade);
-    resizeObserver.observe(scrollContainer);
-    return () => {
-      scrollContainer.removeEventListener("scroll", updateScrollFade);
-      resizeObserver.disconnect();
-    };
-  }, [columns, paginatedItems]);
-
-  const toggleRow = (id: string) => {
-    haptic("selection");
-    const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedIds(next);
-  };
-
-  // compared against visible rows only — selectedIds can hold ids hidden by
-  // the current filter, which would otherwise make this false (and the
-  // header checkbox look unchecked) even when every visible row is selected
-  const visibleSelectedCount = visibleItems.filter((item) =>
-    selectedIds.has(getItemId(item)),
-  ).length;
-  const allSelected =
-    visibleItems.length > 0 && visibleSelectedCount === visibleItems.length;
-  const toggleAll = () => {
-    haptic("selection");
-    const next = new Set(selectedIds);
-    for (const item of visibleItems) {
-      if (allSelected) next.delete(getItemId(item));
-      else next.add(getItemId(item));
-    }
-    setSelectedIds(next);
-  };
+  const { shouldShow: showRowMenuHint, recordOpen: recordRowMenuOpen } =
+    useRowMenuHintState();
 
   const canResetFilterAndSort =
     (filterable || sortable) && hasActiveFilterOrSort;
-  const hasSelection = Boolean(selectable) && selectedIds.size > 0;
-  const showActionBar = canResetFilterAndSort || hasSelection || pageCount > 1;
-
-  const selectedItems = items.filter((item) =>
-    selectedIds.has(getItemId(item)),
-  );
 
   // the "actions" column is never rendered as a real table column — it's
   // matched by id/type convention and used purely as the row context
@@ -551,18 +289,12 @@ export function CustomTable<T>({
   // whichever row is visually first/last. When there are no rows at all,
   // the header row is both
   const isTableEmpty = !loading && paginatedItems.length === 0;
-  const showRowMenuHint = hasRowMenu && shouldShowRowMenuHint(menuOpenCount);
   const leadCheckboxClassName =
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
-  const scrollFadeMask = getScrollFadeMask(
-    scrollFade.left,
-    scrollFade.right,
-    checkboxColumnWidth,
-  );
 
   return (
     <div className="rounded-(--radius-concentric) corner-squircle overflow-clip">
-      {showRowMenuHint && (
+      {showRowMenuHint(hasRowMenu) && (
         <div className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted-foreground">
           <Icon
             icon={MouseRightClick04Icon}
@@ -576,10 +308,7 @@ export function CustomTable<T>({
       <div
         ref={scrollContainerRef}
         className="w-full max-h-[calc(100svh-18rem)] overflow-x-auto overflow-y-auto md:max-h-[calc(100svh-14rem)]"
-        style={{
-          maskImage: scrollFadeMask,
-          WebkitMaskImage: scrollFadeMask,
-        }}
+        style={{ maskImage, WebkitMaskImage: maskImage }}
       >
         <table className="w-full caption-bottom text-sm">
           <TableHeader>
@@ -594,10 +323,7 @@ export function CustomTable<T>({
                 <TableHead ref={checkboxColumnRef} className="left-0 z-20">
                   <div className="flex justify-center">
                     <Checkbox
-                      checked={getTriState(
-                        visibleSelectedCount,
-                        visibleItems.length,
-                      )}
+                      checked={triState}
                       onCheckedChange={toggleAll}
                       aria-label={labels.selectAllRows}
                       className={leadCheckboxClassName}
@@ -615,9 +341,7 @@ export function CustomTable<T>({
                     }
                     sort={sort?.columnId === column.id ? sort.dir : null}
                     onSortChange={(dir: "asc" | "desc" | null) =>
-                      setSortRaw(
-                        dir ? serializeSort({ columnId: column.id, dir }) : "",
-                      )
+                      setSort(dir ? { columnId: column.id, dir } : null)
                     }
                   />
                 </TableHead>
@@ -625,53 +349,11 @@ export function CustomTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading &&
-              SKELETON_ROW_KEYS.map((key, index) => {
-                const skeletonBg =
-                  index % 2 === 1
-                    ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
-                    : "bg-background";
-                const isLastSkeletonRow =
-                  index === SKELETON_ROW_KEYS.length - 1;
-                return (
-                  <TableRow
-                    key={key}
-                    className={cn(index % 2 === 1 && "bg-foreground/5")}
-                  >
-                    {hasCheckboxColumn && (
-                      <TableCell
-                        className={cn(
-                          "sticky left-0 z-10 border-r border-border/50",
-                          skeletonBg,
-                          isLastSkeletonRow &&
-                            "rounded-bl-(--radius-concentric)",
-                        )}
-                      >
-                        <div className="flex justify-center pr-2!">
-                          <Skeleton className="size-7" />
-                        </div>
-                      </TableCell>
-                    )}
-                    {bodyColumns.map((column, columnIndex) => (
-                      <TableCell
-                        key={column.id}
-                        className={cn(
-                          "border-r border-border/50 last:border-r-0",
-                          isLastSkeletonRow &&
-                            columnIndex === 0 &&
-                            !hasCheckboxColumn &&
-                            "rounded-bl-(--radius-concentric)",
-                          isLastSkeletonRow &&
-                            columnIndex === bodyColumns.length - 1 &&
-                            "rounded-br-(--radius-concentric)",
-                        )}
-                      >
-                        <Skeleton className="h-4 w-full min-w-12" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })}
+            {loading && (
+              <CustomTableSkeletonRows
+                {...{ bodyColumns, hasCheckboxColumn }}
+              />
+            )}
             {!loading &&
               paginatedItems.map((item, index) => {
                 const id = getItemId(item);
@@ -686,12 +368,12 @@ export function CustomTable<T>({
                       column.mergeAdjacent &&
                       mergeRuns.get(column.id)?.[index]?.start,
                   );
-                const isSelected = selectedIds.has(id);
+                const selected = isSelected(id);
                 // opaque color-mix instead of a translucent bg-*/N utility —
                 // the sticky lead cell paints this same color on itself, and
                 // a translucent background there would show other columns
                 // sliding underneath it as the table scrolls horizontally
-                const rowBackgroundClassName = isSelected
+                const rowBackgroundClassName = selected
                   ? "bg-[color-mix(in_oklch,var(--background),var(--color-green-500)_15%)]"
                   : index % 2 === 1
                     ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
@@ -716,7 +398,7 @@ export function CustomTable<T>({
                       >
                         <div className="flex justify-center">
                           <Checkbox
-                            checked={isSelected}
+                            checked={selected}
                             onCheckedChange={() => toggleRow(id)}
                             aria-label={labels.selectRow}
                             className={leadCheckboxClassName}
@@ -786,7 +468,7 @@ export function CustomTable<T>({
                   <RowContextMenu
                     key={id}
                     trigger={row}
-                    onOpen={() => setMenuOpenCount(recordRowMenuOpen())}
+                    onOpen={recordRowMenuOpen}
                   >
                     {actionsColumn
                       ? actionsColumn.getButtons(item, selectItem)
@@ -804,143 +486,23 @@ export function CustomTable<T>({
           className="border-t border-border"
         />
       )}
-      {showActionBar && (
-        <div className="fixed inset-x-4 bottom-4 flex flex-col items-end gap-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:flex-row border border-border bg-sidebar px-4 py-2 rounded-full corner-squircle shadow-[0_0_16px_rgba(0,0,0,0.35)]">
-          {pageCount > 1 && (
-            <Pagination className="w-auto">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : undefined
-                    }
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) setPage(currentPage - 1);
-                    }}
-                  />
-                </PaginationItem>
-                <PaginationItem>
-                  <Popover
-                    open={pageJumpOpen}
-                    onOpenChange={(open) => {
-                      setPageJumpOpen(open);
-                      if (open) setPageJumpValue(String(currentPage));
-                    }}
-                  >
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="rounded-sm px-2 text-sm whitespace-nowrap text-muted-foreground hover:text-foreground hover:underline"
-                      >
-                        {labels.pageOf(currentPage, pageCount)}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto">
-                      <form
-                        className="flex items-center gap-2"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const target = Number(pageJumpValue);
-                          if (Number.isInteger(target))
-                            setPage(Math.min(Math.max(target, 1), pageCount));
-                          setPageJumpOpen(false);
-                        }}
-                      >
-                        <Input
-                          type="number"
-                          min={1}
-                          max={pageCount}
-                          autoFocus
-                          value={pageJumpValue}
-                          onChange={(e) => setPageJumpValue(e.target.value)}
-                          className="h-8 w-20"
-                        />
-                        <Button type="submit" size="sm">
-                          {labels.go}
-                        </Button>
-                      </form>
-                    </PopoverContent>
-                  </Popover>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    className={
-                      currentPage === pageCount
-                        ? "pointer-events-none opacity-50"
-                        : undefined
-                    }
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < pageCount) setPage(currentPage + 1);
-                    }}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-          {canResetFilterAndSort && (
-            <Button
-              variant="outline"
-              className="shadow-lg"
-              onClick={resetFilterAndSort}
-            >
-              <Icon icon={BrushCleaningIcon} />
-              <span className="hidden sm:inline">{labels.resetFilters}</span>
-              <span className="sm:hidden">{labels.resetFiltersShort}</span>
-            </Button>
-          )}
-          {selectable && selectionMode && (
-            <Button
-              variant="outline"
-              className="shadow-lg"
-              onClick={() => {
-                setSelectionMode(false);
-                setSelectedIds(new Set());
-              }}
-            >
-              <Icon icon={ICONS.cancel} />
-              {labels.cancelSelection}
-            </Button>
-          )}
-          {selectable && onDeleteSelected && selectedItems.length > 0 && (
-            <ConfirmDialog
-              trigger={
-                <Button variant="destructive" className="shadow-lg">
-                  <Icon icon={Delete02Icon} />
-                  <span className="hidden sm:inline">
-                    {labels.deleteSelected(selectedItems.length)}
-                  </span>
-                  <span className="sm:hidden">
-                    {labels.deleteSelectedShort(selectedItems.length)}
-                  </span>
-                </Button>
-              }
-              title={labels.deleteSelectedTitle(selectedItems.length)}
-              content={labels.deleteSelectedContent}
-              confirmLabel={labels.deleteSelected(selectedItems.length)}
-              cancelLabel={labels.cancel}
-              waitingLabel={labels.waiting}
-              confirmIcon={Delete02Icon}
-              onConfirm={async () => {
-                const result = await onDeleteSelected(selectedItems);
-                if (!result.error) setSelectedIds(new Set());
-                return result;
-              }}
-            />
-          )}
-          {selectable && (
-            <ExtractButton
-              {...{ selectedItems, columns, labels }}
-              filePrefix={exportFilePrefix}
-            />
-          )}
-        </div>
-      )}
+      <CustomTableActionBar
+        {...{
+          currentPage,
+          setPage,
+          pageCount,
+          canResetFilterAndSort,
+          resetFilterAndSort,
+          selectable,
+          selectionMode,
+          clearSelection,
+          selectedItems,
+          onDeleteSelected,
+          columns,
+          labels,
+          exportFilePrefix,
+        }}
+      />
     </div>
   );
 }
