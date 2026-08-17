@@ -86,14 +86,15 @@ function SortiesTableContent({
         label: "Actions",
         icon: ICONS.actions,
         type: "buttons",
-        getButtons: (row) => (
+        getButtons: (row, selectItem) => (
           <>
+            <EditSortieDialog sortie={row} {...{ availableEntrees }} />
+            {selectItem}
             <CopyRowMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
               label="Copier"
-              toastMessage="Copié dans le presse-papier"
+              copiedLabel="Copié"
             />
-            <EditSortieDialog sortie={row} {...{ availableEntrees }} />
             <ContextMenuSeparator />
             <DeleteRowMenuItem
               label="Supprimer"

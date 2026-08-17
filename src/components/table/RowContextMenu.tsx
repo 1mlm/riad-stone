@@ -1,9 +1,8 @@
 "use client";
 
-import { Copy01Icon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, Copy01Icon } from "@hugeicons/core-free-icons";
 import type { ComponentProps, ReactElement, ReactNode } from "react";
-import { useRef } from "react";
-import { toast } from "sonner";
+import { createContext, useContext, useRef, useState } from "react";
 import { type HugeIcon, Icon } from "@/components/Icon";
 import {
   ContextMenu,
@@ -17,6 +16,21 @@ import { haptic } from "@/utils/haptics";
 
 const LONG_PRESS_MS = 450;
 const MOVE_CANCEL_THRESHOLD_PX = 10;
+const COPY_FEEDBACK_MS = 650;
+
+// lets a menu item (Copy) delay the menu's close instead of the instant
+// close-on-select every real ContextMenuItem gets by default — used to show
+// a brief "copied" state in place before the menu goes away, instead of a
+// toast popping up somewhere else on screen
+const RowMenuCloseContext = createContext<(() => void) | null>(null);
+
+function useRowMenuClose() {
+  const close = useContext(RowMenuCloseContext);
+  if (!close) {
+    throw new Error("useRowMenuClose must be used inside a RowContextMenu");
+  }
+  return close;
+}
 
 // a row context menu item that must stay mounted after being clicked (it
 // opens a nested Dialog/Popover of its own) can't be a real ContextMenuItem —
@@ -46,28 +60,33 @@ export function RowMenuItemButton({
   );
 }
 
-// safe as a real ContextMenuItem — copying doesn't open anything that needs
-// to survive the menu closing, it just needs a toast since the item (and its
-// old icon-swap feedback) unmounts the instant it's selected
+// swaps its own icon/label to a checkmark/"Copied" in place instead of
+// popping a toast — a toast draws the eye away from the row that was just
+// acted on, this keeps the feedback right where the click happened
 export function CopyRowMenuItem({
   value,
   label,
-  toastMessage,
+  copiedLabel,
 }: {
   value: string;
   label: string;
-  toastMessage: string;
+  copiedLabel: string;
 }) {
+  const closeMenu = useRowMenuClose();
+  const [copied, setCopied] = useState(false);
+
   return (
     <ContextMenuItem
-      onSelect={() => {
+      onSelect={(event) => {
+        event.preventDefault();
         copyToClipboard(value);
         haptic("light");
-        toast(toastMessage);
+        setCopied(true);
+        setTimeout(closeMenu, COPY_FEEDBACK_MS);
       }}
     >
-      <Icon icon={Copy01Icon} />
-      {label}
+      <Icon icon={copied ? CheckmarkCircle02Icon : Copy01Icon} />
+      {copied ? copiedLabel : label}
     </ContextMenuItem>
   );
 }
@@ -84,6 +103,7 @@ export function RowContextMenu({
   trigger: ReactElement;
   children: ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const startRef = useRef<{ x: number; y: number } | null>(null);
@@ -119,7 +139,7 @@ export function RowContextMenu({
   };
 
   return (
-    <ContextMenu>
+    <ContextMenu {...{ open }} onOpenChange={setOpen}>
       <ContextMenuTrigger
         asChild
         ref={elementRef}
@@ -130,7 +150,11 @@ export function RowContextMenu({
       >
         {trigger}
       </ContextMenuTrigger>
-      <ContextMenuContent>{children}</ContextMenuContent>
+      <ContextMenuContent>
+        <RowMenuCloseContext.Provider value={() => setOpen(false)}>
+          {children}
+        </RowMenuCloseContext.Provider>
+      </ContextMenuContent>
     </ContextMenu>
   );
 }

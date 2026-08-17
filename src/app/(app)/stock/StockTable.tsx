@@ -51,18 +51,19 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         label: "Actions",
         icon: ICONS.actions,
         type: "buttons",
-        getButtons: (row) => (
+        getButtons: (row, selectItem) => (
           <>
-            <CopyRowMenuItem
-              value={buildRowSummary(columns, row, fr.common.locale)}
-              label="Copier"
-              toastMessage="Copié dans le presse-papier"
-            />
             <EntreeDetailsDialog
               reference={row.reference}
               trigger={
                 <RowMenuItemButton icon={ExpandIcon}>Détails</RowMenuItemButton>
               }
+            />
+            {selectItem}
+            <CopyRowMenuItem
+              value={buildRowSummary(columns, row, fr.common.locale)}
+              label="Copier"
+              copiedLabel="Copié"
             />
           </>
         ),

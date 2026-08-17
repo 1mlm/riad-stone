@@ -256,7 +256,7 @@ function HistoryEventListContent({
       label: "Actions",
       icon: ICONS.actions,
       type: "buttons",
-      getButtons: (event) => {
+      getButtons: (event, selectItem) => {
         const { before, current } = getEventSnapshots(event.type, event.data);
         return (
           <>
@@ -268,10 +268,11 @@ function HistoryEventListContent({
                 <HistoryDataTable eventId={event.id} {...{ current, before }} />
               </PopoverContent>
             </Popover>
+            {selectItem}
             <CopyRowMenuItem
               value={buildRowSummary(columns, event, fr.common.locale)}
               label="Copier"
-              toastMessage="Copié dans le presse-papier"
+              copiedLabel="Copié"
             />
           </>
         );

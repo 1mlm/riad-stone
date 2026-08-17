@@ -125,6 +125,36 @@
 [data-slot="dropdown-menu-checkbox-item"],
 [data-slot="dropdown-menu-radio-item"],
 [data-slot="dropdown-menu-sub-trigger"],
+[data-slot="context-menu-item"],
+[data-slot="context-menu-checkbox-item"],
+[data-slot="context-menu-radio-item"],
+[data-slot="context-menu-sub-trigger"],
 [data-slot="command-item"] {
   cursor: pointer !important;
+}
+
+/* DropdownMenuContent/ContextMenuContent's own descendant rules reset every
+   item — destructive-variant included — to the same neutral hover wash
+   (**:data-[variant=destructive]:...!), which cancels the destructive
+   item's own red text/icon classes. Both are Tailwind utilities in the
+   `utilities` layer, so this override must sit in an earlier layer (`base`)
+   — cascade layers reverse order for !important, so an earlier layer's
+   !important beats a later layer's, unlike unlayered vs layered above */
+@layer base {
+  [data-slot="dropdown-menu-item"][data-variant="destructive"],
+  [data-slot="context-menu-item"][data-variant="destructive"] {
+    color: var(--destructive) !important;
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"] svg,
+  [data-slot="context-menu-item"][data-variant="destructive"] svg {
+    color: var(--destructive) !important;
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus,
+  [data-slot="context-menu-item"][data-variant="destructive"]:focus {
+    background-color: color-mix(
+      in oklab,
+      var(--destructive) 10%,
+      transparent
+    ) !important;
+  }
 }

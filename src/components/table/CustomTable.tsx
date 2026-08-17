@@ -19,10 +19,7 @@ import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { Button } from "@/shadcn/ui/button";
 import { Checkbox } from "@/shadcn/ui/checkbox";
-import {
-  ContextMenuItem,
-  ContextMenuSeparator,
-} from "@/shadcn/ui/context-menu";
+import { ContextMenuItem } from "@/shadcn/ui/context-menu";
 import { Input } from "@/shadcn/ui/input";
 import {
   Pagination,
@@ -159,7 +156,14 @@ export type CustomTableColumn<T> = {
       type: "tags";
       getTags: (item: T) => CustomTableEnumValue[];
     }
-  | { type: "buttons"; getButtons: (item: T) => ReactNode }
+  | {
+      type: "buttons";
+      // selectItem is the ready-made "Select" menu item (or null when the
+      // table isn't selectable) — passed in so callers can position it
+      // wherever it belongs in their own action order, instead of it always
+      // being appended last
+      getButtons: (item: T, selectItem: ReactNode) => ReactNode;
+    }
 );
 
 // raw, spreadsheet-friendly value for a column (numeric columns export the
@@ -521,9 +525,10 @@ export function CustomTable<T>({
     (column): column is Extract<CustomTableColumn<T>, { type: "buttons" }> =>
       column.id === "actions" && column.type === "buttons",
   );
-  const bodyColumns = actionsColumn
-    ? columns.filter((column) => column !== actionsColumn)
-    : columns;
+  const bodyColumns = columns.filter(
+    (column): column is Exclude<CustomTableColumn<T>, { type: "buttons" }> =>
+      column.type !== "buttons",
+  );
   const hasCheckboxColumn = Boolean(selectable) && selectionMode;
   const hasRowMenu = Boolean(actionsColumn) || Boolean(selectable);
   const leadCheckboxClassName =
@@ -694,8 +699,7 @@ export function CustomTable<T>({
                               "text-right",
                             (column.type === "copy" ||
                               column.type === "enum" ||
-                              column.type === "tags" ||
-                              column.type === "buttons") &&
+                              column.type === "tags") &&
                               "text-center",
                             run?.start &&
                               run.length > 1 &&
@@ -711,25 +715,23 @@ export function CustomTable<T>({
 
                 if (!hasRowMenu) return row;
 
+                const selectItem = selectable ? (
+                  <ContextMenuItem
+                    onSelect={() => {
+                      setSelectionMode(true);
+                      toggleRow(id);
+                    }}
+                  >
+                    <Icon icon={ICONS.actions} />
+                    {labels.selectRow}
+                  </ContextMenuItem>
+                ) : null;
+
                 return (
                   <RowContextMenu key={id} trigger={row}>
-                    {actionsColumn && (
-                      <div className="flex flex-col gap-1">
-                        {actionsColumn.getButtons(item)}
-                      </div>
-                    )}
-                    {actionsColumn && selectable && <ContextMenuSeparator />}
-                    {selectable && (
-                      <ContextMenuItem
-                        onSelect={() => {
-                          setSelectionMode(true);
-                          toggleRow(id);
-                        }}
-                      >
-                        <Icon icon={ICONS.actions} />
-                        {labels.selectRow}
-                      </ContextMenuItem>
-                    )}
+                    {actionsColumn
+                      ? actionsColumn.getButtons(item, selectItem)
+                      : selectItem}
                   </RowContextMenu>
                 );
               })}

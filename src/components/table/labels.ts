@@ -51,7 +51,7 @@ export type CustomTableLabels = {
 
 export const DEFAULT_TABLE_LABELS: CustomTableLabels = {
   selectAllRows: "Select all rows",
-  selectRow: "Select row",
+  selectRow: "Select",
   cancelSelection: "Cancel selection",
   rightClickHint: "Right-click a row to open its actions",
   longPressHint: "Press and hold a row to open its actions",

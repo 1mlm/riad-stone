@@ -49,9 +49,16 @@ export function DesktopSidebar({
                     height={40}
                     className="size-8 shrink-0 group-data-[collapsible=icon]:size-10"
                   />
-                  <span className="font-semibold group-data-[collapsible=icon]:hidden">
-                    {brand.text}
-                  </span>
+                  <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                    <span className="font-semibold leading-tight">
+                      {brand.text}
+                    </span>
+                    {brand.subtext && (
+                      <span className="text-xs font-normal leading-tight text-muted-foreground">
+                        {brand.subtext}
+                      </span>
+                    )}
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -88,11 +95,6 @@ export function DesktopSidebar({
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>{footer}</SidebarMenu>
-          {brand.subtext && (
-            <span className="px-2 pt-1 text-center text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-              {brand.subtext}
-            </span>
-          )}
         </SidebarFooter>
       </Sidebar>
       <SidebarRail />

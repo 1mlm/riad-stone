@@ -68,14 +68,15 @@ function EntreesTableContent({
         label: "Actions",
         icon: ICONS.actions,
         type: "buttons",
-        getButtons: (row) => (
+        getButtons: (row, selectItem) => (
           <>
+            <EditEntreeDialog entree={row} />
+            {selectItem}
             <CopyRowMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
               label="Copier"
-              toastMessage="Copié dans le presse-papier"
+              copiedLabel="Copié"
             />
-            <EditEntreeDialog entree={row} />
             <ContextMenuSeparator />
             <DeleteRowMenuItem
               label="Supprimer"

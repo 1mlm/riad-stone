@@ -62,6 +62,11 @@ function MoreSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
         {sheetFooter({ open, close: () => setOpen(false) })}
+        {brand.subtext && (
+          <span className="text-center text-xs text-muted-foreground">
+            {brand.subtext}
+          </span>
+        )}
       </SheetContent>
     </Sheet>
   );

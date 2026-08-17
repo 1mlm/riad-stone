@@ -19,7 +19,7 @@ export const fr = {
   },
   table: {
     selectAllRows: "Sélectionner toutes les lignes",
-    selectRow: "Sélectionner la ligne",
+    selectRow: "Sélectionner",
     cancelSelection: "Annuler la sélection",
     rightClickHint: "Clic droit sur une ligne pour ouvrir les actions",
     longPressHint: "Reste appuyé sur une ligne pour ouvrir les actions",

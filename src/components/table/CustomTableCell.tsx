@@ -236,7 +236,11 @@ export function CustomTableCell<T>({
   item,
   labels,
 }: {
-  column: CustomTableColumn<T>;
+  // the "buttons" column is never rendered as a real table cell — CustomTable
+  // filters it out of bodyColumns before mapping over CustomTableCell, since
+  // it's matched by id/type convention and used purely as the row context
+  // menu's content instead
+  column: Exclude<CustomTableColumn<T>, { type: "buttons" }>;
   item: T;
   labels: CustomTableLabels;
 }) {
@@ -266,7 +270,6 @@ export function CustomTableCell<T>({
         timestampLabel={labels.timestamp}
       />
     );
-  if (column.type === "buttons") return <>{column.getButtons(item)}</>;
   if (column.type === "boolean") {
     return column.getBoolean(item) ? (
       <div className="flex justify-center">

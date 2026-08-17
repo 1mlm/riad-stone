@@ -28,7 +28,7 @@ export function runUndoableAction({
     }
   }, UNDO_WINDOW_MS);
 
-  toast(message, {
+  toast.success(message, {
     duration: UNDO_WINDOW_MS,
     action: {
       label: undoLabel,
