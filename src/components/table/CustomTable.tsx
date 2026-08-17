@@ -289,25 +289,18 @@ export function CustomTable<T>({
   );
   const hasCheckboxColumn = Boolean(selectable) && selectionMode;
   const hasRowMenu = Boolean(actionsColumn) || Boolean(selectable);
+  // table cells ignore border-radius entirely under border-collapse (the
+  // browser default), so the table opts into border-separate instead —
+  // that's also why row/group dividers below live on the cells rather than
+  // the row: a <tr>'s own border never paints once collapse is off. When
+  // there are no rows at all the header is simultaneously the first and
+  // last row, so it needs the bottom corners too
+  const isTableEmpty = !loading && paginatedItems.length === 0;
   const leadCheckboxClassName =
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
-  // table cells ignore border-radius entirely once the table is
-  // border-collapse (the browser default here), so the bottom corners can't
-  // round themselves the way the top ones do off the wrapper's own clip —
-  // these two patches fake it by painting over the leftover square sliver
-  // with the page's own background, in the exact shape carved out of their
-  // own corner. The fill has to be much bigger than the radius and get
-  // clipped down to size, rather than being sized to the radius itself —
-  // corner-shape's curve comes out visibly different (pointier, not a real
-  // squircle) when the radius equals the whole box instead of a small
-  // fraction of a larger one, same as every other rounded corner in the app
-  const bottomCornerMaskClassName =
-    "pointer-events-none absolute bottom-0 z-20 size-(--radius-concentric) overflow-hidden";
-  const bottomCornerMaskFillClassName =
-    "absolute bottom-0 size-[calc(var(--radius-concentric)*4)] corner-squircle bg-background";
 
   return (
-    <div className="relative rounded-(--radius-concentric) corner-squircle overflow-clip">
+    <div className="rounded-(--radius-concentric) corner-squircle overflow-clip">
       {showRowMenuHint(hasRowMenu) && (
         <div className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted-foreground">
           <Icon
@@ -324,9 +317,15 @@ export function CustomTable<T>({
         className="w-full max-h-[calc(100svh-18rem)] overflow-x-auto overflow-y-auto md:max-h-[calc(100svh-14rem)]"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
-        <table className="w-full caption-bottom text-sm">
+        <table className="w-full border-separate border-spacing-0 caption-bottom text-sm">
           <TableHeader>
-            <TableRow className="*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4 *:first:rounded-tl-(--radius-concentric) *:last:rounded-tr-(--radius-concentric)">
+            <TableRow
+              className={cn(
+                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4 *:first:rounded-tl-(--radius-concentric) *:last:rounded-tr-(--radius-concentric)",
+                isTableEmpty &&
+                  "*:first:rounded-bl-(--radius-concentric) *:first:corner-squircle *:last:rounded-br-(--radius-concentric) *:last:corner-squircle",
+              )}
+            >
               {hasCheckboxColumn && (
                 <TableHead ref={checkboxColumnRef} className="left-0 z-20">
                   <div className="flex justify-center">
@@ -392,20 +391,25 @@ export function CustomTable<T>({
                   : index % 2 === 1
                     ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
                     : "bg-background";
+                const isLastDataRow = index === paginatedItems.length - 1;
+                // border-separate means a <tr> border never paints — the row
+                // divider and group-start divider both live on the cells.
+                // The checkbox column never spans rows, so its own bottom
+                // edge always matches the row's
                 const row = (
                   <TableRow
                     key={hasRowMenu ? undefined : id}
-                    className={cn(
-                      "group/row",
-                      rowBackgroundClassName,
-                      isGroupStart && "border-t-2 border-t-border",
-                    )}
+                    className={cn("group/row", rowBackgroundClassName)}
                   >
                     {hasCheckboxColumn && (
                       <TableCell
                         className={cn(
                           "sticky left-0 z-10 border-r border-border/50 text-center",
                           rowBackgroundClassName,
+                          !isLastDataRow && "border-b border-border",
+                          isGroupStart && "border-t-2 border-t-border",
+                          isLastDataRow &&
+                            "rounded-bl-(--radius-concentric) corner-squircle",
                         )}
                       >
                         <div className="flex justify-center">
@@ -418,18 +422,26 @@ export function CustomTable<T>({
                         </div>
                       </TableCell>
                     )}
-                    {bodyColumns.map((column) => {
+                    {bodyColumns.map((column, columnIndex) => {
                       const run =
                         column.type === "string" && column.mergeAdjacent
                           ? mergeRuns.get(column.id)?.[index]
                           : undefined;
                       if (run && !run.start) return null;
+                      // a merged group's cell rowSpans past this row — the
+                      // one actually touching the table's bottom edge is
+                      // wherever that span ends, not necessarily this row
+                      const isBottomEdgeCell = run?.start
+                        ? index + run.length - 1 === paginatedItems.length - 1
+                        : isLastDataRow;
                       return (
                         <TableCell
                           key={column.id}
                           rowSpan={run?.start ? run.length : undefined}
                           className={cn(
                             "border-r border-border/50 last:border-r-0",
+                            !isBottomEdgeCell && "border-b border-border",
+                            isGroupStart && "border-t-2 border-t-border",
                             column.dividerBefore &&
                               "border-l-2 border-l-border",
                             column.dimmed && "opacity-80",
@@ -440,6 +452,13 @@ export function CustomTable<T>({
                               column.type === "enum" ||
                               column.type === "tags") &&
                               "text-center",
+                            isBottomEdgeCell &&
+                              columnIndex === 0 &&
+                              !hasCheckboxColumn &&
+                              "rounded-bl-(--radius-concentric) corner-squircle",
+                            isBottomEdgeCell &&
+                              columnIndex === bodyColumns.length - 1 &&
+                              "rounded-br-(--radius-concentric) corner-squircle",
                             run?.start &&
                               run.length > 1 &&
                               "bg-foreground/5! align-middle",
@@ -505,22 +524,6 @@ export function CustomTable<T>({
           exportFilePrefix,
         }}
       />
-      <div aria-hidden className={cn(bottomCornerMaskClassName, "left-0")}>
-        <div
-          className={cn(
-            bottomCornerMaskFillClassName,
-            "left-0 rounded-bl-(--radius-concentric)",
-          )}
-        />
-      </div>
-      <div aria-hidden className={cn(bottomCornerMaskClassName, "right-0")}>
-        <div
-          className={cn(
-            bottomCornerMaskFillClassName,
-            "right-0 rounded-br-(--radius-concentric)",
-          )}
-        />
-      </div>
     </div>
   );
 }
