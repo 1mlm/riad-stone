@@ -296,9 +296,15 @@ export function CustomTable<T>({
   // round themselves the way the top ones do off the wrapper's own clip —
   // these two patches fake it by painting over the leftover square sliver
   // with the page's own background, in the exact shape carved out of their
-  // own corner
+  // own corner. The fill has to be much bigger than the radius and get
+  // clipped down to size, rather than being sized to the radius itself —
+  // corner-shape's curve comes out visibly different (pointier, not a real
+  // squircle) when the radius equals the whole box instead of a small
+  // fraction of a larger one, same as every other rounded corner in the app
   const bottomCornerMaskClassName =
-    "pointer-events-none absolute bottom-0 z-20 size-(--radius-concentric) corner-squircle bg-background";
+    "pointer-events-none absolute bottom-0 z-20 size-(--radius-concentric) overflow-hidden";
+  const bottomCornerMaskFillClassName =
+    "absolute bottom-0 size-[calc(var(--radius-concentric)*4)] corner-squircle bg-background";
 
   return (
     <div className="relative rounded-(--radius-concentric) corner-squircle overflow-clip">
@@ -499,14 +505,22 @@ export function CustomTable<T>({
           exportFilePrefix,
         }}
       />
-      <div
-        aria-hidden
-        className={cn(bottomCornerMaskClassName, "left-0 rounded-tr-full")}
-      />
-      <div
-        aria-hidden
-        className={cn(bottomCornerMaskClassName, "right-0 rounded-tl-full")}
-      />
+      <div aria-hidden className={cn(bottomCornerMaskClassName, "left-0")}>
+        <div
+          className={cn(
+            bottomCornerMaskFillClassName,
+            "left-0 rounded-bl-(--radius-concentric)",
+          )}
+        />
+      </div>
+      <div aria-hidden className={cn(bottomCornerMaskClassName, "right-0")}>
+        <div
+          className={cn(
+            bottomCornerMaskFillClassName,
+            "right-0 rounded-br-(--radius-concentric)",
+          )}
+        />
+      </div>
     </div>
   );
 }
