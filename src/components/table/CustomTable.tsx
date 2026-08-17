@@ -40,6 +40,11 @@ import {
 import { cn } from "@/shadcn/utils";
 import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
+import {
+  getRowMenuOpenCount,
+  recordRowMenuOpen,
+  shouldShowRowMenuHint,
+} from "@/utils/rowMenuHint";
 import { CustomTableCell } from "./CustomTableCell";
 import { CustomTableColumnHeader } from "./CustomTableColumnHeader";
 import { ExtractButton } from "./ExtractButton";
@@ -443,6 +448,15 @@ export function CustomTable<T>({
     if (selectedIds.size === 0) setSelectionMode(false);
   }, [selectedIds]);
 
+  // starts at 0 (matches SSR, which has no localStorage) and syncs the real
+  // count after mount — a returning user might see the hint flash briefly
+  // before disappearing rather than never render it, but avoids a
+  // hydration mismatch between server and client markup
+  const [menuOpenCount, setMenuOpenCount] = useState(0);
+  useEffect(() => {
+    setMenuOpenCount(getRowMenuOpenCount());
+  }, []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: only used to trigger remeasuring after content changes width, not read
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -537,6 +551,7 @@ export function CustomTable<T>({
   // whichever row is visually first/last. When there are no rows at all,
   // the header row is both
   const isTableEmpty = !loading && paginatedItems.length === 0;
+  const showRowMenuHint = hasRowMenu && shouldShowRowMenuHint(menuOpenCount);
   const leadCheckboxClassName =
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
   const scrollFadeMask = getScrollFadeMask(
@@ -547,7 +562,7 @@ export function CustomTable<T>({
 
   return (
     <div className="rounded-md overflow-clip">
-      {hasRowMenu && (
+      {showRowMenuHint && (
         <div className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted-foreground">
           <Icon
             icon={MouseRightClick04Icon}
@@ -766,7 +781,11 @@ export function CustomTable<T>({
                 ) : null;
 
                 return (
-                  <RowContextMenu key={id} trigger={row}>
+                  <RowContextMenu
+                    key={id}
+                    trigger={row}
+                    onOpen={() => setMenuOpenCount(recordRowMenuOpen())}
+                  >
                     {actionsColumn
                       ? actionsColumn.getButtons(item, selectItem)
                       : selectItem}

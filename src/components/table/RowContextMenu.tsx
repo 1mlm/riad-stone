@@ -103,9 +103,13 @@ export function CopyRowMenuItem({
 export function RowContextMenu({
   trigger,
   children,
+  onOpen,
 }: {
   trigger: ReactElement;
   children: ReactNode;
+  // fires once per successful open (real right-click or a completed
+  // long-press) — not on an attempted-then-cancelled one
+  onOpen?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
@@ -143,7 +147,13 @@ export function RowContextMenu({
   };
 
   return (
-    <ContextMenu {...{ open }} onOpenChange={setOpen}>
+    <ContextMenu
+      {...{ open }}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) onOpen?.();
+      }}
+    >
       <ContextMenuTrigger
         asChild
         ref={elementRef}
