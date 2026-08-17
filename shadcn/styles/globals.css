@@ -80,6 +80,20 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
+    /* concentric corners: an inner rounded box inset by a uniform gap from
+       an outer one shares its center only when inner-radius = outer-radius
+       - gap. --radius-card mirrors SidebarInset's own rounded-[3rem] (a
+       shadcn/ui literal, not derived from --radius above — can't touch that
+       file, so it's restated here) and --radius-card-gap mirrors the p-5
+       every page wrapper uses between the card's edge and its content
+       (search bar, table). Content sitting in that gap uses
+       --radius-concentric so its corners are literally concentric with the
+       card's, instead of an arbitrary rounded-md/rounded-lg that happens to
+       look "close enough" */
+    --radius-card: 3rem;
+    --radius-card-gap: 1.25rem;
+    --radius-concentric: calc(var(--radius-card) - var(--radius-card-gap));
 }
 
 @layer base {

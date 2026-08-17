@@ -10,6 +10,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/shadcn/ui/input-group";
+import { cn } from "@/shadcn/utils";
 
 export function SearchBar({
   placeholder = "Search...",
@@ -33,7 +34,10 @@ export function SearchBar({
   const [search, setSearch] = useQueryState(queryKey, { defaultValue: "" });
 
   return (
-    <InputGroup {...{ className }}>
+    // sits directly in a page's p-5 gap off the main content card's own
+    // rounded-[3rem] corner — rounded-(--radius-concentric) keeps its
+    // corner sharing that same center point instead of an arbitrary radius
+    <InputGroup className={cn("rounded-(--radius-concentric)!", className)}>
       <InputGroupAddon>
         <Icon {...{ icon }} />
       </InputGroupAddon>

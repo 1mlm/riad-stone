@@ -561,7 +561,7 @@ export function CustomTable<T>({
   );
 
   return (
-    <div className="rounded-md overflow-clip">
+    <div className="rounded-(--radius-concentric) corner-squircle overflow-clip">
       {showRowMenuHint && (
         <div className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted-foreground">
           <Icon
@@ -585,8 +585,9 @@ export function CustomTable<T>({
           <TableHeader>
             <TableRow
               className={cn(
-                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4 *:first:rounded-tl-md *:last:rounded-tr-md",
-                isTableEmpty && "*:first:rounded-bl-md *:last:rounded-br-md",
+                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4 *:first:rounded-tl-(--radius-concentric) *:last:rounded-tr-(--radius-concentric)",
+                isTableEmpty &&
+                  "*:first:rounded-bl-(--radius-concentric) *:last:rounded-br-(--radius-concentric)",
               )}
             >
               {hasCheckboxColumn && (
@@ -642,7 +643,8 @@ export function CustomTable<T>({
                         className={cn(
                           "sticky left-0 z-10 border-r border-border/50",
                           skeletonBg,
-                          isLastSkeletonRow && "rounded-bl-md",
+                          isLastSkeletonRow &&
+                            "rounded-bl-(--radius-concentric)",
                         )}
                       >
                         <div className="flex justify-center pr-2!">
@@ -658,10 +660,10 @@ export function CustomTable<T>({
                           isLastSkeletonRow &&
                             columnIndex === 0 &&
                             !hasCheckboxColumn &&
-                            "rounded-bl-md",
+                            "rounded-bl-(--radius-concentric)",
                           isLastSkeletonRow &&
                             columnIndex === bodyColumns.length - 1 &&
-                            "rounded-br-md",
+                            "rounded-br-(--radius-concentric)",
                         )}
                       >
                         <Skeleton className="h-4 w-full min-w-12" />
@@ -709,7 +711,7 @@ export function CustomTable<T>({
                         className={cn(
                           "sticky left-0 z-10 border-r border-border/50 text-center",
                           rowBackgroundClassName,
-                          isLastDataRow && "rounded-bl-md",
+                          isLastDataRow && "rounded-bl-(--radius-concentric)",
                         )}
                       >
                         <div className="flex justify-center">
@@ -750,10 +752,10 @@ export function CustomTable<T>({
                             isBottomEdgeCell &&
                               columnIndex === 0 &&
                               !hasCheckboxColumn &&
-                              "rounded-bl-md",
+                              "rounded-bl-(--radius-concentric)",
                             isBottomEdgeCell &&
                               columnIndex === bodyColumns.length - 1 &&
-                              "rounded-br-md",
+                              "rounded-br-(--radius-concentric)",
                             run?.start &&
                               run.length > 1 &&
                               "bg-foreground/5! align-middle",
