@@ -31,7 +31,6 @@ import { useRowMenuHintState } from "./useRowMenuHintState";
 import { useRowSelection } from "./useRowSelection";
 import { useScrollFade } from "./useScrollFade";
 import { useTableFilterSort } from "./useTableFilterSort";
-import { useTableMaxHeight } from "./useTableMaxHeight";
 import { useTablePagination } from "./useTablePagination";
 
 export type CustomTableEnumValue = {
@@ -270,7 +269,6 @@ export function CustomTable<T>({
     columns,
     paginatedItems,
   );
-  const maxHeight = useTableMaxHeight(scrollContainerRef);
 
   const { shouldShow: showRowMenuHint, recordOpen: recordRowMenuOpen } =
     useRowMenuHintState();
@@ -316,20 +314,19 @@ export function CustomTable<T>({
       )}
       <div
         ref={scrollContainerRef}
-        className="w-full overflow-x-auto overflow-y-auto"
-        style={{ maxHeight, maskImage, WebkitMaskImage: maskImage }}
+        className="w-full overflow-x-auto"
+        style={{ maskImage, WebkitMaskImage: maskImage }}
       >
         <table className="w-full border-separate border-spacing-0 caption-bottom text-sm">
           <TableHeader>
-            {/* sticky within this scroll region only, not the page — it's
-            capped to the space actually left below it (useTableMaxHeight),
-            so its own scrollbar is the whole remaining viewport, not a
-            shorter, easy-to-miss box. Top corners round for free off the
-            wrapper's own overflow-clip, no need for the header cells to
-            also round themselves */}
+            {/* no internal scroll region to be sticky within — the page
+            scrolls instead, so the header just scrolls away with the rest
+            of the table. Top corners round for free off the wrapper's own
+            overflow-clip, no need for the header cells to also round
+            themselves */}
             <TableRow
               className={cn(
-                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
+                "*:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
                 isTableEmpty &&
                   "*:first:rounded-bl-(--radius-concentric) *:first:corner-squircle *:last:rounded-br-(--radius-concentric) *:last:corner-squircle",
               )}
