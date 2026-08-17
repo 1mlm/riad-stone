@@ -134,21 +134,18 @@
 }
 
 /* DropdownMenuContent/ContextMenuContent's own descendant rules reset every
-   item — destructive-variant included — to the same neutral hover wash
-   (**:data-[variant=destructive]:...!), which cancels the destructive
-   item's own red text/icon classes. Both are Tailwind utilities in the
-   `utilities` layer, so this override must sit in an earlier layer (`base`)
-   — cascade layers reverse order for !important, so an earlier layer's
-   !important beats a later layer's, unlike unlayered vs layered above */
+   item — destructive-variant included — to the same neutral hover wash on
+   focus/hover (**:data-[variant=destructive]:...!), which cancels the
+   destructive item's own red text/icon on hover. Both are Tailwind
+   utilities in the `utilities` layer, so this override must sit in an
+   earlier layer (`base`) — cascade layers reverse order for !important, so
+   an earlier layer's !important beats a later layer's, unlike unlayered vs
+   layered above. Only restyled on :focus (Radix moves real DOM focus to an
+   item on hover, so this fires on hover too) — destructive items read as a
+   normal item at rest and only turn red as you're about to act on them.
+   The `*` variant re-covers every descendant, not just the icon itself,
+   since the neutralizing rule above targets descendants at any depth too */
 @layer base {
-  [data-slot="dropdown-menu-item"][data-variant="destructive"],
-  [data-slot="context-menu-item"][data-variant="destructive"] {
-    color: var(--destructive) !important;
-  }
-  [data-slot="dropdown-menu-item"][data-variant="destructive"] svg,
-  [data-slot="context-menu-item"][data-variant="destructive"] svg {
-    color: var(--destructive) !important;
-  }
   [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus,
   [data-slot="context-menu-item"][data-variant="destructive"]:focus {
     background-color: color-mix(
@@ -156,5 +153,10 @@
       var(--destructive) 10%,
       transparent
     ) !important;
+    color: var(--destructive) !important;
+  }
+  [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus *,
+  [data-slot="context-menu-item"][data-variant="destructive"]:focus * {
+    color: var(--destructive) !important;
   }
 }

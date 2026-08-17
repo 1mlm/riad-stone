@@ -37,7 +37,12 @@ function useRowMenuClose() {
 // selecting one closes and unmounts the whole menu content, which would tear
 // down the nested dialog's state along with it. This is styled to match
 // ContextMenuItem but is a plain button so clicking it doesn't trigger that
-// close-and-unmount behavior
+// close-and-unmount behavior. It's always used as a Dialog/PopoverTrigger's
+// asChild target, which clones it and overwrites its own data-slot/className
+// merge in ways that make it unreliable to target from outside CSS — styled
+// entirely with its own classes instead, no data-slot dependency. No
+// explicit cursor class either: it's a real <button>, the global
+// `button:not(:disabled)` rule in globals.css already gives it a pointer
 export function RowMenuItemButton({
   icon,
   children,
@@ -47,9 +52,8 @@ export function RowMenuItemButton({
   return (
     <button
       type="button"
-      data-slot="context-menu-item"
       className={cn(
-        "flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm outline-hidden select-none hover:bg-foreground/10 focus:bg-foreground/10 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm outline-hidden select-none hover:bg-foreground/10 focus:bg-foreground/10 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
