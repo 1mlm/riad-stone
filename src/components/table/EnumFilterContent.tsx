@@ -2,8 +2,8 @@ import { Icon } from "@/components/Icon";
 import { DropdownMenuSeparator } from "@/shadcn/ui/dropdown-menu";
 import { ICONS } from "@/utils/icon";
 import type { CustomTableColumn } from "./CustomTable";
-import { EnumBadge } from "./CustomTableCell";
 import { CheckboxRow, SelectAllRow } from "./CustomTableFilterPrimitives";
+import { EnumBadge } from "./EnumBadge";
 import {
   type ColumnFilterField,
   ENUM_FILTER_NONE_KEY,
