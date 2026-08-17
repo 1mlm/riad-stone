@@ -45,9 +45,14 @@ export function SearchBar({
         {...{ placeholder }}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        // flex-1 alone won't shrink below the placeholder's own rendered
+        // width (flex items default to min-width: auto), which pushes the
+        // result count out instead of ellipsizing — min-w-0 lets it actually
+        // shrink, truncate does the ellipsizing
+        className="min-w-0 truncate"
       />
       {resultCount !== undefined && (
-        <InputGroupAddon align="inline-end">
+        <InputGroupAddon align="inline-end" className="shrink-0">
           <InputGroupText>
             {resultCount}{" "}
             {resultCount === 1 ? resultLabelSingular : resultLabelPlural}

@@ -126,15 +126,20 @@
   /* Inputs and buttons sat flush with everything else around them — a hint
      of shadow makes them read as tappable surfaces instead of flat
      rectangles. Inset gives the surface itself some depth; the outer shadow
-     on inputs keeps their existing raised-edge look on top of that */
+     on inputs keeps their existing raised-edge look on top of that. Always
+     a dark inset regardless of theme — a white/light inset in dark mode
+     reads as a highlight, not depth, on a dark surface */
   [data-slot="input"],
   [data-slot="input-group"] {
-    @apply shadow-xs shadow-black/5 inset-shadow-sm inset-shadow-black/5 dark:shadow-black/20 dark:inset-shadow-white/5;
+    @apply shadow-xs shadow-black/5 inset-shadow-sm inset-shadow-black/5 dark:shadow-black/20 dark:inset-shadow-black/40;
     }
 
-  /* same [class*="group/button"] reasoning as the squircle rule above */
-  [class*="group/button"] {
-    @apply inset-shadow-sm inset-shadow-black/10 dark:inset-shadow-white/10;
+  /* same [class*="group/button"] reasoning as the squircle rule above.
+     Ghost/link buttons have no fill to read as "recessed into" — skip them */
+  [class*="group/button"]:not([data-variant="ghost"]):not(
+      [data-variant="link"]
+    ) {
+    @apply inset-shadow-sm inset-shadow-black/10 dark:inset-shadow-black/40;
     }
 
   /* Chrome autofill tints only the input; tint the whole group to match */
