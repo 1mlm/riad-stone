@@ -15,7 +15,6 @@ import {
   ENTREE_FIELD_BY_KEY,
   toDisplayLength,
 } from "@/app/(app)/entrees/fields";
-import { Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { SearchBar } from "@/components/SearchBar";
 import {
@@ -24,11 +23,13 @@ import {
   type CustomTableColumn,
   type CustomTableEnumValue,
 } from "@/components/table/CustomTable";
-import { CopyButton } from "@/components/table/CustomTableCell";
+import {
+  CopyRowMenuItem,
+  RowMenuItemButton,
+} from "@/components/table/RowContextMenu";
 import type { HistoryEvent } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { fr } from "@/messages/fr";
-import { Button } from "@/shadcn/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { cn } from "@/shadcn/utils";
 import type { DeviceInfo } from "@/utils/deviceInfo";
@@ -258,28 +259,21 @@ function HistoryEventListContent({
       getButtons: (event) => {
         const { before, current } = getEventSnapshots(event.type, event.data);
         return (
-          <div className="flex items-center justify-center gap-1">
+          <>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  className="corner-squircle"
-                >
-                  <Icon icon={ExpandIcon} />
-                </Button>
+                <RowMenuItemButton icon={ExpandIcon}>Détails</RowMenuItemButton>
               </PopoverTrigger>
               <PopoverContent className="w-auto max-h-(--radix-popover-content-available-height) overflow-y-auto">
                 <HistoryDataTable eventId={event.id} {...{ current, before }} />
               </PopoverContent>
             </Popover>
-            <CopyButton
+            <CopyRowMenuItem
               value={buildRowSummary(columns, event, fr.common.locale)}
-              variant="outline"
-              size="icon-sm"
-              className="corner-squircle"
+              label="Copier"
+              toastMessage="Copié dans le presse-papier"
             />
-          </div>
+          </>
         );
       },
     },

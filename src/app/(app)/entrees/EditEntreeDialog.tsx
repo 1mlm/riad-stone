@@ -3,8 +3,7 @@
 import { EditIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
 import { FormDialog } from "@/components/FormDialog";
-import { Icon } from "@/components/Icon";
-import { Button } from "@/shadcn/ui/button";
+import { RowMenuItemButton } from "@/components/table/RowContextMenu";
 import { playChime } from "@/utils/sound";
 import { updateEntree } from "./actions";
 import { EntreeFormFields } from "./EntreeFormFields";
@@ -28,11 +27,7 @@ export function EditEntreeDialog({ entree }: { entree: EntreeRow }) {
     <FormDialog
       {...{ open, formAction, pending }}
       onOpenChange={setOpen}
-      trigger={
-        <Button variant="warning" size="icon-sm" className="corner-squircle">
-          <Icon icon={EditIcon} />
-        </Button>
-      }
+      trigger={<RowMenuItemButton icon={EditIcon}>Modifier</RowMenuItemButton>}
       title="Modifier l'entrée"
       description="Formulaire de modification d'une entrée en stock."
       error={state.error}

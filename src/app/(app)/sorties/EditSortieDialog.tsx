@@ -5,8 +5,7 @@ import { useActionState, useState } from "react";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
-import { Icon } from "@/components/Icon";
-import { Button } from "@/shadcn/ui/button";
+import { RowMenuItemButton } from "@/components/table/RowContextMenu";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
 import { playChime } from "@/utils/sound";
@@ -44,11 +43,7 @@ export function EditSortieDialog({
     <FormDialog
       {...{ open, formAction, pending }}
       onOpenChange={setOpen}
-      trigger={
-        <Button variant="warning" size="icon-sm" className="corner-squircle">
-          <Icon icon={EditIcon} />
-        </Button>
-      }
+      trigger={<RowMenuItemButton icon={EditIcon}>Modifier</RowMenuItemButton>}
       title="Modifier la sortie"
       description="Formulaire de modification d'une sortie."
       error={state.error}

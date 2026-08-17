@@ -23,6 +23,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shadcn/ui/tooltip";
 import { cn } from "@/shadcn/utils";
+import { copyToClipboard } from "@/utils/clipboard";
 import { getColorStyle } from "@/utils/color";
 import {
   formatDetailedDuration,
@@ -69,22 +70,6 @@ export function CopyButton({
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
-
-  // navigator.clipboard is undefined on non-HTTPS origins and older
-  // browsers — fall back to the old execCommand trick instead of silently
-  // doing nothing
-  const copyToClipboard = (text: string) => {
-    if (navigator.clipboard) return navigator.clipboard.writeText(text);
-
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-  };
 
   const handleCopy = () => {
     copyToClipboard(value);

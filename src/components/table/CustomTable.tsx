@@ -726,7 +726,7 @@ export function CustomTable<T>({
                           toggleRow(id);
                         }}
                       >
-                        <Icon icon={ICONS.check} />
+                        <Icon icon={ICONS.actions} />
                         {labels.selectRow}
                       </ContextMenuItem>
                     )}

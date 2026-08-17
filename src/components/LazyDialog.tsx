@@ -19,11 +19,13 @@ const SKELETON_KEYS = ["a", "b", "c"];
 // request until someone actually clicks it
 export function LazyDialog<T>({
   triggerIcon,
+  trigger,
   title,
   load,
   children,
 }: {
   triggerIcon: HugeIcon;
+  trigger?: ReactNode;
   title: string;
   load: () => Promise<T>;
   children: (data: T) => ReactNode;
@@ -43,14 +45,16 @@ export function LazyDialog<T>({
   return (
     <Dialog {...{ open }} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          className="corner-squircle"
-        >
-          <Icon icon={triggerIcon} />
-        </Button>
+        {trigger ?? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="corner-squircle"
+          >
+            <Icon icon={triggerIcon} />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

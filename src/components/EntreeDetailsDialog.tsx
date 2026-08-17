@@ -1,6 +1,7 @@
 "use client";
 
 import { ExpandIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import type { ReactNode } from "react";
 import {
   type EntreeDetails,
   getEntreeDetails,
@@ -89,13 +90,16 @@ export function EntreeDetailsDialog({
   // itself opened from within a sortie form, so opening it doesn't offer to
   // open another sortie form on top of the one already open
   allowAddSortie = true,
+  trigger,
 }: {
   reference: string;
   allowAddSortie?: boolean;
+  trigger?: ReactNode;
 }) {
   return (
     <LazyDialog
       triggerIcon={ExpandIcon}
+      {...{ trigger }}
       title={`Détails de l'entrée ${reference}`}
       load={() => getEntreeDetails(reference)}
     >

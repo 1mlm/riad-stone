@@ -1,5 +1,6 @@
 "use client";
 
+import { ExpandIcon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
 import {
   createConteneurColumn,
@@ -22,7 +23,10 @@ import {
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
-import { CopyButton } from "@/components/table/CustomTableCell";
+import {
+  CopyRowMenuItem,
+  RowMenuItemButton,
+} from "@/components/table/RowContextMenu";
 import { fr } from "@/messages/fr";
 import { ICONS } from "@/utils/icon";
 
@@ -48,15 +52,19 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
         icon: ICONS.actions,
         type: "buttons",
         getButtons: (row) => (
-          <div className="flex items-center justify-center gap-1">
-            <CopyButton
+          <>
+            <CopyRowMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
-              variant="outline"
-              size="icon-sm"
-              className="corner-squircle"
+              label="Copier"
+              toastMessage="Copié dans le presse-papier"
             />
-            <EntreeDetailsDialog reference={row.reference} />
-          </div>
+            <EntreeDetailsDialog
+              reference={row.reference}
+              trigger={
+                <RowMenuItemButton icon={ExpandIcon}>Détails</RowMenuItemButton>
+              }
+            />
+          </>
         ),
       },
     ],

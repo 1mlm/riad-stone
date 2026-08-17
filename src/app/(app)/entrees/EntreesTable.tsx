@@ -1,15 +1,16 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
-import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SearchBar } from "@/components/SearchBar";
 import {
   buildRowSummary,
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
-import { CopyButton } from "@/components/table/CustomTableCell";
+import { DeleteRowMenuItem } from "@/components/table/DeleteRowMenuItem";
+import { CopyRowMenuItem } from "@/components/table/RowContextMenu";
 import { fr } from "@/messages/fr";
+import { ContextMenuSeparator } from "@/shadcn/ui/context-menu";
 import { ICONS } from "@/utils/icon";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
@@ -68,15 +69,16 @@ function EntreesTableContent({
         icon: ICONS.actions,
         type: "buttons",
         getButtons: (row) => (
-          <div className="flex items-center justify-center gap-1">
-            <CopyButton
+          <>
+            <CopyRowMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
-              variant="outline"
-              size="icon-sm"
-              className="corner-squircle"
+              label="Copier"
+              toastMessage="Copié dans le presse-papier"
             />
             <EditEntreeDialog entree={row} />
-            <DeleteRowButton
+            <ContextMenuSeparator />
+            <DeleteRowMenuItem
+              label="Supprimer"
               message={`Entrée ${row.reference} supprimée`}
               undoLabel={fr.common.cancel}
               onOptimisticRemove={() =>
@@ -93,7 +95,7 @@ function EntreesTableContent({
               }
               commit={() => deleteEntree(row.reference)}
             />
-          </div>
+          </>
         ),
       },
     ],
