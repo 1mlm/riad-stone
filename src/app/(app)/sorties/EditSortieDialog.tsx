@@ -1,15 +1,14 @@
 "use client";
 
 import { EditIcon } from "@hugeicons/core-free-icons";
-import { useActionState, useState } from "react";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
 import { RowMenuItemButton } from "@/components/table/RowContextMenu";
+import { useFormDialogAction } from "@/components/useFormDialogAction";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";
-import { playChime } from "@/utils/sound";
 import { updateSortie } from "./actions";
 import { SortieFormFields } from "./SortieFormFields";
 import type { AvailableEntree, SortieRow } from "./types";
@@ -21,23 +20,14 @@ export function EditSortieDialog({
   sortie: SortieRow;
   availableEntrees: AvailableEntree[];
 }) {
-  const [open, setOpen] = useState(false);
   // availableEntrees.piecesRestantes already excludes this sortie's own
   // amount — add it back since editing releases it before re-applying
   const maxNombrePieces =
     (availableEntrees.find(
       (entree) => entree.reference === sortie.entreeReference,
     )?.piecesRestantes ?? 0) + sortie.nombrePieces;
-  const [state, formAction, pending] = useActionState(
-    async (prevState: { error: string | null }, formData: FormData) => {
-      const result = await updateSortie(sortie.id, prevState, formData);
-      if (!result.error) {
-        setOpen(false);
-        playChime("success");
-      }
-      return result;
-    },
-    { error: null },
+  const { open, setOpen, state, formAction, pending } = useFormDialogAction(
+    (prevState, formData) => updateSortie(sortie.id, prevState, formData),
   );
 
   return (

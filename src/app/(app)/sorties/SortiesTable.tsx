@@ -20,6 +20,7 @@ import {
 } from "@/components/table/CustomTable";
 import { DeleteRowMenuItem } from "@/components/table/DeleteRowMenuItem";
 import { CopyRowMenuItem } from "@/components/table/RowContextMenu";
+import { useOptimisticRowRemoval } from "@/components/table/useOptimisticRowRemoval";
 import { fr } from "@/messages/fr";
 import { ContextMenuSeparator } from "@/shadcn/ui/context-menu";
 import { ICONS } from "@/utils/icon";
@@ -36,15 +37,8 @@ function SortiesTableContent({
   availableEntrees: AvailableEntree[];
 }) {
   const [resultCount, setResultCount] = useState(items.length);
-  // hides a row the moment its delete is confirmed, instead of waiting on
-  // the server action's revalidatePath round-trip — rolled back on error
-  const [pendingRemovedIds, setPendingRemovedIds] = useState<Set<number>>(
-    new Set(),
-  );
-  const visibleItems = useMemo(
-    () => items.filter((item) => !pendingRemovedIds.has(item.id)),
-    [items, pendingRemovedIds],
-  );
+  const { visibleItems, markRemoved, unmarkRemoved, deleteSelected } =
+    useOptimisticRowRemoval(items, (item) => item.id);
 
   const columns: CustomTableColumn<SortieRow>[] = useMemo(
     () => [
@@ -100,23 +94,15 @@ function SortiesTableContent({
               label="Supprimer"
               message={`Sortie de l'entrée ${row.entreeReference} supprimée`}
               undoLabel={fr.common.cancel}
-              onOptimisticRemove={() =>
-                setPendingRemovedIds((prev) => new Set(prev).add(row.id))
-              }
-              onRevert={() =>
-                setPendingRemovedIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(row.id);
-                  return next;
-                })
-              }
+              onOptimisticRemove={() => markRemoved(row.id)}
+              onRevert={() => unmarkRemoved(row.id)}
               commit={() => deleteSortie(row.id)}
             />
           </>
         ),
       },
     ],
-    [availableEntrees],
+    [availableEntrees, markRemoved, unmarkRemoved],
   );
 
   return (
@@ -137,24 +123,9 @@ function SortiesTableContent({
         getItemId={(row) => String(row.id)}
         exportFilePrefix="sorties"
         selectable
-        onDeleteSelected={async (rows) => {
-          setPendingRemovedIds(
-            (prev) => new Set([...prev, ...rows.map((row) => row.id)]),
-          );
-          const results = await Promise.all(
-            rows.map((row) => deleteSortie(row.id)),
-          );
-          const failedIds = rows
-            .filter((_, i) => results[i].error)
-            .map((row) => row.id);
-          if (failedIds.length > 0)
-            setPendingRemovedIds((prev) => {
-              const next = new Set(prev);
-              for (const id of failedIds) next.delete(id);
-              return next;
-            });
-          return { error: results.find((r) => r.error)?.error ?? null };
-        }}
+        onDeleteSelected={(rows) =>
+          deleteSelected(rows, (row) => deleteSortie(row.id))
+        }
         defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
         labels={fr.table}

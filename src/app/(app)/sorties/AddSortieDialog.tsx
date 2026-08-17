@@ -1,18 +1,18 @@
 "use client";
 
 import { EditIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
-import { type ReactNode, useActionState, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
+import { useFormDialogAction } from "@/components/useFormDialogAction";
 import { Button } from "@/shadcn/ui/button";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { formatShortDate } from "@/utils/date";
 import { ICONS } from "@/utils/icon";
-import { playChime } from "@/utils/sound";
 import { createSortie } from "./actions";
 import { SortieFormFields } from "./SortieFormFields";
 import type { AvailableEntree } from "./types";
@@ -102,21 +102,12 @@ export function AddSortieDialog({
   initialReference?: string;
   trigger?: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
   const [entreeReference, setEntreeReference] = useState(
     initialReference ?? "",
   );
-  const [state, formAction, pending] = useActionState(
-    async (prevState: { error: string | null }, formData: FormData) => {
-      const result = await createSortie(prevState, formData);
-      if (!result.error) {
-        setOpen(false);
-        setEntreeReference("");
-        playChime("success");
-      }
-      return result;
-    },
-    { error: null },
+  const { open, setOpen, state, formAction, pending } = useFormDialogAction(
+    createSortie,
+    () => setEntreeReference(""),
   );
 
   const selectedEntree = useMemo(
