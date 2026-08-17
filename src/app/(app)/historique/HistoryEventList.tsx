@@ -11,10 +11,9 @@ import {
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
 import { Suspense, useState } from "react";
-import {
-  ENTREE_FIELD_BY_KEY,
-  toDisplayLength,
-} from "@/app/(app)/entrees/fields";
+import { ENTREE_FIELDS, toDisplayLength } from "@/app/(app)/entrees/fields";
+import type { HugeIcon } from "@/components/Icon";
+import { Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { SearchBar } from "@/components/SearchBar";
 import {
@@ -94,33 +93,45 @@ const TYPE_META: Record<HistoryItemType, CustomTableEnumValue> = {
   },
 };
 
-const ENTREE_FIELD_LABELS = Object.fromEntries(
-  Object.entries(ENTREE_FIELD_BY_KEY).map(([key, field]) => [key, field.label]),
+// entree fields come from the single ENTREE_FIELDS source of truth (label
+// and icon both); the rest are event-payload shapes that don't belong to
+// any entity (login, seeding, sortie-only fields, ...)
+const ENTREE_FIELD_META = Object.fromEntries(
+  ENTREE_FIELDS.map((field) => [field.key, field]),
 );
-
-// entree fields come from the single ENTREE_FIELDS source of truth; the rest
-// are event-payload shapes that don't belong to any entity (login, seeding, ...)
-const FIELD_LABELS: Record<string, string> = {
-  ...ENTREE_FIELD_LABELS,
-  entreeReference: "Référence de l'entrée",
-  bonCommande: "Bon de commande",
-  dateSortie: "Date de sortie",
-  code: "Code utilisé",
-  userAgent: "Appareil",
-  entreesCreated: "Entrées créées",
-  sortiesCreated: "Sorties créées",
-  entreesCleared: "Entrées supprimées",
-  sortiesCleared: "Sorties supprimées",
+const FIELD_META: Record<string, { label: string; icon: HugeIcon }> = {
+  ...ENTREE_FIELD_META,
+  entreeReference: { label: "Référence de l'entrée", icon: ICONS.reference },
+  bonCommande: { label: "Bon de commande", icon: ICONS.bonCommande },
+  dateSortie: { label: "Date de sortie", icon: ICONS.date },
+  code: { label: "Code utilisé", icon: Key01Icon },
+  userAgent: { label: "Appareil", icon: ICONS.details },
+  entreesCreated: { label: "Entrées créées", icon: ICONS.pieces },
+  sortiesCreated: { label: "Sorties créées", icon: ICONS.pieces },
+  entreesCleared: { label: "Entrées supprimées", icon: ICONS.pieces },
+  sortiesCleared: { label: "Sorties supprimées", icon: ICONS.pieces },
 };
 
 // jsonb doesn't preserve key insertion order on round-trip, so a snapshot's
-// field order can't be trusted — sort against FIELD_LABELS' order instead,
+// field order can't be trusted — sort against FIELD_META's order instead,
 // which mirrors ENTREE_FIELDS
-const FIELD_ORDER = Object.keys(FIELD_LABELS);
+const FIELD_ORDER = Object.keys(FIELD_META);
 function orderFields(fields: string[]): string[] {
   return [...fields].sort(
     (a, b) => FIELD_ORDER.indexOf(a) - FIELD_ORDER.indexOf(b),
   );
+}
+
+// for an update event, only the fields that actually changed are worth
+// showing — a désignation edit doesn't need to drag the other 9 entrée
+// fields along just to prove they stayed the same
+function getDisplayFields(
+  current: HistorySnapshot,
+  before?: HistorySnapshot,
+): string[] {
+  const fields = orderFields(Object.keys(current));
+  if (!before) return fields;
+  return fields.filter((field) => before[field] !== current[field]);
 }
 
 function formatFieldValue(field: string, value: unknown): string {
@@ -174,6 +185,24 @@ function DeviceInfoCell({ value }: { value: unknown }) {
   );
 }
 
+function FieldValue({
+  field,
+  value,
+  eventId,
+}: {
+  field: string;
+  value: unknown;
+  eventId: number;
+}) {
+  if (field === "code" && value) return <RevealSecretValue {...{ eventId }} />;
+  if (field === "userAgent") return <DeviceInfoCell {...{ value }} />;
+  return <>{formatFieldValue(field, value)}</>;
+}
+
+// one field per column (icon + label header), one row per snapshot — before
+// & after for an update, just current otherwise — instead of the old
+// per-field "label, previous, next" layout, so every popover in the app
+// reads the same way regardless of how many fields it's showing
 function HistoryDataTable({
   eventId,
   current,
@@ -183,50 +212,63 @@ function HistoryDataTable({
   current: HistorySnapshot;
   before?: HistorySnapshot;
 }) {
-  const fields = orderFields(Object.keys(current));
+  const fields = getDisplayFields(current, before);
   if (fields.length === 0) return null;
 
   return (
-    <table className="w-full text-xs">
-      <tbody>
-        {fields.map((field) => {
-          const changed = before && before[field] !== current[field];
-          return (
-            <tr key={field} className="border-t border-border/50">
-              <td className="py-1 pr-3 whitespace-nowrap text-muted-foreground">
-                {FIELD_LABELS[field] ?? field}
-              </td>
-              {before && (
+    <div className="overflow-x-auto">
+      <table className="text-xs">
+        <thead>
+          <tr>
+            {fields.map((field) => {
+              const meta = FIELD_META[field];
+              return (
+                <th
+                  key={field}
+                  className="border-b border-border/50 px-3 py-1.5 text-left font-medium whitespace-nowrap text-muted-foreground"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Icon icon={meta?.icon ?? ICONS.details} />
+                    {meta?.label ?? field}
+                  </span>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {before && (
+            <tr>
+              {fields.map((field) => (
                 <td
+                  key={field}
                   className={cn(
-                    "py-1 pr-3",
+                    "px-3 py-1.5 text-destructive line-through decoration-dashed",
                     field === "bonCommande" && "font-mono",
-                    changed && "text-muted-foreground line-through",
                   )}
                 >
-                  {formatFieldValue(field, before[field])}
+                  <FieldValue {...{ field, eventId }} value={before[field]} />
                 </td>
-              )}
+              ))}
+            </tr>
+          )}
+          <tr>
+            {fields.map((field) => (
               <td
+                key={field}
                 className={cn(
-                  "py-1",
+                  "px-3 py-1.5",
                   field === "bonCommande" && "font-mono",
-                  changed && "font-medium text-amber-600",
+                  before && "font-bold text-green-600",
                 )}
               >
-                {field === "code" && current[field] ? (
-                  <RevealSecretValue {...{ eventId }} />
-                ) : field === "userAgent" ? (
-                  <DeviceInfoCell value={current[field]} />
-                ) : (
-                  formatFieldValue(field, current[field])
-                )}
+                <FieldValue {...{ field, eventId }} value={current[field]} />
               </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -258,16 +300,24 @@ function HistoryEventListContent({
       type: "buttons",
       getButtons: (event, selectItem) => {
         const { before, current } = getEventSnapshots(event.type, event.data);
+        const hasDetails = getDisplayFields(current, before).length > 0;
         return (
           <>
-            <Popover>
-              <PopoverTrigger asChild>
-                <RowMenuItemButton icon={ExpandIcon}>Détails</RowMenuItemButton>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto max-h-(--radix-popover-content-available-height) overflow-y-auto">
-                <HistoryDataTable eventId={event.id} {...{ current, before }} />
-              </PopoverContent>
-            </Popover>
+            {hasDetails && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <RowMenuItemButton icon={ExpandIcon}>
+                    Détails
+                  </RowMenuItemButton>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto max-h-(--radix-popover-content-available-height) overflow-y-auto">
+                  <HistoryDataTable
+                    eventId={event.id}
+                    {...{ current, before }}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
             {selectItem}
             <CopyRowMenuItem
               value={buildRowSummary(columns, event, fr.common.locale)}
