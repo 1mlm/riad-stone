@@ -10,11 +10,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shadcn/ui/dropdown-menu";
 import { Input } from "@/shadcn/ui/input";
@@ -556,6 +552,7 @@ export function CustomTableColumnHeader<T>({
   onSortChange: (dir: "asc" | "desc" | null) => void;
   labels: CustomTableLabels;
 }) {
+  const [view, setView] = useState<"root" | "filter" | "sort">("root");
   const columnEligible = isColumnFilterableOrSortable(column);
   const canFilter = filterable && columnEligible;
   const canSort = sortable && columnEligible;
@@ -599,87 +596,123 @@ export function CustomTableColumnHeader<T>({
   if (!canFilter && !canSort)
     return <span className="inline-flex">{label}</span>;
 
+  // a flyout sub-menu (side="right") has nowhere to go on a narrow mobile
+  // viewport — Radix's Sub only flips right/left, and near a screen edge
+  // both options overflow. Drilling into filter/sort content in place,
+  // inside the same already-correctly-positioned DropdownMenuContent,
+  // sidesteps that positioning problem entirely instead of fighting it
+  const isFilterWide =
+    column.type !== "string" && column.type !== "tags"
+      ? true
+      : column.type === "string" && column.filterType === "length";
+
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      onOpenChange={(open) => {
+        if (!open) setView("root");
+      }}
+    >
       <DropdownMenuTrigger>{label}</DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-40">
-        {canFilter && (
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Icon icon={ICONS.filter} />
-              {labels.filter}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent
-                className={cn(
-                  column.type !== "string" && column.type !== "tags" && "w-56",
-                  column.type === "string" &&
-                    column.filterType === "length" &&
-                    "w-56",
-                )}
-              >
-                {column.type === "enum" && (
-                  <EnumFilterContent
-                    {...{ column, getField, setField, labels }}
-                  />
-                )}
-                {column.type === "date" && (
-                  <DateRangeFilterContent {...{ getField, setField, labels }} />
-                )}
-                {column.type === "string" && column.filterType === "number" && (
-                  <NumberRangeFilterContent
-                    {...{ getField, setField, labels }}
-                  />
-                )}
-                {column.type === "string" && column.filterType === "length" && (
-                  <LengthRangeFilterContent
-                    {...{ getField, setField, labels }}
-                  />
-                )}
-                {column.type === "string" &&
-                  column.filterType !== "number" &&
-                  column.filterType !== "length" && (
-                    <TextFilterContent {...{ getField, setField, labels }} />
-                  )}
-                {column.type === "tags" && (
-                  <TagsFilterContent
-                    {...{ column, items, getField, setField, labels }}
-                  />
-                )}
-                {column.type === "boolean" && (
-                  <BooleanFilterContent {...{ getField, setField, labels }} />
-                )}
-                {hasActiveFilter && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        for (const field of fields) setField(field, "");
-                      }}
-                    >
-                      <Icon icon={ICONS.cancel} />
-                      {labels.cancel}
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
+      <DropdownMenuContent
+        align="center"
+        className={cn(
+          "w-40",
+          view === "filter" && isFilterWide && "w-56",
+          view !== "root" && "max-w-[calc(100vw-2rem)]",
         )}
-        {canSort && (
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Icon icon={ICONS.sort} />
+      >
+        {view === "root" && (
+          <>
+            {canFilter && (
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setView("filter");
+                }}
+              >
+                <Icon icon={ICONS.filter} />
+                {labels.filter}
+              </DropdownMenuItem>
+            )}
+            {canSort && (
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setView("sort");
+                }}
+              >
+                <Icon icon={ICONS.sort} />
+                {labels.sort}
+              </DropdownMenuItem>
+            )}
+          </>
+        )}
+        {view === "filter" && (
+          <>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setView("root");
+              }}
+            >
+              <Icon icon={ICONS.chevronLeft} />
+              {labels.filter}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {column.type === "enum" && (
+              <EnumFilterContent {...{ column, getField, setField, labels }} />
+            )}
+            {column.type === "date" && (
+              <DateRangeFilterContent {...{ getField, setField, labels }} />
+            )}
+            {column.type === "string" && column.filterType === "number" && (
+              <NumberRangeFilterContent {...{ getField, setField, labels }} />
+            )}
+            {column.type === "string" && column.filterType === "length" && (
+              <LengthRangeFilterContent {...{ getField, setField, labels }} />
+            )}
+            {column.type === "string" &&
+              column.filterType !== "number" &&
+              column.filterType !== "length" && (
+                <TextFilterContent {...{ getField, setField, labels }} />
+              )}
+            {column.type === "tags" && (
+              <TagsFilterContent
+                {...{ column, items, getField, setField, labels }}
+              />
+            )}
+            {column.type === "boolean" && (
+              <BooleanFilterContent {...{ getField, setField, labels }} />
+            )}
+            {hasActiveFilter && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    for (const field of fields) setField(field, "");
+                  }}
+                >
+                  <Icon icon={ICONS.cancel} />
+                  {labels.cancel}
+                </DropdownMenuItem>
+              </>
+            )}
+          </>
+        )}
+        {view === "sort" && (
+          <>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setView("root");
+              }}
+            >
+              <Icon icon={ICONS.chevronLeft} />
               {labels.sort}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <SortSubmenuContent
-                  {...{ numeric, sort, onSortChange, labels }}
-                />
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <SortSubmenuContent {...{ numeric, sort, onSortChange, labels }} />
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
