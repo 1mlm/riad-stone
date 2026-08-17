@@ -1,6 +1,6 @@
 "use client";
 
-import { Loading01Icon } from "@hugeicons/core-free-icons";
+import { Loading01Icon, MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
@@ -46,14 +46,8 @@ function MoreSheet({
           onClick={() => haptic("light")}
           className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-muted-foreground"
         >
-          <Image
-            src={brand.iconSrc}
-            alt={brand.text}
-            width={20}
-            height={20}
-            className="size-5"
-          />
-          <span className="text-[0.65rem]">{brand.text}</span>
+          <Icon icon={MoreHorizontalIcon} className="size-5" />
+          <span className="text-[0.65rem]">Plus</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="gap-3 p-4" showCloseButton={false}>
@@ -61,12 +55,22 @@ function MoreSheet({
           <SheetTitle>{sheetTitle}</SheetTitle>
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
+        <div className="flex flex-col items-center gap-1 pb-1">
+          <Image
+            src={brand.iconSrc}
+            alt={brand.text}
+            width={32}
+            height={32}
+            className="size-8"
+          />
+          <span className="font-semibold">{brand.text}</span>
+          {brand.subtext && (
+            <span className="text-xs text-muted-foreground">
+              {brand.subtext}
+            </span>
+          )}
+        </div>
         {sheetFooter({ open, close: () => setOpen(false) })}
-        {brand.subtext && (
-          <span className="text-center text-xs text-muted-foreground">
-            {brand.subtext}
-          </span>
-        )}
       </SheetContent>
     </Sheet>
   );
@@ -155,7 +159,6 @@ export function MobileTopBar({
         hidden && "-translate-y-[calc(100%+2rem)]",
       )}
     >
-      <MoreSheet {...{ brand, sheetTitle, sheetDescription, sheetFooter }} />
       {items.map((item) => (
         <NavLink
           key={item.href}
@@ -163,6 +166,7 @@ export function MobileTopBar({
           count={item.countKey ? counts[item.countKey] : undefined}
         />
       ))}
+      <MoreSheet {...{ brand, sheetTitle, sheetDescription, sheetFooter }} />
     </nav>
   );
 }
