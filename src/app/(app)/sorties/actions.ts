@@ -47,6 +47,7 @@ export async function getAvailableEntrees(): Promise<AvailableEntree[]> {
     select: {
       reference: true,
       designation: true,
+      date: true,
       nombrePieces: true,
       sorties: { select: { nombrePieces: true } },
     },
@@ -57,6 +58,8 @@ export async function getAvailableEntrees(): Promise<AvailableEntree[]> {
     .map((entree) => ({
       reference: entree.reference,
       designation: entree.designation,
+      date: entree.date,
+      piecesTotal: entree.nombrePieces,
       piecesRestantes:
         entree.nombrePieces -
         entree.sorties.reduce((sum, sortie) => sum + sortie.nombrePieces, 0),

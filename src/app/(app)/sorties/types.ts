@@ -17,5 +17,9 @@ export type SortieRow = {
 export type AvailableEntree = {
   reference: string;
   designation: string;
+  date: Date;
   piecesRestantes: number;
+  // the entree's original nombrePieces, ignoring sorties already taken from
+  // it — piecesRestantes/piecesTotal is what the combobox shows
+  piecesTotal: number;
 };

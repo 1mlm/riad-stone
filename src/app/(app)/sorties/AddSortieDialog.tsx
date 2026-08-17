@@ -9,6 +9,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
+import { formatShortDate } from "@/utils/date";
 import { ICONS } from "@/utils/icon";
 import { playChime } from "@/utils/sound";
 import { createSortie } from "./actions";
@@ -36,7 +37,24 @@ function EntreeReferenceField({
         onValueChange={onSelect}
         options={availableEntrees.map((entree) => ({
           value: entree.reference,
-          label: `${entree.designation}: ${entree.piecesRestantes} pièce(s) restante(s)`,
+          searchText: `${entree.reference} ${entree.designation}`,
+          content: (
+            <span className="flex items-center gap-2">
+              <span className="shrink-0 font-mono font-semibold">
+                {entree.reference}
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {formatShortDate(entree.date)}
+              </span>
+              <span className="min-w-0 flex-1 truncate">
+                {entree.designation}
+              </span>
+              <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                <Icon icon={ICONS.pieces} />
+                {entree.piecesRestantes}/{entree.piecesTotal}
+              </span>
+            </span>
+          ),
         }))}
         placeholder="Sélectionner une entrée..."
         searchPlaceholder="Rechercher une référence..."

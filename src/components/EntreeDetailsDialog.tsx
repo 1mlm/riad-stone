@@ -132,7 +132,9 @@ export function EntreeDetailsDialog({
                   {
                     reference: details.reference,
                     designation: details.designation,
+                    date: new Date(details.date),
                     piecesRestantes: details.piecesRestantes,
+                    piecesTotal: details.nombrePieces,
                   },
                 ]}
                 initialReference={details.reference}
