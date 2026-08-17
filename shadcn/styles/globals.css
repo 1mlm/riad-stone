@@ -123,15 +123,15 @@
     @apply corner-squircle;
     }
 
-  /* Inputs and buttons sat flush with everything else around them — a hint
-     of shadow makes them read as tappable surfaces instead of flat
-     rectangles. Inset gives the surface itself some depth; the outer shadow
-     on inputs keeps their existing raised-edge look on top of that. Always
-     a dark inset regardless of theme — a white/light inset in dark mode
-     reads as a highlight, not depth, on a dark surface */
+  /* Inputs sat flush with everything else around them — a hint of outer
+     shadow makes them read as tappable surfaces instead of flat rectangles.
+     No inset shadow: it read differently depending on the input's shape
+     (plain text input vs. an InputGroup with an icon addon vs. a date
+     picker), so different input types looked inconsistent next to each
+     other. Flat fill is the same everywhere */
   [data-slot="input"],
   [data-slot="input-group"] {
-    @apply shadow-xs shadow-black/5 inset-shadow-sm inset-shadow-black/5 dark:shadow-black/20 dark:inset-shadow-black/40;
+    @apply shadow-xs shadow-black/5 dark:shadow-black/20;
     }
 
   /* same [class*="group/button"] reasoning as the squircle rule above.
