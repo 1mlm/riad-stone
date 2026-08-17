@@ -319,9 +319,13 @@ export function CustomTable<T>({
       >
         <table className="w-full border-separate border-spacing-0 caption-bottom text-sm">
           <TableHeader>
+            {/* top corners round for free off the wrapper's own overflow-clip
+            — no need for the header cells to also round themselves, and
+            doing so anyway visibly conflicts with the wrapper's curve since
+            the two aren't drawn from the same origin */}
             <TableRow
               className={cn(
-                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4 *:first:rounded-tl-(--radius-concentric) *:last:rounded-tr-(--radius-concentric)",
+                "*:sticky *:top-0 *:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
                 isTableEmpty &&
                   "*:first:rounded-bl-(--radius-concentric) *:first:corner-squircle *:last:rounded-br-(--radius-concentric) *:last:corner-squircle",
               )}
