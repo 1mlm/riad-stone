@@ -3,8 +3,8 @@
 import { type PropsWithChildren, type ReactNode, ViewTransition } from "react";
 import { SidebarInset, SidebarProvider } from "@/shadcn/ui/sidebar";
 import { DesktopSidebar } from "./DesktopSidebar";
-import { MobileTopBar, type SheetFooterRenderer } from "./MobileTopBar";
-import type { AppNavBrand, AppNavItem } from "./types";
+import { MobileTopBar } from "./MobileTopBar";
+import type { AppNavBrand, AppNavItem, SheetFooterRenderer } from "./types";
 
 // desktop sidebar (via shadcn's Sidebar primitive) and mobile top bar are
 // two genuinely different shells around the same nav data — merging their

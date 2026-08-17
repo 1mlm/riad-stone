@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { HugeIcon } from "@/components/Icon";
 
 export type AppNavBrand = {
@@ -12,3 +13,8 @@ export type AppNavItem = {
   icon: HugeIcon;
   countKey?: string;
 };
+
+export type SheetFooterRenderer = (context: {
+  open: boolean;
+  close: () => void;
+}) => ReactNode;
