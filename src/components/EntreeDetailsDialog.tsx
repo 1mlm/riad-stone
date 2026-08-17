@@ -8,6 +8,7 @@ import {
 } from "@/app/(app)/entrees/actions";
 import { toDisplayLength } from "@/app/(app)/entrees/fields";
 import { AddSortieDialog } from "@/app/(app)/sorties/AddSortieDialog";
+import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { Icon } from "@/components/Icon";
 import { LazyDialog } from "@/components/LazyDialog";
 import { Button } from "@/shadcn/ui/button";
@@ -100,7 +101,12 @@ export function EntreeDetailsDialog({
     <LazyDialog
       triggerIcon={ExpandIcon}
       {...{ trigger }}
-      title={`Détails de l'entrée ${reference}`}
+      title={
+        <>
+          Détails de l'entrée{" "}
+          <DialogTitleChip icon={ICONS.reference}>{reference}</DialogTitleChip>
+        </>
+      }
       load={() => getEntreeDetails(reference)}
     >
       {(details) =>

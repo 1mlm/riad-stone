@@ -3,6 +3,7 @@
 import { EditIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { type ReactNode, useActionState, useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
+import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
@@ -136,7 +137,12 @@ export function AddSortieDialog({
           </Button>
         )
       }
-      title="Ajouter une sortie"
+      title={
+        <>
+          Ajouter une{" "}
+          <DialogTitleChip icon={ICONS.sortie}>sortie</DialogTitleChip>
+        </>
+      }
       description="Formulaire de sortie d'une entrée en stock."
       error={state.error}
       submitIcon={PlusSignIcon}

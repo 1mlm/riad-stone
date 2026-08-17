@@ -36,7 +36,7 @@ export function FormDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trigger: ReactNode;
-  title: string;
+  title: ReactNode;
   description: string;
   formAction: (formData: FormData) => void;
   pending: boolean;

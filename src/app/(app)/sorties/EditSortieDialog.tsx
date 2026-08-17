@@ -2,6 +2,7 @@
 
 import { EditIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
+import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
@@ -44,7 +45,12 @@ export function EditSortieDialog({
       {...{ open, formAction, pending }}
       onOpenChange={setOpen}
       trigger={<RowMenuItemButton icon={EditIcon}>Modifier</RowMenuItemButton>}
-      title="Modifier la sortie"
+      title={
+        <>
+          Modifier la{" "}
+          <DialogTitleChip icon={ICONS.sortie}>sortie</DialogTitleChip>
+        </>
+      }
       description="Formulaire de modification d'une sortie."
       error={state.error}
       submitIcon={EditIcon}

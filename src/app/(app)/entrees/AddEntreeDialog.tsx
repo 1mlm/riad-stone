@@ -3,6 +3,7 @@
 import { Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
@@ -286,7 +287,12 @@ export function AddEntreeDialog({
           Ajouter une entrée
         </Button>
       }
-      title="Ajouter une entrée"
+      title={
+        <>
+          Ajouter une{" "}
+          <DialogTitleChip icon={ICONS.entree}>entrée</DialogTitleChip>
+        </>
+      }
       description="Formulaire d'ajout d'une ou plusieurs entrées en stock partageant une même désignation."
       error={state.error}
       submitIcon={PlusSignIcon}

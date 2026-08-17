@@ -10,6 +10,7 @@ import {
   ChevronRightIcon,
   Cursor02Icon,
   DashboardSquare01Icon,
+  Download01Icon,
   FileNotFoundIcon,
   FilterIcon,
   HashIcon,
@@ -27,11 +28,14 @@ import {
   SquareIcon,
   Tag01Icon,
   Tag02Icon,
+  Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import type { HugeIcon } from "@/components/Icon";
 
 // one place mapping a concept to its icon — edit here, not at each call site
 export const ICONS = {
+  entree: Download01Icon,
+  sortie: Upload01Icon,
   reference: HashIcon,
   designation: Tag01Icon,
   date: Calendar04Icon,

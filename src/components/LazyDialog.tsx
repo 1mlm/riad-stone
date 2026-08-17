@@ -26,7 +26,7 @@ export function LazyDialog<T>({
 }: {
   triggerIcon: HugeIcon;
   trigger?: ReactNode;
-  title: string;
+  title: ReactNode;
   load: () => Promise<T>;
   children: (data: T) => ReactNode;
 }) {
