@@ -1,7 +1,7 @@
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useEffect, useMemo } from "react";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 100;
 
 // URL-synced page number plus the current page's slice of visibleItems.
 // Resets to page 1 whenever any value in resetDeps changes (search, filter,
