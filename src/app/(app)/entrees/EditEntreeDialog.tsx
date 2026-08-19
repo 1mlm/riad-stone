@@ -3,7 +3,7 @@
 import { EditIcon } from "@hugeicons/core-free-icons";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FormDialog } from "@/components/FormDialog";
-import { RowMenuItemButton } from "@/components/table/RowContextMenu";
+import { RowMenuItemButton } from "@/components/table/RowMenu";
 import { useFormDialogAction } from "@/components/useFormDialogAction";
 import { ICONS } from "@/utils/icon";
 import { updateEntree } from "./actions";

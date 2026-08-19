@@ -1,6 +1,6 @@
 "use client";
 
-import { ExpandIcon } from "@hugeicons/core-free-icons";
+import { ExpandIcon, Share03Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
 import {
   createConteneurColumn,
@@ -23,12 +23,10 @@ import {
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
-import {
-  CopyRowMenuItem,
-  RowMenuItemButton,
-} from "@/components/table/RowContextMenu";
+import { CopyMenuItem, RowMenuItemButton } from "@/components/table/RowMenu";
 import { fr } from "@/messages/fr";
 import { ICONS } from "@/utils/icon";
+import { buildShareLink } from "@/utils/shareLink";
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
   const [resultCount, setResultCount] = useState(items.length);
@@ -60,10 +58,16 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
               }
             />
             {selectItem}
-            <CopyRowMenuItem
+            <CopyMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
               label="Copier"
               copiedLabel="Copié"
+            />
+            <CopyMenuItem
+              icon={Share03Icon}
+              value={buildShareLink("/stock", "q", row.reference)}
+              label="Partager"
+              copiedLabel="Lien copié"
             />
           </>
         ),

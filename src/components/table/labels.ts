@@ -6,8 +6,7 @@ export type CustomTableLabels = {
   selectAllRows: string;
   selectRow: string;
   cancelSelection: string;
-  rightClickHint: string;
-  longPressHint: string;
+  rowMenuLabel: string;
   emptyTitle: string;
   resetFilters: string;
   resetFiltersShort: string;
@@ -53,8 +52,7 @@ export const DEFAULT_TABLE_LABELS: CustomTableLabels = {
   selectAllRows: "Select all rows",
   selectRow: "Select",
   cancelSelection: "Cancel selection",
-  rightClickHint: "Right-click a row to open its actions",
-  longPressHint: "Press and hold a row to open its actions",
+  rowMenuLabel: "Row actions",
   emptyTitle: "Nothing to show",
   resetFilters: "Reset filters and sort",
   resetFiltersShort: "Reset",

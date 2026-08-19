@@ -2,7 +2,7 @@
 
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/Icon";
-import { ContextMenuItem } from "@/shadcn/ui/context-menu";
+import { DropdownMenuItem } from "@/shadcn/ui/dropdown-menu";
 import { haptic } from "@/utils/haptics";
 import { runUndoableAction } from "@/utils/undoableAction";
 
@@ -22,7 +22,7 @@ export function DeleteRowMenuItem({
   commit: () => Promise<{ error: string | null } | undefined>;
 }) {
   return (
-    <ContextMenuItem
+    <DropdownMenuItem
       variant="destructive"
       onSelect={() => {
         haptic("warning");
@@ -32,6 +32,6 @@ export function DeleteRowMenuItem({
     >
       <Icon icon={Delete02Icon} />
       {label}
-    </ContextMenuItem>
+    </DropdownMenuItem>
   );
 }

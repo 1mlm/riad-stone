@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  InboxIcon,
-  MouseRightClick04Icon,
-  Tap04Icon,
-} from "@hugeicons/core-free-icons";
+import { InboxIcon, MoreVerticalIcon } from "@hugeicons/core-free-icons";
 import { type ReactNode, useEffect } from "react";
 import { type HugeIcon, Icon } from "@/components/Icon";
 import { MetaPage } from "@/components/MetaPage";
 import { Checkbox } from "@/shadcn/ui/checkbox";
-import { ContextMenuItem } from "@/shadcn/ui/context-menu";
+import { DropdownMenuItem } from "@/shadcn/ui/dropdown-menu";
 import {
   TableBody,
   TableCell,
@@ -25,9 +21,8 @@ import { CustomTableColumnHeader } from "./CustomTableColumnHeader";
 import { CustomTableSkeletonRows } from "./CustomTableSkeletonRows";
 import type { ColumnFilterField } from "./filtering";
 import { type CustomTableLabels, resolveTableLabels } from "./labels";
-import { RowContextMenu } from "./RowContextMenu";
+import { RowMenu } from "./RowMenu";
 import { useMergeRuns } from "./useMergeRuns";
-import { useRowMenuHintState } from "./useRowMenuHintState";
 import { useRowSelection } from "./useRowSelection";
 import { useScrollFade } from "./useScrollFade";
 import { useTableFilterSort } from "./useTableFilterSort";
@@ -189,6 +184,7 @@ export function CustomTable<T>({
   onVisibleCountChange,
   defaultSort,
   onDeleteSelected,
+  pinnedItemIds,
   labels: labelOverrides,
 }: {
   items: T[];
@@ -217,6 +213,11 @@ export function CustomTable<T>({
   // enables the bulk-delete action in the selection bar; the table clears
   // its own selection once this resolves without an error
   onDeleteSelected?: (items: T[]) => Promise<{ error: string | null }>;
+  // kept in front of the table, in this order, with a highlight — e.g. rows
+  // just created this session. Ephemeral by design: the caller owns this
+  // state, so a page refresh naturally drops it and the table falls back
+  // to its normal sort
+  pinnedItemIds?: string[];
   // English by default, override the keys you need to localize
   labels?: Partial<CustomTableLabels>;
 }) {
@@ -239,6 +240,8 @@ export function CustomTable<T>({
     searchQueryKey,
     sortQueryKey,
     defaultSort,
+    getItemId,
+    pinnedItemIds,
   });
 
   useEffect(() => {
@@ -249,7 +252,9 @@ export function CustomTable<T>({
     useTablePagination(visibleItems, {
       paginate,
       pageQueryKey,
-      resetDeps: [search, filterValues, sortRaw],
+      // a newly pinned row (e.g. just-created) belongs on page 1 — jump
+      // there the same way a narrowing filter/search/sort would
+      resetDeps: [search, filterValues, sortRaw, pinnedItemIds],
     });
 
   const mergeRuns = useMergeRuns(columns, paginatedItems);
@@ -269,9 +274,6 @@ export function CustomTable<T>({
     columns,
     paginatedItems,
   );
-
-  const { shouldShow: showRowMenuHint, recordOpen: recordRowMenuOpen } =
-    useRowMenuHintState();
 
   const canResetFilterAndSort =
     (filterable || sortable) && hasActiveFilterOrSort;
@@ -301,17 +303,6 @@ export function CustomTable<T>({
 
   return (
     <div className="rounded-(--radius-concentric) corner-squircle overflow-clip">
-      {showRowMenuHint(hasRowMenu) && (
-        <div className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted-foreground">
-          <Icon
-            icon={MouseRightClick04Icon}
-            className="hidden size-3.5 sm:inline"
-          />
-          <span className="hidden sm:inline">{labels.rightClickHint}</span>
-          <Icon icon={Tap04Icon} className="size-3.5 sm:hidden" />
-          <span className="sm:hidden">{labels.longPressHint}</span>
-        </div>
-      )}
       <div
         ref={scrollContainerRef}
         className="w-full overflow-x-auto"
@@ -364,12 +355,13 @@ export function CustomTable<T>({
                   />
                 </TableHead>
               ))}
+              {hasRowMenu && <TableHead className="w-10" />}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && (
               <CustomTableSkeletonRows
-                {...{ bodyColumns, hasCheckboxColumn }}
+                {...{ bodyColumns, hasCheckboxColumn, hasRowMenu }}
               />
             )}
             {!loading &&
@@ -387,23 +379,38 @@ export function CustomTable<T>({
                       mergeRuns.get(column.id)?.[index]?.start,
                   );
                 const selected = isSelected(id);
+                const isPinned = pinnedItemIds?.includes(id) ?? false;
                 // opaque color-mix instead of a translucent bg-*/N utility —
                 // the sticky lead cell paints this same color on itself, and
                 // a translucent background there would show other columns
                 // sliding underneath it as the table scrolls horizontally
                 const rowBackgroundClassName = selected
                   ? "bg-[color-mix(in_oklch,var(--background),var(--color-green-500)_15%)]"
-                  : index % 2 === 1
-                    ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
-                    : "bg-background";
+                  : isPinned
+                    ? "bg-[color-mix(in_oklch,var(--background),var(--color-amber-400)_12%)]"
+                    : index % 2 === 1
+                      ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
+                      : "bg-background";
                 const isLastDataRow = index === paginatedItems.length - 1;
                 // border-separate means a <tr> border never paints — the row
                 // divider and group-start divider both live on the cells.
                 // The checkbox column never spans rows, so its own bottom
                 // edge always matches the row's
-                const row = (
+                const selectItem = selectable ? (
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setSelectionMode(true);
+                      toggleRow(id);
+                    }}
+                  >
+                    <Icon icon={ICONS.actions} />
+                    {labels.selectRow}
+                  </DropdownMenuItem>
+                ) : null;
+
+                return (
                   <TableRow
-                    key={hasRowMenu ? undefined : id}
+                    key={id}
                     className={cn("group/row", rowBackgroundClassName)}
                   >
                     {hasCheckboxColumn && (
@@ -462,6 +469,7 @@ export function CustomTable<T>({
                               !hasCheckboxColumn &&
                               "rounded-bl-(--radius-concentric) corner-squircle",
                             isBottomEdgeCell &&
+                              !hasRowMenu &&
                               columnIndex === bodyColumns.length - 1 &&
                               "rounded-br-(--radius-concentric) corner-squircle",
                             run?.start &&
@@ -473,33 +481,27 @@ export function CustomTable<T>({
                         </TableCell>
                       );
                     })}
+                    {hasRowMenu && (
+                      <TableCell
+                        className={cn(
+                          "border-r border-border/50 text-center last:border-r-0",
+                          !isLastDataRow && "border-b border-border",
+                          isGroupStart && "border-t-2 border-t-border",
+                          isLastDataRow &&
+                            "rounded-br-(--radius-concentric) corner-squircle",
+                        )}
+                      >
+                        <RowMenu
+                          ariaLabel={labels.rowMenuLabel}
+                          icon={MoreVerticalIcon}
+                        >
+                          {actionsColumn
+                            ? actionsColumn.getButtons(item, selectItem)
+                            : selectItem}
+                        </RowMenu>
+                      </TableCell>
+                    )}
                   </TableRow>
-                );
-
-                if (!hasRowMenu) return row;
-
-                const selectItem = selectable ? (
-                  <ContextMenuItem
-                    onSelect={() => {
-                      setSelectionMode(true);
-                      toggleRow(id);
-                    }}
-                  >
-                    <Icon icon={ICONS.actions} />
-                    {labels.selectRow}
-                  </ContextMenuItem>
-                ) : null;
-
-                return (
-                  <RowContextMenu
-                    key={id}
-                    trigger={row}
-                    onOpen={recordRowMenuOpen}
-                  >
-                    {actionsColumn
-                      ? actionsColumn.getButtons(item, selectItem)
-                      : selectItem}
-                  </RowContextMenu>
                 );
               })}
           </TableBody>

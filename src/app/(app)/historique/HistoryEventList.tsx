@@ -1,6 +1,6 @@
 "use client";
 
-import { ExpandIcon } from "@hugeicons/core-free-icons";
+import { ExpandIcon, Share03Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useState } from "react";
 import { MetaPage } from "@/components/MetaPage";
 import { SearchBar } from "@/components/SearchBar";
@@ -9,15 +9,13 @@ import {
   CustomTable,
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
-import {
-  CopyRowMenuItem,
-  RowMenuItemButton,
-} from "@/components/table/RowContextMenu";
+import { CopyMenuItem, RowMenuItemButton } from "@/components/table/RowMenu";
 import type { HistoryEvent } from "@/generated/prisma/client";
 import { fr } from "@/messages/fr";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { getEventReference, getEventSnapshots } from "@/utils/historySnapshot";
 import { ICONS } from "@/utils/icon";
+import { buildShareLink } from "@/utils/shareLink";
 import { HistoryDataTable } from "./HistoryDataTable";
 import { getDisplayFields } from "./historyFieldMeta";
 import { TYPE_META } from "./historyTypeMeta";
@@ -51,6 +49,7 @@ function HistoryEventListContent({
       getButtons: (event, selectItem) => {
         const { before, current } = getEventSnapshots(event.type, event.data);
         const hasDetails = getDisplayFields(current, before).length > 0;
+        const reference = getEventReference(event.type, event.data);
         return (
           <>
             {hasDetails && (
@@ -69,11 +68,19 @@ function HistoryEventListContent({
               </Popover>
             )}
             {selectItem}
-            <CopyRowMenuItem
+            <CopyMenuItem
               value={buildRowSummary(columns, event, fr.common.locale)}
               label="Copier"
               copiedLabel="Copié"
             />
+            {reference && (
+              <CopyMenuItem
+                icon={Share03Icon}
+                value={buildShareLink("/historique", "hq", reference)}
+                label="Partager"
+                copiedLabel="Lien copié"
+              />
+            )}
           </>
         );
       },

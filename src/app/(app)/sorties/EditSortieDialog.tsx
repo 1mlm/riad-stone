@@ -5,7 +5,7 @@ import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
-import { RowMenuItemButton } from "@/components/table/RowContextMenu";
+import { RowMenuItemButton } from "@/components/table/RowMenu";
 import { useFormDialogAction } from "@/components/useFormDialogAction";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { ICONS } from "@/utils/icon";

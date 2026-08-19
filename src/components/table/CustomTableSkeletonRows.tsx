@@ -8,9 +8,11 @@ const SKELETON_ROW_KEYS = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`);
 export function CustomTableSkeletonRows<T>({
   bodyColumns,
   hasCheckboxColumn,
+  hasRowMenu,
 }: {
   bodyColumns: Exclude<CustomTableColumn<T>, { type: "buttons" }>[];
   hasCheckboxColumn: boolean;
+  hasRowMenu: boolean;
 }) {
   return (
     <>
@@ -48,6 +50,7 @@ export function CustomTableSkeletonRows<T>({
                     !hasCheckboxColumn &&
                     "rounded-bl-(--radius-concentric)",
                   isLastSkeletonRow &&
+                    !hasRowMenu &&
                     columnIndex === bodyColumns.length - 1 &&
                     "rounded-br-(--radius-concentric)",
                 )}
@@ -55,6 +58,18 @@ export function CustomTableSkeletonRows<T>({
                 <Skeleton className="h-4 w-full min-w-12" />
               </TableCell>
             ))}
+            {hasRowMenu && (
+              <TableCell
+                className={cn(
+                  "border-r border-border/50 last:border-r-0",
+                  isLastSkeletonRow && "rounded-br-(--radius-concentric)",
+                )}
+              >
+                <div className="flex justify-center">
+                  <Skeleton className="size-7" />
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         );
       })}

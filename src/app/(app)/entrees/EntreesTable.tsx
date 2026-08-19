@@ -1,5 +1,6 @@
 "use client";
 
+import { Share03Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import {
@@ -8,11 +9,13 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { DeleteRowMenuItem } from "@/components/table/DeleteRowMenuItem";
-import { CopyRowMenuItem } from "@/components/table/RowContextMenu";
+import { CopyMenuItem } from "@/components/table/RowMenu";
+import { useJustCreatedIds } from "@/components/table/useJustCreatedIds";
 import { useOptimisticRowRemoval } from "@/components/table/useOptimisticRowRemoval";
 import { fr } from "@/messages/fr";
-import { ContextMenuSeparator } from "@/shadcn/ui/context-menu";
+import { DropdownMenuSeparator } from "@/shadcn/ui/dropdown-menu";
 import { ICONS } from "@/utils/icon";
+import { buildShareLink } from "@/utils/shareLink";
 import { AddEntreeDialog } from "./AddEntreeDialog";
 import { deleteEntree } from "./actions";
 import {
@@ -43,6 +46,7 @@ function EntreesTableContent({
   const [resultCount, setResultCount] = useState(items.length);
   const { visibleItems, markRemoved, unmarkRemoved, deleteSelected } =
     useOptimisticRowRemoval(items, (item) => item.reference);
+  const pinnedItemIds = useJustCreatedIds(items, (item) => item.reference);
 
   const columns: CustomTableColumn<EntreeRow>[] = useMemo(
     () => [
@@ -66,12 +70,18 @@ function EntreesTableContent({
           <>
             <EditEntreeDialog entree={row} />
             {selectItem}
-            <CopyRowMenuItem
+            <CopyMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
               label="Copier"
               copiedLabel="Copié"
             />
-            <ContextMenuSeparator />
+            <CopyMenuItem
+              icon={Share03Icon}
+              value={buildShareLink("/entrees", "q", row.reference)}
+              label="Partager"
+              copiedLabel="Lien copié"
+            />
+            <DropdownMenuSeparator />
             <DeleteRowMenuItem
               label="Supprimer"
               message={`Entrée ${row.reference} supprimée`}
@@ -110,6 +120,7 @@ function EntreesTableContent({
         }
         defaultSort={DESIGNATION_THEN_REFERENCE_SORT}
         onVisibleCountChange={setResultCount}
+        {...{ pinnedItemIds }}
         labels={fr.table}
       />
     </div>
