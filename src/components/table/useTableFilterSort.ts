@@ -45,12 +45,18 @@ export function useTableFilterSort<T>(
     searchQueryKey,
     sortQueryKey,
     defaultSort,
+    getItemId,
+    pinnedItemIds,
   }: {
     filterable: boolean;
     sortable: boolean;
     searchQueryKey: string;
     sortQueryKey: string;
     defaultSort?: { columnId: string; dir: "asc" | "desc" }[];
+    getItemId: (item: T) => string;
+    // kept in front of the sorted/filtered list, in this order, regardless
+    // of the active sort — e.g. rows just created this session
+    pinnedItemIds?: string[];
   },
 ) {
   const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
@@ -113,25 +119,50 @@ export function useTableFilterSort<T>(
         ),
       );
     });
-    if (sort) {
-      const sortColumn = columns.find((column) => column.id === sort.columnId);
-      if (!sortColumn) return filtered;
-      const sorted = [...filtered].sort((a, b) =>
-        compareColumnValues(sortColumn, a, b),
-      );
-      return sort.dir === "desc" ? sorted.reverse() : sorted;
-    }
-    if (!defaultSort || defaultSort.length === 0) return filtered;
-    return [...filtered].sort((a, b) => {
-      for (const key of defaultSort) {
-        const sortColumn = columns.find((column) => column.id === key.columnId);
-        if (!sortColumn) continue;
-        const cmp = compareColumnValues(sortColumn, a, b);
-        if (cmp !== 0) return key.dir === "desc" ? -cmp : cmp;
+    const sorted = (() => {
+      if (sort) {
+        const sortColumn = columns.find(
+          (column) => column.id === sort.columnId,
+        );
+        if (!sortColumn) return filtered;
+        const bySortColumn = [...filtered].sort((a, b) =>
+          compareColumnValues(sortColumn, a, b),
+        );
+        return sort.dir === "desc" ? bySortColumn.reverse() : bySortColumn;
       }
-      return 0;
-    });
-  }, [items, columns, search, sort, defaultSort, filterValues, filterable]);
+      if (!defaultSort || defaultSort.length === 0) return filtered;
+      return [...filtered].sort((a, b) => {
+        for (const key of defaultSort) {
+          const sortColumn = columns.find(
+            (column) => column.id === key.columnId,
+          );
+          if (!sortColumn) continue;
+          const cmp = compareColumnValues(sortColumn, a, b);
+          if (cmp !== 0) return key.dir === "desc" ? -cmp : cmp;
+        }
+        return 0;
+      });
+    })();
+
+    if (!pinnedItemIds || pinnedItemIds.length === 0) return sorted;
+    const pinnedIdSet = new Set(pinnedItemIds);
+    const byId = new Map(sorted.map((item) => [getItemId(item), item]));
+    const pinned = pinnedItemIds
+      .map((id) => byId.get(id))
+      .filter((item): item is T => item !== undefined);
+    const rest = sorted.filter((item) => !pinnedIdSet.has(getItemId(item)));
+    return [...pinned, ...rest];
+  }, [
+    items,
+    columns,
+    search,
+    sort,
+    defaultSort,
+    filterValues,
+    filterable,
+    pinnedItemIds,
+    getItemId,
+  ]);
 
   return {
     visibleItems,
