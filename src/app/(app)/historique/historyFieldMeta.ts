@@ -1,4 +1,8 @@
-import { Key01Icon } from "@hugeicons/core-free-icons";
+import {
+  Download01Icon,
+  Key01Icon,
+  Search02Icon,
+} from "@hugeicons/core-free-icons";
 import { ENTREE_FIELDS, toDisplayLength } from "@/app/(app)/entrees/fields";
 import type { HugeIcon } from "@/components/Icon";
 import type { HistorySnapshot } from "@/utils/historySnapshot";
@@ -22,6 +26,10 @@ export const FIELD_META: Record<string, { label: string; icon: HugeIcon }> = {
   sortiesCreated: { label: "Sorties créées", icon: ICONS.pieces },
   entreesCleared: { label: "Entrées supprimées", icon: ICONS.pieces },
   sortiesCleared: { label: "Sorties supprimées", icon: ICONS.pieces },
+  query: { label: "Recherche", icon: Search02Icon },
+  filePrefix: { label: "Table", icon: ICONS.details },
+  format: { label: "Format", icon: Download01Icon },
+  rowCount: { label: "Lignes exportées", icon: ICONS.pieces },
 };
 
 // jsonb doesn't preserve key insertion order on round-trip, so a snapshot's

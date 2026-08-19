@@ -3,6 +3,7 @@
 import { Download01Icon } from "@hugeicons/core-free-icons";
 import ExcelJS from "exceljs";
 import { useState } from "react";
+import { logExport } from "@/app/(app)/actions";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
 import {
@@ -133,6 +134,7 @@ export function ExtractDialog<T>({
     if (format === "excel")
       await downloadAsExcel(rows, buildExportFilename(filePrefix, "xlsx"));
     else downloadAsCsv(rows, buildExportFilename(filePrefix, "csv"));
+    logExport(filePrefix, format, items.length);
     onOpenChange(false);
   };
 

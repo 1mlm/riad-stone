@@ -53,6 +53,8 @@ enum HistoryItemType {
   LOGIN
   LOGOUT
   VIEW_PAGE
+  SEARCH
+  EXPORT_DATA
 }
 
 model HistoryEvent {

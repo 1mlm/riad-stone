@@ -23,6 +23,7 @@ import { DeleteRowMenuItem } from "@/components/table/DeleteRowMenuItem";
 import { CopyMenuItem } from "@/components/table/RowMenu";
 import { useJustCreatedIds } from "@/components/table/useJustCreatedIds";
 import { useOptimisticRowRemoval } from "@/components/table/useOptimisticRowRemoval";
+import { useSearchQueryLogging } from "@/components/useSearchQueryLogging";
 import { fr } from "@/messages/fr";
 import { DropdownMenuSeparator } from "@/shadcn/ui/dropdown-menu";
 import { ICONS } from "@/utils/icon";
@@ -43,6 +44,7 @@ function SortiesTableContent({
   const { visibleItems, markRemoved, unmarkRemoved, deleteSelected } =
     useOptimisticRowRemoval(items, (item) => item.id);
   const pinnedItemIds = useJustCreatedIds(items, (item) => String(item.id));
+  useSearchQueryLogging("q");
 
   const columns: CustomTableColumn<SortieRow>[] = useMemo(
     () => [

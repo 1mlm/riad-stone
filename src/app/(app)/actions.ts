@@ -26,6 +26,27 @@ export async function logPageVisit(path: string): Promise<void> {
   await logHistory(HistoryItemType.VIEW_PAGE, { path, userAgent });
 }
 
+export async function logSearchQuery(
+  query: string,
+  path: string,
+): Promise<void> {
+  await requireAuth();
+  await logHistory(HistoryItemType.SEARCH, { query, path });
+}
+
+export async function logExport(
+  filePrefix: string,
+  format: "excel" | "csv",
+  rowCount: number,
+): Promise<void> {
+  await requireAuth();
+  await logHistory(HistoryItemType.EXPORT_DATA, {
+    filePrefix,
+    format,
+    rowCount,
+  });
+}
+
 export async function isStockEmpty(): Promise<boolean> {
   const [entreeCount, sortieCount] = await Promise.all([
     prisma.entree.count(),

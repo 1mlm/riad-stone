@@ -1,5 +1,6 @@
 import {
   Delete02Icon,
+  Download01Icon,
   EditIcon,
   EyeIcon,
   Key01Icon,
@@ -7,6 +8,7 @@ import {
   NuclearPowerIcon,
   Plant01Icon,
   PlusSignIcon,
+  Search02Icon,
 } from "@hugeicons/core-free-icons";
 import type { CustomTableEnumValue } from "@/components/table/CustomTable";
 import { HistoryItemType } from "@/generated/prisma/enums";
@@ -66,5 +68,15 @@ export const TYPE_META: Record<HistoryItemType, CustomTableEnumValue> = {
     icon: EyeIcon,
     color: "gray",
     label: "Page consultée",
+  },
+  [HistoryItemType.SEARCH]: {
+    icon: Search02Icon,
+    color: "gray",
+    label: "Recherche effectuée",
+  },
+  [HistoryItemType.EXPORT_DATA]: {
+    icon: Download01Icon,
+    color: "blue",
+    label: "Données exportées",
   },
 };
