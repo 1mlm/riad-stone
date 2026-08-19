@@ -52,6 +52,7 @@ enum HistoryItemType {
   SEED_FAKE_DATA
   LOGIN
   LOGOUT
+  VIEW_PAGE
 }
 
 model HistoryEvent {

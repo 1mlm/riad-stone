@@ -1,6 +1,7 @@
 import {
   Delete02Icon,
   EditIcon,
+  EyeIcon,
   Key01Icon,
   LogoutIcon,
   NuclearPowerIcon,
@@ -60,5 +61,10 @@ export const TYPE_META: Record<HistoryItemType, CustomTableEnumValue> = {
     icon: LogoutIcon,
     color: "gray",
     label: "Déconnexion",
+  },
+  [HistoryItemType.VIEW_PAGE]: {
+    icon: EyeIcon,
+    color: "gray",
+    label: "Page consultée",
   },
 };

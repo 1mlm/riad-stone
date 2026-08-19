@@ -20,6 +20,12 @@ export async function logout(): Promise<void> {
   redirect("/gate");
 }
 
+export async function logPageVisit(path: string): Promise<void> {
+  await requireAuth();
+  const userAgent = buildDeviceInfo(await headers());
+  await logHistory(HistoryItemType.VIEW_PAGE, { path, userAgent });
+}
+
 export async function isStockEmpty(): Promise<boolean> {
   const [entreeCount, sortieCount] = await Promise.all([
     prisma.entree.count(),

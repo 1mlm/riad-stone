@@ -17,12 +17,25 @@ async function getStockCount() {
   ).length;
 }
 
+function getStartOfToday() {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  return startOfToday;
+}
+
 export default async function AppLayout({ children }: PropsWithChildren) {
-  const [entrees, sorties, stock] = await Promise.all([
+  const [entrees, sorties, stock, historique] = await Promise.all([
     prisma.entree.count(),
     prisma.sortie.count(),
     getStockCount(),
+    prisma.historyEvent.count({
+      where: { createdAt: { gte: getStartOfToday() } },
+    }),
   ]);
 
-  return <AppShell counts={{ entrees, sorties, stock }}>{children}</AppShell>;
+  return (
+    <AppShell counts={{ entrees, sorties, stock, historique }}>
+      {children}
+    </AppShell>
+  );
 }

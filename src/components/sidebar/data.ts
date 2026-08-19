@@ -22,5 +22,10 @@ export const NAV_ITEMS: AppNavItem[] = [
     countKey: "sorties",
   },
   { href: "/stock", label: "Stock", icon: PackageIcon, countKey: "stock" },
-  { href: "/historique", label: "Historique", icon: ICONS.history },
+  {
+    href: "/historique",
+    label: "Historique",
+    icon: ICONS.history,
+    countKey: "historique",
+  },
 ];

@@ -16,6 +16,7 @@ export const FIELD_META: Record<string, { label: string; icon: HugeIcon }> = {
   bonCommande: { label: "Bon de commande", icon: ICONS.bonCommande },
   dateSortie: { label: "Date de sortie", icon: ICONS.date },
   code: { label: "Code utilisé", icon: Key01Icon },
+  path: { label: "Page", icon: ICONS.history },
   userAgent: { label: "Appareil", icon: ICONS.details },
   entreesCreated: { label: "Entrées créées", icon: ICONS.pieces },
   sortiesCreated: { label: "Sorties créées", icon: ICONS.pieces },
