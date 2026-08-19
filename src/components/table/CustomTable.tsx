@@ -334,6 +334,7 @@ export function CustomTable<T>({
                   </div>
                 </TableHead>
               )}
+              {hasRowMenu && <TableHead className="w-10" />}
               {bodyColumns.map((column) => (
                 <TableHead
                   key={column.id}
@@ -355,7 +356,6 @@ export function CustomTable<T>({
                   />
                 </TableHead>
               ))}
-              {hasRowMenu && <TableHead className="w-10" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -434,6 +434,27 @@ export function CustomTable<T>({
                         </div>
                       </TableCell>
                     )}
+                    {hasRowMenu && (
+                      <TableCell
+                        className={cn(
+                          "border-r border-border/50 text-center",
+                          !isLastDataRow && "border-b border-border",
+                          isGroupStart && "border-t-2 border-t-border",
+                          isLastDataRow &&
+                            !hasCheckboxColumn &&
+                            "rounded-bl-(--radius-concentric) corner-squircle",
+                        )}
+                      >
+                        <RowMenu
+                          ariaLabel={labels.rowMenuLabel}
+                          icon={MoreVerticalIcon}
+                        >
+                          {actionsColumn
+                            ? actionsColumn.getButtons(item, selectItem)
+                            : selectItem}
+                        </RowMenu>
+                      </TableCell>
+                    )}
                     {bodyColumns.map((column, columnIndex) => {
                       const run =
                         column.type === "string" && column.mergeAdjacent
@@ -467,9 +488,9 @@ export function CustomTable<T>({
                             isBottomEdgeCell &&
                               columnIndex === 0 &&
                               !hasCheckboxColumn &&
+                              !hasRowMenu &&
                               "rounded-bl-(--radius-concentric) corner-squircle",
                             isBottomEdgeCell &&
-                              !hasRowMenu &&
                               columnIndex === bodyColumns.length - 1 &&
                               "rounded-br-(--radius-concentric) corner-squircle",
                             run?.start &&
@@ -481,26 +502,6 @@ export function CustomTable<T>({
                         </TableCell>
                       );
                     })}
-                    {hasRowMenu && (
-                      <TableCell
-                        className={cn(
-                          "border-r border-border/50 text-center last:border-r-0",
-                          !isLastDataRow && "border-b border-border",
-                          isGroupStart && "border-t-2 border-t-border",
-                          isLastDataRow &&
-                            "rounded-br-(--radius-concentric) corner-squircle",
-                        )}
-                      >
-                        <RowMenu
-                          ariaLabel={labels.rowMenuLabel}
-                          icon={MoreVerticalIcon}
-                        >
-                          {actionsColumn
-                            ? actionsColumn.getButtons(item, selectItem)
-                            : selectItem}
-                        </RowMenu>
-                      </TableCell>
-                    )}
                   </TableRow>
                 );
               })}

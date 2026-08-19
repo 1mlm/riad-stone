@@ -40,6 +40,20 @@ export function CustomTableSkeletonRows<T>({
                 </div>
               </TableCell>
             )}
+            {hasRowMenu && (
+              <TableCell
+                className={cn(
+                  "border-r border-border/50",
+                  isLastSkeletonRow &&
+                    !hasCheckboxColumn &&
+                    "rounded-bl-(--radius-concentric)",
+                )}
+              >
+                <div className="flex justify-center">
+                  <Skeleton className="size-7" />
+                </div>
+              </TableCell>
+            )}
             {bodyColumns.map((column, columnIndex) => (
               <TableCell
                 key={column.id}
@@ -48,9 +62,9 @@ export function CustomTableSkeletonRows<T>({
                   isLastSkeletonRow &&
                     columnIndex === 0 &&
                     !hasCheckboxColumn &&
+                    !hasRowMenu &&
                     "rounded-bl-(--radius-concentric)",
                   isLastSkeletonRow &&
-                    !hasRowMenu &&
                     columnIndex === bodyColumns.length - 1 &&
                     "rounded-br-(--radius-concentric)",
                 )}
@@ -58,18 +72,6 @@ export function CustomTableSkeletonRows<T>({
                 <Skeleton className="h-4 w-full min-w-12" />
               </TableCell>
             ))}
-            {hasRowMenu && (
-              <TableCell
-                className={cn(
-                  "border-r border-border/50 last:border-r-0",
-                  isLastSkeletonRow && "rounded-br-(--radius-concentric)",
-                )}
-              >
-                <div className="flex justify-center">
-                  <Skeleton className="size-7" />
-                </div>
-              </TableCell>
-            )}
           </TableRow>
         );
       })}
