@@ -24,14 +24,12 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { CopyMenuItem, RowMenuItemButton } from "@/components/table/RowMenu";
-import { useSearchQueryLogging } from "@/components/useSearchQueryLogging";
 import { fr } from "@/messages/fr";
 import { ICONS } from "@/utils/icon";
 import { buildShareLink } from "@/utils/shareLink";
 
 function StockTableContent({ items }: { items: EntreeRow[] }) {
   const [resultCount, setResultCount] = useState(items.length);
-  useSearchQueryLogging("q");
 
   const columns: CustomTableColumn<EntreeRow>[] = useMemo(
     () => [

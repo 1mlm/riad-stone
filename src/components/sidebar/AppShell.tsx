@@ -6,7 +6,6 @@ import { useTransition } from "react";
 import { logout } from "@/app/(app)/actions";
 import { AppNav } from "@/components/app-nav/AppNav";
 import { Icon } from "@/components/Icon";
-import { PageVisitTracker } from "@/components/PageVisitTracker";
 import { Button } from "@/shadcn/ui/button";
 import { SidebarMenuItem } from "@/shadcn/ui/sidebar";
 import { DevDataActions } from "./DevDataActions";
@@ -43,36 +42,33 @@ export function AppShell({
   children,
 }: PropsWithChildren<{ counts: NavCounts }>) {
   return (
-    <>
-      <PageVisitTracker />
-      <AppNav
-        brand={APP_HEADER}
-        items={NAV_ITEMS}
-        {...{ counts }}
-        sidebarFooter={
-          <>
-            <SidebarMenuItem>
-              <SettingsButton />
-            </SidebarMenuItem>
-            <LogoutButton />
-          </>
-        }
-        sheetTitle="Plus d'options"
-        sheetDescription="Paramètres et déconnexion"
-        sheetFooter={({ open, close }) => (
-          <>
-            <MobileLogoutButton />
-            <DevDataActions
-              {...{ open }}
-              onSeeded={close}
-              buttonClassName="w-full"
-              leadingSeparator
-            />
-          </>
-        )}
-      >
-        {children}
-      </AppNav>
-    </>
+    <AppNav
+      brand={APP_HEADER}
+      items={NAV_ITEMS}
+      {...{ counts }}
+      sidebarFooter={
+        <>
+          <SidebarMenuItem>
+            <SettingsButton />
+          </SidebarMenuItem>
+          <LogoutButton />
+        </>
+      }
+      sheetTitle="Plus d'options"
+      sheetDescription="Paramètres et déconnexion"
+      sheetFooter={({ open, close }) => (
+        <>
+          <MobileLogoutButton />
+          <DevDataActions
+            {...{ open }}
+            onSeeded={close}
+            buttonClassName="w-full"
+            leadingSeparator
+          />
+        </>
+      )}
+    >
+      {children}
+    </AppNav>
   );
 }

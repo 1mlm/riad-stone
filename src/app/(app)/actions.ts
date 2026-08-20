@@ -20,20 +20,6 @@ export async function logout(): Promise<void> {
   redirect("/gate");
 }
 
-export async function logPageVisit(path: string): Promise<void> {
-  await requireAuth();
-  const userAgent = buildDeviceInfo(await headers());
-  await logHistory(HistoryItemType.VIEW_PAGE, { path, userAgent });
-}
-
-export async function logSearchQuery(
-  query: string,
-  path: string,
-): Promise<void> {
-  await requireAuth();
-  await logHistory(HistoryItemType.SEARCH, { query, path });
-}
-
 export async function logExport(
   filePrefix: string,
   format: "excel" | "csv",

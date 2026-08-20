@@ -10,7 +10,6 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { CopyMenuItem, RowMenuItemButton } from "@/components/table/RowMenu";
-import { useSearchQueryLogging } from "@/components/useSearchQueryLogging";
 import type { HistoryEvent } from "@/generated/prisma/client";
 import { fr } from "@/messages/fr";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
@@ -31,7 +30,6 @@ function HistoryEventListContent({
   emptySubtitle: string;
 }) {
   const [resultCount, setResultCount] = useState(events.length);
-  useSearchQueryLogging("hq");
 
   if (events.length === 0)
     return (
