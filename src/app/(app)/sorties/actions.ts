@@ -155,6 +155,12 @@ export async function updateSortie(
     if (!existing)
       throw new SortieValidationError("Cette sortie n'existe pas.");
 
+    const hasChanges =
+      existing.nombrePieces !== parsed.data.nombrePieces ||
+      existing.bonCommande !== parsed.data.bonCommande ||
+      existing.dateSortie.getTime() !== parsed.data.dateSortie.getTime();
+    if (!hasChanges) return { existing, updated: null };
+
     const piecesRestantes = await getPiecesRestantes(
       tx,
       existing.entreeReference,
@@ -175,11 +181,13 @@ export async function updateSortie(
   });
   if (outcome.result === null) return { error: outcome.error };
 
-  await logHistory(HistoryItemType.UPDATE_OUTPUT, {
-    before: toSortieSnapshot(outcome.result.existing),
-    after: toSortieSnapshot(outcome.result.updated),
-  });
-  revalidateStockPaths();
+  if (outcome.result.updated) {
+    await logHistory(HistoryItemType.UPDATE_OUTPUT, {
+      before: toSortieSnapshot(outcome.result.existing),
+      after: toSortieSnapshot(outcome.result.updated),
+    });
+    revalidateStockPaths();
+  }
   return { error: null };
 }
 

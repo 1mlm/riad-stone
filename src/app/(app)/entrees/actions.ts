@@ -309,6 +309,16 @@ export async function updateEntree(
         "Cette entrée a déjà une sortie associée, elle ne peut plus être modifiée.",
       );
 
+    const hasChanges =
+      existing.designation !== parsed.data.designation ||
+      existing.origine !== parsed.data.origine ||
+      existing.conteneur !== parsed.data.conteneur ||
+      existing.date.getTime() !== parsed.data.date.getTime() ||
+      Number(existing.longueur) !== parsed.data.longueur ||
+      Number(existing.largeur) !== parsed.data.largeur ||
+      existing.nombrePieces !== parsed.data.nombrePieces;
+    if (!hasChanges) return { existing, updated: null };
+
     const updated = await tx.entree.update({
       where: { reference: originalReference },
       data: {
@@ -325,11 +335,13 @@ export async function updateEntree(
   });
   if (outcome.result === null) return { error: outcome.error };
 
-  await logHistory(HistoryItemType.UPDATE_INPUT, {
-    before: toEntreeSnapshot(outcome.result.existing),
-    after: toEntreeSnapshot(outcome.result.updated),
-  });
-  revalidateStockPaths();
+  if (outcome.result.updated) {
+    await logHistory(HistoryItemType.UPDATE_INPUT, {
+      before: toEntreeSnapshot(outcome.result.existing),
+      after: toEntreeSnapshot(outcome.result.updated),
+    });
+    revalidateStockPaths();
+  }
   return { error: null };
 }
 
