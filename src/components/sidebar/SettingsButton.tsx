@@ -13,6 +13,8 @@ import { DevDataActions } from "./DevDataActions";
 export function SettingsButton() {
   const [open, setOpen] = useState(false);
 
+  if (process.env.NODE_ENV === "production") return null;
+
   return (
     <ResponsivePopover
       {...{ open, onOpenChange: setOpen }}
