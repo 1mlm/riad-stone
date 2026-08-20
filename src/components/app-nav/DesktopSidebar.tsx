@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Icon } from "@/components/Icon";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +15,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/shadcn/ui/sidebar";
+import { DesktopNavLinkContent } from "./DesktopNavLinkContent";
 import type { AppNavBrand, AppNavItem } from "./types";
 
 export function DesktopSidebar({
@@ -79,13 +79,11 @@ export function DesktopSidebar({
                     className="rounded-full corner-squircle"
                   >
                     <Link href={item.href}>
-                      <Icon icon={item.icon} />
-                      <span>{item.label}</span>
-                      {Boolean(count) && (
-                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                          {count}
-                        </span>
-                      )}
+                      <DesktopNavLinkContent
+                        icon={item.icon}
+                        label={item.label}
+                        {...{ count }}
+                      />
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
