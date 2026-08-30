@@ -1,5 +1,24 @@
 const MS_PER_DAY = 86_400_000;
 
+// server has no meaningful "local" timezone (UTC on Vercel), so any
+// day-boundary computed there needs an explicit timezone passed in
+export function getStartOfDayInTimeZone(date: Date, timeZone: string): Date {
+  const day = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+  const offset = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    timeZoneName: "longOffset",
+  })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value.replace("GMT", "");
+
+  return new Date(`${day}T00:00:00${offset || "+00:00"}`);
+}
+
 const getStartOfDay = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
