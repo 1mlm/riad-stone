@@ -4,7 +4,7 @@ import type { Sortie } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { logHistory } from "@/utils/history";
-import { prisma } from "@/utils/prisma";
+import { type PrismaTransactionClient, prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
 import { revalidateStockPaths } from "@/utils/revalidate";
 import type { AvailableEntree } from "./types";
@@ -23,7 +23,7 @@ function toSortieSnapshot(sortie: Sortie) {
 class SortieValidationError extends Error {}
 
 async function getPiecesRestantes(
-  tx: Prisma.TransactionClient,
+  tx: PrismaTransactionClient,
   reference: string,
   excludeSortieId?: number,
 ): Promise<number | null> {
@@ -85,7 +85,7 @@ function readSortieFormData(formData: FormData) {
 }
 
 async function runSortieTransaction<T>(
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: PrismaTransactionClient) => Promise<T>,
 ): Promise<{ result: T; error: null } | { result: null; error: string }> {
   try {
     const result = await prisma.$transaction(fn, {

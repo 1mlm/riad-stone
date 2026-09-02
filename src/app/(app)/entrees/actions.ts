@@ -5,7 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
 import { logHistory } from "@/utils/history";
 import { LENGTH_UNITS, type LengthUnit, lengthToMeters } from "@/utils/length";
-import { prisma } from "@/utils/prisma";
+import { type PrismaTransactionClient, prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
 import { revalidateStockPaths } from "@/utils/revalidate";
 
@@ -20,7 +20,7 @@ class EntreeValidationError extends Error {
 }
 
 async function runEntreeTransaction<T>(
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: PrismaTransactionClient) => Promise<T>,
 ): Promise<
   | { result: T; error: null; duplicateReference?: undefined }
   | { result: null; error: string; duplicateReference?: string }

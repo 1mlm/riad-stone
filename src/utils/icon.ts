@@ -1,6 +1,7 @@
 import {
   Alert02Icon,
   ArrowHorizontalIcon,
+  ArrowLeft01Icon,
   ArrowVerticalIcon,
   Calendar04Icon,
   Cancel01Icon,
@@ -8,6 +9,7 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Copy01Icon,
   Cursor02Icon,
   DashboardSquare01Icon,
   Download01Icon,
@@ -19,6 +21,7 @@ import {
   InvoiceIcon,
   Location06Icon,
   MaterialAndTextureIcon,
+  ReloadIcon,
   ScrollIcon,
   Sorting01Icon,
   SortingAZ02Icon,
@@ -66,4 +69,7 @@ export const ICONS = {
   alert: Alert02Icon,
   notFound: FileNotFoundIcon,
   home: Home01Icon,
+  back: ArrowLeft01Icon,
+  retry: ReloadIcon,
+  copy: Copy01Icon,
 } satisfies Record<string, HugeIcon>;
