@@ -36,14 +36,9 @@ export function EntreeCard({
       )}
     >
       <div className="flex justify-end gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          title="Dupliquer cette fiche"
-          onClick={onClone}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={onClone}>
           <Icon icon={Copy01Icon} />
+          Dupliquer
         </Button>
         <ConfirmDialog
           trigger={

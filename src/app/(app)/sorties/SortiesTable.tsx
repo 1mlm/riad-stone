@@ -36,9 +36,11 @@ import type { AvailableEntree, SortieRow } from "./types";
 function SortiesTableContent({
   items,
   availableEntrees,
+  fieldSuggestions,
 }: {
   items: SortieRow[];
   availableEntrees: AvailableEntree[];
+  fieldSuggestions: { bonCommande: string[] };
 }) {
   const [resultCount, setResultCount] = useState(items.length);
   const { visibleItems, markRemoved, unmarkRemoved, deleteSelected } =
@@ -93,7 +95,10 @@ function SortiesTableContent({
         type: "buttons",
         getButtons: (row, selectItem) => (
           <>
-            <EditSortieDialog sortie={row} {...{ availableEntrees }} />
+            <EditSortieDialog
+              sortie={row}
+              {...{ availableEntrees, fieldSuggestions }}
+            />
             {selectItem}
             <CopyMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
@@ -119,7 +124,7 @@ function SortiesTableContent({
         ),
       },
     ],
-    [availableEntrees, markRemoved, unmarkRemoved],
+    [availableEntrees, fieldSuggestions, markRemoved, unmarkRemoved],
   );
 
   return (
@@ -132,7 +137,7 @@ function SortiesTableContent({
           resultLabelPlural={fr.searchBar.resultLabelPlural}
           {...{ resultCount }}
         />
-        <AddSortieDialog {...{ availableEntrees }} />
+        <AddSortieDialog {...{ availableEntrees, fieldSuggestions }} />
       </div>
       <CustomTable
         items={visibleItems}
@@ -155,6 +160,7 @@ function SortiesTableContent({
 export function SortiesTable(props: {
   items: SortieRow[];
   availableEntrees: AvailableEntree[];
+  fieldSuggestions: { bonCommande: string[] };
 }) {
   return (
     <Suspense>

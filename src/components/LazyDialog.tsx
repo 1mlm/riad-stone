@@ -28,11 +28,18 @@ export function LazyDialog<T>({
   trigger?: ReactNode;
   title: ReactNode;
   load: () => Promise<T>;
-  children: (data: T) => ReactNode;
+  // refresh re-runs load and replaces the cached data — for a child action
+  // (e.g. adding a sortie from within these détails) that changes what this
+  // dialog is showing
+  children: (data: T, refresh: () => Promise<void>) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState<{ data: T }>();
   const [loading, setLoading] = useState(false);
+
+  const refresh = async () => {
+    setLoaded({ data: await load() });
+  };
 
   const handleOpenChange = async (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -68,7 +75,7 @@ export function LazyDialog<T>({
               ))}
             </div>
           )}
-          {!loading && loaded && children(loaded.data)}
+          {!loading && loaded && children(loaded.data, refresh)}
         </div>
       </DialogContent>
     </Dialog>

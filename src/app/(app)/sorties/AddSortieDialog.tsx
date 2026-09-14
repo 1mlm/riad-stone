@@ -1,7 +1,13 @@
 "use client";
 
 import { EditIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
-import { type ReactNode, useActionState, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Combobox } from "@/components/Combobox";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
@@ -12,6 +18,7 @@ import { restoreFormValues } from "@/components/restoreFormValues";
 import { useCardCarousel } from "@/components/useCardCarousel";
 import { Button } from "@/shadcn/ui/button";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
+import { cn } from "@/shadcn/utils";
 import { formatShortDate } from "@/utils/date";
 import { ICONS } from "@/utils/icon";
 import { playChime } from "@/utils/sound";
@@ -94,14 +101,25 @@ function EntreeReferenceField({
 
 export function AddSortieDialog({
   availableEntrees,
+  // EntreeDetailsDialog opens this without any past bonCommande values on
+  // hand — falls back to no suggestions rather than making that a required
+  // prop everywhere
+  fieldSuggestions = { bonCommande: [] },
   initialReference,
+  onSuccess,
   trigger,
 }: {
   availableEntrees: AvailableEntree[];
+  fieldSuggestions?: { bonCommande: string[] };
   // pre-selects the entrée reference and skips the combobox — used when
   // opening this dialog from a specific entrée's details rather than the
   // sorties page, where the user should still pick freely
   initialReference?: string;
+  // notified after a successful submit, on top of the dialog's own
+  // close/reset — EntreeDetailsDialog uses this to refresh its stale
+  // pièces-restantes/sorties list instead of showing what it fetched before
+  // this sortie existed
+  onSuccess?: () => void;
   trigger?: ReactNode;
 }) {
   const [entreeReference, setEntreeReference] = useState(
@@ -133,6 +151,26 @@ export function AddSortieDialog({
     resetCarousel();
   };
 
+  // each fiche's own "max" only caps it against the entrée's full
+  // piecesRestantes, not against what the other fiches in this same
+  // submission already claim — this running total is what actually catches
+  // an over-allocation before the server round-trip does. Fiche inputs are
+  // uncontrolled, so it's recomputed from the DOM: on every fiche's own
+  // input event (bubbling up to the wrapping div below), and whenever a
+  // fiche is added/cloned/removed
+  const [sumPieces, setSumPieces] = useState(0);
+  const recomputeSumPieces = () => {
+    setSumPieces(
+      cards.reduce(
+        (sum, card) =>
+          sum + (Number(getCardFieldValue(card.id, "nombrePieces")) || 0),
+        0,
+      ),
+    );
+  };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getCardFieldValue is a fresh closure every render — only cards actually needs to retrigger this
+  useEffect(recomputeSumPieces, [cards]);
+
   // every field on the source fiche is currently visible only in its
   // uncontrolled DOM input (see useCardCarousel's module comment) — read
   // them all before seeding the new fiche, which mounts them back as
@@ -163,6 +201,7 @@ export function AddSortieDialog({
         setOpen(false);
         resetState();
         playChime("success");
+        onSuccess?.();
         return result;
       }
       if (result.invalidCardId) {
@@ -237,13 +276,35 @@ export function AddSortieDialog({
         </Button>
       ) : (
         <>
-          <CardsCarousel
-            {...{ cards, activeIndex, invalidCardId, scrollRef, setCardRef }}
-            maxPieces={selectedEntree?.piecesRestantes}
-            onDeleteCard={deleteCard}
-            onCloneCard={cloneCard}
-            onNavigate={navigateTo}
-          />
+          {selectedEntree && (
+            <p
+              className={cn(
+                "text-xs",
+                sumPieces > selectedEntree.piecesRestantes
+                  ? "font-medium text-destructive"
+                  : "text-muted-foreground",
+              )}
+            >
+              Total alloué : {sumPieces} / {selectedEntree.piecesRestantes}{" "}
+              pièces
+            </p>
+          )}
+          <div onInput={recomputeSumPieces}>
+            <CardsCarousel
+              {...{
+                cards,
+                activeIndex,
+                invalidCardId,
+                scrollRef,
+                setCardRef,
+                fieldSuggestions,
+              }}
+              maxPieces={selectedEntree?.piecesRestantes}
+              onDeleteCard={deleteCard}
+              onCloneCard={cloneCard}
+              onNavigate={navigateTo}
+            />
+          </div>
           <Button
             type="button"
             variant="outline"

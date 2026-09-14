@@ -8,6 +8,7 @@ import {
 } from "@/app/(app)/entrees/actions";
 import { toDisplayLength } from "@/app/(app)/entrees/fields";
 import { AddSortieDialog } from "@/app/(app)/sorties/AddSortieDialog";
+import { getSortieFieldSuggestions } from "@/app/(app)/sorties/actions";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { Icon } from "@/components/Icon";
 import { LazyDialog } from "@/components/LazyDialog";
@@ -115,9 +116,15 @@ export function EntreeDetailsDialog({
           <DialogTitleChip icon={ICONS.reference}>{reference}</DialogTitleChip>
         </>
       }
-      load={() => getEntreeDetails(reference)}
+      load={async () => {
+        const [entree, sortieFieldSuggestions] = await Promise.all([
+          getEntreeDetails(reference),
+          getSortieFieldSuggestions(),
+        ]);
+        return { entree, sortieFieldSuggestions };
+      }}
     >
-      {(details) =>
+      {({ entree: details, sortieFieldSuggestions }, refresh) =>
         details ? (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
@@ -152,6 +159,8 @@ export function EntreeDetailsDialog({
                   },
                 ]}
                 initialReference={details.reference}
+                fieldSuggestions={sortieFieldSuggestions}
+                onSuccess={refresh}
                 trigger={
                   <Button className="rounded-full corner-squircle">
                     <Icon icon={PlusSignIcon} />

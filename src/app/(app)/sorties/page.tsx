@@ -1,14 +1,15 @@
 import { prisma } from "@/utils/prisma";
-import { getAvailableEntrees } from "./actions";
+import { getAvailableEntrees, getSortieFieldSuggestions } from "./actions";
 import { SortiesTable } from "./SortiesTable";
 
 export default async function SortiesPage() {
-  const [sorties, availableEntrees] = await Promise.all([
+  const [sorties, availableEntrees, fieldSuggestions] = await Promise.all([
     prisma.sortie.findMany({
       include: { entree: true },
       orderBy: { dateSortie: "desc" },
     }),
     getAvailableEntrees(),
+    getSortieFieldSuggestions(),
   ]);
 
   const rows = sorties.map((sortie) => ({
@@ -26,5 +27,7 @@ export default async function SortiesPage() {
     commentaire: sortie.commentaire,
   }));
 
-  return <SortiesTable items={rows} {...{ availableEntrees }} />;
+  return (
+    <SortiesTable items={rows} {...{ availableEntrees, fieldSuggestions }} />
+  );
 }

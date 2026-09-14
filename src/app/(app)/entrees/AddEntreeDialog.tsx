@@ -59,6 +59,31 @@ export function AddEntreeDialog({
   // defaultValues through the normal EntreeFormFields plumbing. reference is
   // deliberately left out: it's a unique lot id, duplicating it would just
   // trigger the duplicate-reference error
+  // suggests the next reference in a numbered series (TZ140 -> TZ141) off
+  // the given fiche's own current reference — lots in this app are numbered
+  // sequentially, so this saves retyping the same prefix on every fiche of
+  // a batch. Just a convenience default, not a uniqueness guarantee: an
+  // unrecognized pattern (no trailing digits) leaves the field blank, and a
+  // collision with some other existing lot still surfaces the normal
+  // duplicate-reference error at submit, same as if the user had typed it
+  const getNextReference = (sourceId: string): string | undefined => {
+    const match = getCardFieldValue(sourceId, "reference").match(
+      /^(.*?)(\d+)$/,
+    );
+    if (!match) return undefined;
+    const [, prefix, digits] = match;
+    return `${prefix}${String(Number(digits) + 1).padStart(digits.length, "0")}`;
+  };
+
+  const addFicheAfter = (sourceId: string | undefined) =>
+    addCard(sourceId ? { reference: getNextReference(sourceId) } : undefined);
+
+  // every field on the source card is currently visible only in its
+  // uncontrolled DOM input (see useCardCarousel's module comment) — read
+  // them all before seeding the new card, which mounts them back as
+  // defaultValues through the normal EntreeFormFields plumbing. reference
+  // gets the same next-in-series suggestion as a plain new fiche, rather
+  // than a literal duplicate of the fiche being cloned
   const cloneCard = (sourceId: string) => {
     const readNumber = (key: string) => {
       const raw = getCardFieldValue(sourceId, key);
@@ -77,6 +102,7 @@ export function AddEntreeDialog({
     const dateIso = getCardFieldValue(sourceId, "date");
 
     addCard({
+      reference: getNextReference(sourceId),
       origine: getCardFieldValue(sourceId, "origine") || null,
       conteneur: getCardFieldValue(sourceId, "conteneur") || null,
       commentaire: getCardFieldValue(sourceId, "commentaire") || null,
@@ -203,7 +229,7 @@ export function AddEntreeDialog({
             variant="outline"
             size="sm"
             className="corner-squircle"
-            onClick={() => addCard()}
+            onClick={() => addFicheAfter(cards[cards.length - 1]?.id)}
           >
             <Icon icon={PlusSignIcon} />
             Ajouter une autre fiche

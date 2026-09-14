@@ -68,6 +68,24 @@ export async function getAvailableEntrees(): Promise<AvailableEntree[]> {
     .filter((entree) => entree.piecesRestantes > 0);
 }
 
+// the multi-fiche add form namespaces every field under a per-fiche uuid,
+// which defeats the browser's own name-based autofill history — a datalist
+// fed by past values is the fix, same reasoning as
+// entrees/actions.ts's getEntreeFieldSuggestions
+export async function getSortieFieldSuggestions(): Promise<{
+  bonCommande: string[];
+}> {
+  const rows = await prisma.sortie.findMany({
+    select: { bonCommande: true },
+    distinct: ["bonCommande"],
+    where: { bonCommande: { not: null } },
+    orderBy: { bonCommande: "asc" },
+  });
+  return {
+    bonCommande: rows.map((row) => row.bonCommande).filter((v) => v !== null),
+  };
+}
+
 // reads one sortie's fields off formData, optionally namespaced under
 // `${namePrefix}__` — the multi-fiche add flow puts several fiches' fields
 // in one <form>, each namespaced by its own card id

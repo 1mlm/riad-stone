@@ -11,6 +11,7 @@ export function CardsCarousel({
   activeIndex,
   invalidCardId,
   maxPieces,
+  fieldSuggestions,
   onDeleteCard,
   onCloneCard,
   onNavigate,
@@ -21,6 +22,7 @@ export function CardsCarousel({
   activeIndex: number;
   invalidCardId: string | undefined;
   maxPieces: number | undefined;
+  fieldSuggestions: { bonCommande: string[] };
   onDeleteCard: (id: string) => void;
   onCloneCard: (id: string) => void;
   onNavigate: (index: number) => void;
@@ -33,7 +35,7 @@ export function CardsCarousel({
       renderCard={(card) => (
         <SortieCard
           key={card.id}
-          {...{ card, maxPieces }}
+          {...{ card, maxPieces, fieldSuggestions }}
           invalid={card.id === invalidCardId}
           onDelete={() => onDeleteCard(card.id)}
           onClone={() => onCloneCard(card.id)}

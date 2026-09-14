@@ -14,6 +14,7 @@ export function SortieCard({
   card,
   invalid,
   maxPieces,
+  fieldSuggestions,
   onDelete,
   onClone,
   cardRef,
@@ -21,6 +22,7 @@ export function SortieCard({
   card: Card<SortieCardValues>;
   invalid: boolean;
   maxPieces: number | undefined;
+  fieldSuggestions: { bonCommande: string[] };
   onDelete: () => void;
   onClone: () => void;
   cardRef: (el: HTMLDivElement | null) => void;
@@ -36,14 +38,9 @@ export function SortieCard({
       )}
     >
       <div className="flex justify-end gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          title="Dupliquer cette fiche"
-          onClick={onClone}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={onClone}>
           <Icon icon={Copy01Icon} />
+          Dupliquer
         </Button>
         <ConfirmDialog
           trigger={
@@ -72,7 +69,7 @@ export function SortieCard({
       <SortieFormFields
         namePrefix={card.id}
         sortie={card.initialValues}
-        {...{ maxPieces }}
+        {...{ maxPieces, fieldSuggestions }}
       />
     </div>
   );

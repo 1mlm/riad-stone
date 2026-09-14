@@ -16,9 +16,11 @@ import type { AvailableEntree, SortieRow } from "./types";
 export function EditSortieDialog({
   sortie,
   availableEntrees,
+  fieldSuggestions,
 }: {
   sortie: SortieRow;
   availableEntrees: AvailableEntree[];
+  fieldSuggestions: { bonCommande: string[] };
 }) {
   // availableEntrees.piecesRestantes already excludes this sortie's own
   // amount — add it back since editing releases it before re-applying
@@ -71,7 +73,10 @@ export function EditSortieDialog({
         </div>
       </div>
 
-      <SortieFormFields {...{ sortie }} maxPieces={maxNombrePieces} />
+      <SortieFormFields
+        {...{ sortie, fieldSuggestions }}
+        maxPieces={maxNombrePieces}
+      />
     </FormDialog>
   );
 }

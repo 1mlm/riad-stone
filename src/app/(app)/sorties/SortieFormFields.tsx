@@ -26,6 +26,7 @@ export function SortieFormFields({
   sortie,
   namePrefix,
   maxPieces,
+  fieldSuggestions,
 }: {
   sortie?: Partial<SortieCardValues>;
   // namespaces this instance's fields — set when several fiches share one
@@ -36,6 +37,11 @@ export function SortieFormFields({
   // Several fiches in the same submission can each go up to this; the
   // server validates their sum against the real remaining stock
   maxPieces?: number;
+  // past bonCommande values, offered as a <datalist> — the multi-fiche form
+  // namespaces every field under a per-fiche id, which defeats the
+  // browser's own name-based autofill history, same reasoning as
+  // entrees' origine/conteneur suggestions
+  fieldSuggestions?: { bonCommande: string[] };
 }) {
   const nombrePieces = namespaced("nombrePieces", namePrefix);
   const dateSortie = namespaced("dateSortie", namePrefix);
@@ -88,9 +94,21 @@ export function SortieFormFields({
             name={bonCommande.name}
             defaultValue={sortie?.bonCommande ?? ""}
             placeholder="C928492748"
+            list={
+              fieldSuggestions?.bonCommande.length
+                ? `${bonCommande.id}-suggestions`
+                : undefined
+            }
             className="font-mono"
           />
         </InputGroup>
+        {Boolean(fieldSuggestions?.bonCommande.length) && (
+          <datalist id={`${bonCommande.id}-suggestions`}>
+            {fieldSuggestions?.bonCommande.map((value) => (
+              <option key={value} {...{ value }} />
+            ))}
+          </datalist>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
