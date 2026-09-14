@@ -56,18 +56,20 @@ export function LazyDialog<T>({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        {loading && (
-          <div className="flex flex-col gap-2">
-            {SKELETON_KEYS.map((key) => (
-              <Skeleton key={key} className="h-6 w-full" />
-            ))}
-          </div>
-        )}
-        {!loading && loaded && children(loaded.data)}
+        <div className="flex min-h-0 flex-col gap-4 overflow-x-hidden overflow-y-auto">
+          {loading && (
+            <div className="flex flex-col gap-2">
+              {SKELETON_KEYS.map((key) => (
+                <Skeleton key={key} className="h-6 w-full" />
+              ))}
+            </div>
+          )}
+          {!loading && loaded && children(loaded.data)}
+        </div>
       </DialogContent>
     </Dialog>
   );

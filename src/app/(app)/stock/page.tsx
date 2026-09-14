@@ -16,6 +16,7 @@ export default async function StockPage() {
       conteneur: entree.conteneur,
       longueur: Number(entree.longueur),
       largeur: Number(entree.largeur),
+      commentaire: entree.commentaire,
       nombrePieces:
         entree.nombrePieces -
         entree.sorties.reduce((sum, sortie) => sum + sortie.nombrePieces, 0),

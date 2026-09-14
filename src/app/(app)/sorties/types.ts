@@ -12,6 +12,16 @@ export type SortieRow = {
   nombrePieces: number;
   dateSortie: Date;
   bonCommande: string | null;
+  commentaire: string | null;
+};
+
+// a single fiche's own fields in the multi-fiche add flow — entreeReference
+// is shared across every fiche and lives outside this shape
+export type SortieCardValues = {
+  nombrePieces?: number;
+  dateSortie?: Date;
+  bonCommande?: string | null;
+  commentaire?: string | null;
 };
 
 export type AvailableEntree = {

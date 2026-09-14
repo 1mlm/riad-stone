@@ -1,6 +1,7 @@
 import { DatePickerField } from "@/components/DatePickerField";
 import { fr } from "@/messages/fr";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
+import { Textarea } from "@/shadcn/ui/textarea";
 import {
   type FieldContext,
   getInputId,
@@ -64,21 +65,33 @@ export function EntreeFieldInput({
       />
     );
 
-  if (field.kind === "unitLength")
+  if (field.kind === "textarea")
+    return (
+      <Textarea
+        id={getInputId(field.key, context)}
+        name={getInputName(field.key, context)}
+        placeholder={field.placeholder}
+        defaultValue={
+          entree ? ((entree[field.key] as string | null) ?? "") : undefined
+        }
+      />
+    );
+
+  if (field.kind === "unitLength") {
+    const lengthMeters = entree?.[field.key as "longueur" | "largeur"];
     return (
       <UnitLengthInput
         valueName={getInputName(`${field.key}Value`, context)}
         unitName={getInputName(`${field.key}Unit`, context)}
         placeholder="0"
         defaultValue={
-          entree
-            ? Math.round(
-                toDisplayLength(entree[field.key as "longueur" | "largeur"]),
-              )
-            : undefined
+          lengthMeters === undefined
+            ? undefined
+            : Math.round(toDisplayLength(lengthMeters))
         }
       />
     );
+  }
 
   return (
     <InputGroup>

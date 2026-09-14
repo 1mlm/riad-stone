@@ -8,4 +8,5 @@ export type EntreeRow = {
   longueur: number;
   largeur: number;
   nombrePieces: number;
+  commentaire: string | null;
 };

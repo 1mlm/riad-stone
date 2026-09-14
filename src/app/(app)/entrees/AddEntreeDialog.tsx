@@ -6,21 +6,28 @@ import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
+import { restoreFormValues } from "@/components/restoreFormValues";
+import { useCardCarousel } from "@/components/useCardCarousel";
 import { Button } from "@/shadcn/ui/button";
 import { ICONS } from "@/utils/icon";
+import type { LengthUnit } from "@/utils/length";
+import { lengthToMeters } from "@/utils/length";
 import { playChime } from "@/utils/sound";
-import { type CreateEntreesResult, createEntrees } from "./actions";
+import {
+  type CreateEntreesResult,
+  createEntrees,
+  type DesignationSuggestion,
+} from "./actions";
 import { CardsCarousel } from "./CardsCarousel";
 import { DesignationCombobox } from "./DesignationCombobox";
 import { ENTREE_FIELD_BY_KEY } from "./fields";
-import { restoreFormValues } from "./restoreFormValues";
-import { useEntreeCardCarousel } from "./useEntreeCardCarousel";
+import type { EntreeRow } from "./types";
 
 export function AddEntreeDialog({
   designationSuggestions,
   fieldSuggestions,
 }: {
-  designationSuggestions: string[];
+  designationSuggestions: DesignationSuggestion[];
   fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   const [open, setOpen] = useState(false);
@@ -37,12 +44,60 @@ export function AddEntreeDialog({
     addCard,
     deleteCard,
     resetState: resetCarousel,
-    jumpToDuplicate,
-  } = useEntreeCardCarousel();
+    getCardFieldValue,
+    findCardByFieldValue,
+  } = useCardCarousel<Partial<EntreeRow>>();
 
   const resetState = () => {
     setDesignation("");
     resetCarousel();
+  };
+
+  // every field on the source card is currently visible only in its
+  // uncontrolled DOM input (see useCardCarousel's module comment) — read
+  // them all before seeding the new card, which mounts them back as
+  // defaultValues through the normal EntreeFormFields plumbing. reference is
+  // deliberately left out: it's a unique lot id, duplicating it would just
+  // trigger the duplicate-reference error
+  const cloneCard = (sourceId: string) => {
+    const readNumber = (key: string) => {
+      const raw = getCardFieldValue(sourceId, key);
+      return raw ? Number(raw) : undefined;
+    };
+    const longueurValue = readNumber("longueurValue");
+    const longueurUnit = getCardFieldValue(
+      sourceId,
+      "longueurUnit",
+    ) as LengthUnit;
+    const largeurValue = readNumber("largeurValue");
+    const largeurUnit = getCardFieldValue(
+      sourceId,
+      "largeurUnit",
+    ) as LengthUnit;
+    const dateIso = getCardFieldValue(sourceId, "date");
+
+    addCard({
+      origine: getCardFieldValue(sourceId, "origine") || null,
+      conteneur: getCardFieldValue(sourceId, "conteneur") || null,
+      commentaire: getCardFieldValue(sourceId, "commentaire") || null,
+      nombrePieces: readNumber("nombrePieces"),
+      longueur:
+        longueurValue === undefined
+          ? undefined
+          : lengthToMeters(longueurValue, longueurUnit),
+      largeur:
+        largeurValue === undefined
+          ? undefined
+          : lengthToMeters(largeurValue, largeurUnit),
+      date: dateIso ? new Date(dateIso) : undefined,
+    });
+  };
+
+  const jumpToDuplicate = (reference: string) => {
+    const match = findCardByFieldValue("reference", reference);
+    if (!match) return;
+    setInvalidCardId(match.card.id);
+    navigateTo(match.index);
   };
 
   const [state, formAction, pending] = useActionState(
@@ -123,7 +178,7 @@ export function AddEntreeDialog({
           type="button"
           variant="outline"
           className="rounded-full corner-squircle"
-          onClick={addCard}
+          onClick={() => addCard()}
         >
           <Icon icon={PlusSignIcon} />
           Ajouter une fiche
@@ -140,6 +195,7 @@ export function AddEntreeDialog({
               fieldSuggestions,
             }}
             onDeleteCard={deleteCard}
+            onCloneCard={cloneCard}
             onNavigate={navigateTo}
           />
           <Button
@@ -147,7 +203,7 @@ export function AddEntreeDialog({
             variant="outline"
             size="sm"
             className="corner-squircle"
-            onClick={addCard}
+            onClick={() => addCard()}
           >
             <Icon icon={PlusSignIcon} />
             Ajouter une autre fiche

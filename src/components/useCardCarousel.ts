@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 
-export type Card = { id: string };
+export type Card<TInitialValues> = {
+  id: string;
+  initialValues?: TInitialValues;
+};
 
 // crypto.randomUUID needs a secure context and a fairly recent browser —
 // falls back to a simple unique-enough id so card creation never breaks
@@ -9,12 +12,15 @@ const newCardId = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-// owns the multi-card carousel used by AddEntreeDialog: which cards exist,
-// which one is in view/invalid, and the scroll-into-view navigation between
-// them. cardElements is a plain ref map (not state) since it only drives
-// imperative scrollIntoView calls and DOM lookups, never a re-render
-export function useEntreeCardCarousel() {
-  const [cards, setCards] = useState<Card[]>([]);
+// owns the multi-card carousel shared by AddEntreeDialog and AddSortieDialog:
+// which cards exist, which one is in view/invalid, the scroll-into-view
+// navigation between them, and reading a card's live field values straight
+// off the DOM (its inputs are uncontrolled, so React state never holds
+// them — see restoreFormValues.ts for the same reasoning). cardElements is a
+// plain ref map (not state) since it only drives imperative scrollIntoView
+// calls and DOM lookups, never a re-render
+export function useCardCarousel<TInitialValues = never>() {
+  const [cards, setCards] = useState<Card<TInitialValues>[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [invalidCardId, setInvalidCardId] = useState<string>();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,11 +46,12 @@ export function useEntreeCardCarousel() {
     scrollToCard(card.id, index);
   };
 
-  const addCard = () => {
-    const card = { id: newCardId() };
+  const addCard = (initialValues?: TInitialValues) => {
+    const card = { id: newCardId(), initialValues };
     const index = cards.length;
     setCards((prev) => [...prev, card]);
     requestAnimationFrame(() => scrollToCard(card.id, index));
+    return card.id;
   };
 
   const deleteCard = (id: string) => {
@@ -63,26 +70,29 @@ export function useEntreeCardCarousel() {
     cardElements.current.clear();
   };
 
-  // on a duplicate-reference error, jump to whichever of the (possibly two)
-  // matching cards is closest to the one currently in view — the reference
-  // inputs are uncontrolled, so their live value is read straight off the DOM
-  const jumpToDuplicate = (reference: string) => {
+  // a namespaced field's current value, read straight off the DOM (see the
+  // module comment — these inputs are uncontrolled)
+  const getCardFieldValue = (cardId: string, fieldName: string): string =>
+    cardElements.current
+      .get(cardId)
+      ?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+        `[name="${cardId}__${fieldName}"]`,
+      )?.value ?? "";
+
+  // finds, among existing cards, whichever has `fieldName` equal to `value`
+  // right now — closest to whichever card is currently in view. Used e.g. to
+  // jump to one of two cards sharing a duplicate reference after a
+  // server-side validation error
+  const findCardByFieldValue = (fieldName: string, value: string) => {
     const matches = cards
       .map((card, index) => ({ card, index }))
-      .filter(({ card }) => {
-        const input = cardElements.current
-          .get(card.id)
-          ?.querySelector<HTMLInputElement>(`[name="${card.id}__reference"]`);
-        return input?.value.trim() === reference;
-      });
-    if (matches.length === 0) return;
-    const closest = matches.reduce((a, b) =>
+      .filter(({ card }) => getCardFieldValue(card.id, fieldName) === value);
+    if (matches.length === 0) return undefined;
+    return matches.reduce((a, b) =>
       Math.abs(a.index - activeIndex) <= Math.abs(b.index - activeIndex)
         ? a
         : b,
     );
-    setInvalidCardId(closest.card.id);
-    navigateTo(closest.index);
   };
 
   return {
@@ -97,6 +107,7 @@ export function useEntreeCardCarousel() {
     addCard,
     deleteCard,
     resetState,
-    jumpToDuplicate,
+    getCardFieldValue,
+    findCardByFieldValue,
   };
 }

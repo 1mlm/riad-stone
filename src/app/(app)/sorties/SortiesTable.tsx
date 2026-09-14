@@ -3,6 +3,7 @@
 import { Share03Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
 import {
+  createCommentaireColumn,
   createConteneurColumn,
   createDesignationColumn,
   createLengthColumn,
@@ -63,6 +64,7 @@ function SortiesTableContent({
         getDate: (row) => row.dateSortie,
       },
       createNombrePiecesColumn(),
+      createCommentaireColumn(),
       createSurfacePieceColumn(),
       createSurfaceTotaleColumn("Surface de sortie"),
       {

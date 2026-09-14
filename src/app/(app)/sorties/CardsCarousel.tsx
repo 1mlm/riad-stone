@@ -3,37 +3,37 @@
 import type { RefObject } from "react";
 import { CardCarouselShell } from "@/components/CardCarouselShell";
 import type { Card } from "@/components/useCardCarousel";
-import { EntreeCard } from "./EntreeCard";
-import type { EntreeRow } from "./types";
+import { SortieCard } from "./SortieCard";
+import type { SortieCardValues } from "./types";
 
 export function CardsCarousel({
   cards,
   activeIndex,
   invalidCardId,
+  maxPieces,
   onDeleteCard,
   onCloneCard,
   onNavigate,
   scrollRef,
   setCardRef,
-  fieldSuggestions,
 }: {
-  cards: Card<Partial<EntreeRow>>[];
+  cards: Card<SortieCardValues>[];
   activeIndex: number;
   invalidCardId: string | undefined;
+  maxPieces: number | undefined;
   onDeleteCard: (id: string) => void;
   onCloneCard: (id: string) => void;
   onNavigate: (index: number) => void;
   scrollRef: RefObject<HTMLDivElement | null>;
   setCardRef: (id: string) => (el: HTMLDivElement | null) => void;
-  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   return (
     <CardCarouselShell
       {...{ cards, activeIndex, onNavigate, scrollRef }}
       renderCard={(card) => (
-        <EntreeCard
+        <SortieCard
           key={card.id}
-          {...{ card, fieldSuggestions }}
+          {...{ card, maxPieces }}
           invalid={card.id === invalidCardId}
           onDelete={() => onDeleteCard(card.id)}
           onClone={() => onCloneCard(card.id)}

@@ -12,7 +12,9 @@ export type FieldSuggestions = Partial<Record<EntreeField["key"], string[]>>;
 // passed around as one bag so each renderer keeps a two-prop signature
 export type FieldContext = {
   mode: "add" | "edit";
-  entree?: EntreeRow;
+  // full row in edit mode; a partial clone of another card's current values
+  // when a fresh add-mode card was seeded via "Dupliquer cette fiche"
+  entree?: Partial<EntreeRow>;
   // namespaces every id/name under this prefix — needed when several
   // EntreeFormFields instances share one <form> (the multi-card add flow)
   namePrefix?: string;

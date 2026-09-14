@@ -64,16 +64,51 @@ function toEntreeSnapshot(entree: Entree) {
     longueur: Number(entree.longueur),
     largeur: Number(entree.largeur),
     nombrePieces: entree.nombrePieces,
+    commentaire: entree.commentaire,
   };
 }
 
-export async function getDesignationSuggestions(): Promise<string[]> {
+export type DesignationSuggestion = {
+  designation: string;
+  lotCount: number;
+  piecesRestantes: number;
+};
+
+// aggregated per designation so the Add Entrée combobox can show, next to
+// each suggestion, how much of that designation is already in stock — the
+// same density as the sortie picker's ref/date/pieces row
+export async function getDesignationSuggestions(): Promise<
+  DesignationSuggestion[]
+> {
   const rows = await prisma.entree.findMany({
-    select: { designation: true },
-    distinct: ["designation"],
+    select: {
+      designation: true,
+      nombrePieces: true,
+      sorties: { select: { nombrePieces: true } },
+    },
     orderBy: { designation: "asc" },
   });
-  return rows.map((row) => row.designation);
+
+  const byDesignation = new Map<string, DesignationSuggestion>();
+  for (const row of rows) {
+    const piecesRestantes =
+      row.nombrePieces -
+      row.sorties.reduce((sum, sortie) => sum + sortie.nombrePieces, 0);
+    const existing = byDesignation.get(row.designation);
+    if (existing) {
+      existing.lotCount += 1;
+      existing.piecesRestantes += piecesRestantes;
+    } else {
+      byDesignation.set(row.designation, {
+        designation: row.designation,
+        lotCount: 1,
+        piecesRestantes,
+      });
+    }
+  }
+  return [...byDesignation.values()].sort((a, b) =>
+    a.designation.localeCompare(b.designation),
+  );
 }
 
 // the multi-card add form namespaces every field under a per-card uuid, which
@@ -115,12 +150,14 @@ export type EntreeDetails = {
   longueur: number;
   largeur: number;
   nombrePieces: number;
+  commentaire: string | null;
   piecesRestantes: number;
   sorties: {
     id: number;
     nombrePieces: number;
     dateSortie: string;
     bonCommande: string | null;
+    commentaire: string | null;
   }[];
 };
 
@@ -149,12 +186,14 @@ export async function getEntreeDetails(
     longueur: Number(entree.longueur),
     largeur: Number(entree.largeur),
     nombrePieces: entree.nombrePieces,
+    commentaire: entree.commentaire,
     piecesRestantes: entree.nombrePieces - piecesSorties,
     sorties: entree.sorties.map((sortie) => ({
       id: sortie.id,
       nombrePieces: sortie.nombrePieces,
       dateSortie: sortie.dateSortie.toISOString(),
       bonCommande: sortie.bonCommande,
+      commentaire: sortie.commentaire,
     })),
   };
 }
@@ -178,6 +217,7 @@ function readEntreeFormData(
   const reference = String(formData.get(key("reference")) ?? "").trim();
   const origine = String(formData.get(key("origine")) ?? "").trim();
   const conteneur = String(formData.get(key("conteneur")) ?? "").trim();
+  const commentaire = String(formData.get(key("commentaire")) ?? "").trim();
   const date = String(formData.get(key("date")) ?? "");
   const longueurValue = Number(formData.get(key("longueurValue")));
   const longueurUnit = String(formData.get(key("longueurUnit")));
@@ -204,6 +244,7 @@ function readEntreeFormData(
       reference,
       origine: origine || null,
       conteneur: conteneur || null,
+      commentaire: commentaire || null,
       date: date ? new Date(date) : new Date(),
       longueur: lengthToMeters(longueurValue, longueurUnit),
       largeur: lengthToMeters(largeurValue, largeurUnit),
@@ -313,6 +354,7 @@ export async function updateEntree(
       existing.designation !== parsed.data.designation ||
       existing.origine !== parsed.data.origine ||
       existing.conteneur !== parsed.data.conteneur ||
+      existing.commentaire !== parsed.data.commentaire ||
       existing.date.getTime() !== parsed.data.date.getTime() ||
       Number(existing.longueur) !== parsed.data.longueur ||
       Number(existing.largeur) !== parsed.data.largeur ||
@@ -325,6 +367,7 @@ export async function updateEntree(
         designation: parsed.data.designation,
         origine: parsed.data.origine,
         conteneur: parsed.data.conteneur,
+        commentaire: parsed.data.commentaire,
         date: parsed.data.date,
         longueur: parsed.data.longueur,
         largeur: parsed.data.largeur,

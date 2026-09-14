@@ -14,6 +14,7 @@ function toSortieSnapshot(sortie: Sortie) {
     entreeReference: sortie.entreeReference,
     nombrePieces: sortie.nombrePieces,
     bonCommande: sortie.bonCommande,
+    commentaire: sortie.commentaire,
     dateSortie: sortie.dateSortie.toISOString(),
   };
 }
@@ -67,10 +68,15 @@ export async function getAvailableEntrees(): Promise<AvailableEntree[]> {
     .filter((entree) => entree.piecesRestantes > 0);
 }
 
-function readSortieFormData(formData: FormData) {
-  const bonCommande = String(formData.get("bonCommande") ?? "").trim();
-  const dateSortie = String(formData.get("dateSortie") ?? "");
-  const nombrePieces = Number(formData.get("nombrePieces"));
+// reads one sortie's fields off formData, optionally namespaced under
+// `${namePrefix}__` — the multi-fiche add flow puts several fiches' fields
+// in one <form>, each namespaced by its own card id
+function readSortieFormData(formData: FormData, namePrefix?: string) {
+  const key = (k: string) => (namePrefix ? `${namePrefix}__${k}` : k);
+  const bonCommande = String(formData.get(key("bonCommande")) ?? "").trim();
+  const commentaire = String(formData.get(key("commentaire")) ?? "").trim();
+  const dateSortie = String(formData.get(key("dateSortie")) ?? "");
+  const nombrePieces = Number(formData.get(key("nombrePieces")));
 
   if (!Number.isInteger(nombrePieces) || nombrePieces <= 0)
     return { error: "Le nombre de pièces est invalide." as const };
@@ -79,6 +85,7 @@ function readSortieFormData(formData: FormData) {
     data: {
       nombrePieces,
       bonCommande: bonCommande || null,
+      commentaire: commentaire || null,
       dateSortie: dateSortie ? new Date(dateSortie) : new Date(),
     },
   };
@@ -107,35 +114,67 @@ async function runSortieTransaction<T>(
   }
 }
 
-export async function createSortie(
-  _prevState: { error: string | null },
+export type CreateSortiesResult = {
+  error: string | null;
+  // which fiche failed a non-sum validation (bad nombrePieces/etc) so the
+  // client can jump straight to it instead of leaving the user to guess
+  // which of several fiches is at fault
+  invalidCardId?: string;
+};
+
+// creates every fiche against one shared entrée in a single transaction:
+// either all of them land, or none do. The sum of their nombrePieces is
+// validated against the entrée's real piecesRestantes — an individual
+// fiche's own max attribute only ever caps it at the full amount, since
+// uncontrolled fiche inputs can't know live what the others currently hold
+export async function createSorties(
+  _prevState: CreateSortiesResult,
   formData: FormData,
-): Promise<{ error: string | null }> {
+): Promise<CreateSortiesResult> {
   await requireAuth();
 
   const entreeReference = String(formData.get("entreeReference") ?? "").trim();
   if (!entreeReference) return { error: "La référence est requise." };
 
-  const parsed = readSortieFormData(formData);
-  if (parsed.error) return { error: parsed.error };
+  const cardIds = String(formData.get("cardIds") ?? "")
+    .split(",")
+    .filter(Boolean);
+  if (cardIds.length === 0) return { error: "Ajoutez au moins une fiche." };
+
+  const parsedCards: {
+    cardId: string;
+    data: NonNullable<ReturnType<typeof readSortieFormData>["data"]>;
+  }[] = [];
+  for (const cardId of cardIds) {
+    const parsed = readSortieFormData(formData, cardId);
+    if (parsed.error) return { error: parsed.error, invalidCardId: cardId };
+    parsedCards.push({ cardId, data: parsed.data });
+  }
+
+  const totalNombrePieces = parsedCards.reduce(
+    (sum, { data }) => sum + data.nombrePieces,
+    0,
+  );
 
   const outcome = await runSortieTransaction(async (tx) => {
     const piecesRestantes = await getPiecesRestantes(tx, entreeReference);
     if (piecesRestantes === null)
       throw new SortieValidationError("Cette référence n'existe pas.");
-    if (parsed.data.nombrePieces > piecesRestantes)
+    if (totalNombrePieces > piecesRestantes)
       throw new SortieValidationError(
         `Il ne reste que ${piecesRestantes} pièce(s) disponible(s) pour cette référence.`,
       );
 
-    return tx.sortie.create({ data: { entreeReference, ...parsed.data } });
+    return Promise.all(
+      parsedCards.map(({ data }) =>
+        tx.sortie.create({ data: { entreeReference, ...data } }),
+      ),
+    );
   });
   if (outcome.result === null) return { error: outcome.error };
 
-  await logHistory(
-    HistoryItemType.CREATE_OUTPUT,
-    toSortieSnapshot(outcome.result),
-  );
+  for (const sortie of outcome.result)
+    await logHistory(HistoryItemType.CREATE_OUTPUT, toSortieSnapshot(sortie));
   revalidateStockPaths();
   return { error: null };
 }
@@ -158,6 +197,7 @@ export async function updateSortie(
     const hasChanges =
       existing.nombrePieces !== parsed.data.nombrePieces ||
       existing.bonCommande !== parsed.data.bonCommande ||
+      existing.commentaire !== parsed.data.commentaire ||
       existing.dateSortie.getTime() !== parsed.data.dateSortie.getTime();
     if (!hasChanges) return { existing, updated: null };
 

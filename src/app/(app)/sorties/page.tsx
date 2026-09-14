@@ -23,6 +23,7 @@ export default async function SortiesPage() {
     nombrePieces: sortie.nombrePieces,
     dateSortie: sortie.dateSortie,
     bonCommande: sortie.bonCommande,
+    commentaire: sortie.commentaire,
   }));
 
   return <SortiesTable items={rows} {...{ availableEntrees }} />;

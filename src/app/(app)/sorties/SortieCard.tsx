@@ -7,23 +7,23 @@ import type { Card } from "@/components/useCardCarousel";
 import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import { cn } from "@/shadcn/utils";
-import { EntreeFormFields } from "./EntreeFormFields";
-import type { EntreeRow } from "./types";
+import { SortieFormFields } from "./SortieFormFields";
+import type { SortieCardValues } from "./types";
 
-export function EntreeCard({
+export function SortieCard({
   card,
   invalid,
+  maxPieces,
   onDelete,
   onClone,
   cardRef,
-  fieldSuggestions,
 }: {
-  card: Card<Partial<EntreeRow>>;
+  card: Card<SortieCardValues>;
   invalid: boolean;
+  maxPieces: number | undefined;
   onDelete: () => void;
   onClone: () => void;
   cardRef: (el: HTMLDivElement | null) => void;
-  fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   return (
     <div
@@ -69,12 +69,10 @@ export function EntreeCard({
           }}
         />
       </div>
-      <EntreeFormFields
-        mode="add"
+      <SortieFormFields
         namePrefix={card.id}
-        entree={card.initialValues}
-        excludeKeys={["designation"]}
-        {...{ fieldSuggestions }}
+        sortie={card.initialValues}
+        {...{ maxPieces }}
       />
     </div>
   );

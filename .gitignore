@@ -39,3 +39,6 @@ next-env.d.ts
 # prisma
 /src/generated/prisma
 .claude
+
+# local backups / scratch
+/tmp

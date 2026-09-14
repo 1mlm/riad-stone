@@ -15,19 +15,15 @@ type BaseField = {
   // readOnly once the entree exists — only its own reference, an immutable id
   lockedOnEdit?: boolean;
   // consecutive fields sharing a group render side by side instead of stacked
-  group?: "dimensions";
-  // stays tucked away behind the "Détails supplémentaires" toggle until
-  // opened — for fields that are truly nice-to-have (origine, conteneur).
-  // a non-required field without this still renders inline (e.g. date),
-  // just without the required asterisk
-  collapsedByDefault?: boolean;
+  group?: "dimensions" | "pieces-date" | "location";
 };
 
 export type EntreeField =
   | (BaseField & { kind: "text"; placeholder?: string })
   | (BaseField & { kind: "date" })
   | (BaseField & { kind: "unitLength" })
-  | (BaseField & { kind: "integer" });
+  | (BaseField & { kind: "integer" })
+  | (BaseField & { kind: "textarea"; placeholder?: string });
 
 // single source of truth for the Entree add/edit forms — driving both is the
 // point: a new field only needs one entry here instead of hand-written JSX
@@ -72,6 +68,7 @@ export const ENTREE_FIELDS = [
     icon: ICONS.pieces,
     required: true,
     kind: "integer",
+    group: "pieces-date",
   },
   {
     key: "date",
@@ -79,6 +76,7 @@ export const ENTREE_FIELDS = [
     icon: ICONS.date,
     required: false,
     kind: "date",
+    group: "pieces-date",
   },
   {
     key: "origine",
@@ -86,7 +84,7 @@ export const ENTREE_FIELDS = [
     icon: ICONS.location,
     required: false,
     kind: "text",
-    collapsedByDefault: true,
+    group: "location",
   },
   {
     key: "conteneur",
@@ -94,7 +92,15 @@ export const ENTREE_FIELDS = [
     icon: ICONS.conteneur,
     required: false,
     kind: "text",
-    collapsedByDefault: true,
+    group: "location",
+  },
+  {
+    key: "commentaire",
+    label: "Commentaire",
+    icon: ICONS.commentaire,
+    required: false,
+    kind: "textarea",
+    placeholder: "Notes, remarques...",
   },
 ] as const satisfies readonly EntreeField[];
 

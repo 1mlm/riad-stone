@@ -18,6 +18,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
 import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
+import type { DesignationSuggestion } from "./actions";
 
 export function DesignationCombobox({
   name,
@@ -29,7 +30,7 @@ export function DesignationCombobox({
   name: string;
   value: string;
   onValueChange: (value: string) => void;
-  suggestions: string[];
+  suggestions: DesignationSuggestion[];
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -80,12 +81,24 @@ export function DesignationCombobox({
             <CommandGroup>
               {suggestions.map((suggestion) => (
                 <CommandItem
-                  key={suggestion}
-                  value={suggestion}
-                  data-checked={suggestion === value}
+                  key={suggestion.designation}
+                  value={suggestion.designation}
+                  data-checked={suggestion.designation === value}
                   onSelect={select}
                 >
-                  {suggestion}
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate">
+                      {suggestion.designation}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                      {suggestion.lotCount} lot
+                      {suggestion.lotCount > 1 ? "s" : ""}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                      <Icon icon={ICONS.pieces} />
+                      {suggestion.piecesRestantes}
+                    </span>
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

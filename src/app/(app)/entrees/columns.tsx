@@ -7,6 +7,7 @@ type EntreeLikeRow = {
   designation: string;
   origine: string | null;
   conteneur: string | null;
+  commentaire: string | null;
   longueur: number;
   largeur: number;
   nombrePieces: number;
@@ -89,6 +90,19 @@ export function createConteneurColumn<
     icon,
     type: "string",
     getString: (row) => row.conteneur ?? "",
+  };
+}
+
+export function createCommentaireColumn<
+  T extends EntreeLikeRow,
+>(): CustomTableColumn<T> {
+  const { label, icon } = ENTREE_FIELD_BY_KEY.commentaire;
+  return {
+    id: "commentaire",
+    label,
+    icon,
+    type: "string",
+    getString: (row) => row.commentaire ?? "",
   };
 }
 

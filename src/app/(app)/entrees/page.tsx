@@ -23,6 +23,7 @@ export default async function EntreesPage() {
     longueur: Number(entree.longueur),
     largeur: Number(entree.largeur),
     nombrePieces: entree.nombrePieces,
+    commentaire: entree.commentaire,
   }));
 
   return (

@@ -142,6 +142,7 @@
   [class*="group/button"],
   [data-slot="input"],
   [data-slot="input-group"],
+  [data-slot="textarea"],
   [data-slot="badge"] {
     @apply corner-squircle;
     }
@@ -153,7 +154,8 @@
      picker), so different input types looked inconsistent next to each
      other. Flat fill is the same everywhere */
   [data-slot="input"],
-  [data-slot="input-group"] {
+  [data-slot="input-group"],
+  [data-slot="textarea"] {
     @apply shadow-xs shadow-black/5 dark:shadow-black/20;
     }
 
@@ -169,6 +171,16 @@
   [data-slot="input-group"]:has(input:autofill) {
     background-color: #e8f0fe;
     }
+}
+
+/* every dialog gets breathing room from the viewport edge on the vertical
+   axis too, matching DialogContent's own horizontal
+   max-w-[calc(100%-2rem)] — a floor for dialogs that never scroll internally
+   (ConfirmDialog, ExtractDialog); ones with genuinely tall content
+   (FormDialog, LazyDialog) additionally scroll an inner wrapper so this
+   max-height doesn't clip their close button or footer */
+[data-slot="dialog-content"] {
+  max-height: calc(100dvh - 2rem);
 }
 
 /* Radix menu items and cmdk options ship with cursor-default baked into

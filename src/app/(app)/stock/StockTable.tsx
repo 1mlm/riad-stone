@@ -3,6 +3,7 @@
 import { ExpandIcon, Share03Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
 import {
+  createCommentaireColumn,
   createConteneurColumn,
   createDateColumn,
   createDesignationColumn,
@@ -44,6 +45,7 @@ function StockTableContent({ items }: { items: EntreeRow[] }) {
       createNombrePiecesColumn("Pièces restantes"),
       createSurfaceTotaleColumn(),
       createSurfaceDesignationColumn(items),
+      createCommentaireColumn(),
       {
         id: "actions",
         label: "Actions",

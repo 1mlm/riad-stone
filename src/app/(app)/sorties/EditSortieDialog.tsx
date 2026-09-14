@@ -71,25 +71,7 @@ export function EditSortieDialog({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel htmlFor="edit-nombrePieces" icon={ICONS.pieces} required>
-          Nombre de pièces (max {maxNombrePieces})
-        </FieldLabel>
-        <InputGroup>
-          <InputGroupInput
-            id="edit-nombrePieces"
-            name="nombrePieces"
-            type="number"
-            min="1"
-            max={maxNombrePieces}
-            step="1"
-            defaultValue={sortie.nombrePieces}
-            required
-          />
-        </InputGroup>
-      </div>
-
-      <SortieFormFields mode="edit" {...{ sortie }} />
+      <SortieFormFields {...{ sortie }} maxPieces={maxNombrePieces} />
     </FormDialog>
   );
 }

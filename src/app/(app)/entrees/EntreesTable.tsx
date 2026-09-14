@@ -1,7 +1,8 @@
 "use client";
 
-import { Share03Icon } from "@hugeicons/core-free-icons";
+import { ExpandIcon, Share03Icon } from "@hugeicons/core-free-icons";
 import { Suspense, useMemo, useState } from "react";
+import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
 import { SearchBar } from "@/components/SearchBar";
 import {
   buildRowSummary,
@@ -9,7 +10,7 @@ import {
   type CustomTableColumn,
 } from "@/components/table/CustomTable";
 import { DeleteRowMenuItem } from "@/components/table/DeleteRowMenuItem";
-import { CopyMenuItem } from "@/components/table/RowMenu";
+import { CopyMenuItem, RowMenuItemButton } from "@/components/table/RowMenu";
 import { useJustCreatedIds } from "@/components/table/useJustCreatedIds";
 import { useOptimisticRowRemoval } from "@/components/table/useOptimisticRowRemoval";
 import { fr } from "@/messages/fr";
@@ -17,8 +18,9 @@ import { DropdownMenuSeparator } from "@/shadcn/ui/dropdown-menu";
 import { ICONS } from "@/utils/icon";
 import { buildShareLink } from "@/utils/shareLink";
 import { AddEntreeDialog } from "./AddEntreeDialog";
-import { deleteEntree } from "./actions";
+import { type DesignationSuggestion, deleteEntree } from "./actions";
 import {
+  createCommentaireColumn,
   createConteneurColumn,
   createDateColumn,
   createDesignationColumn,
@@ -40,7 +42,7 @@ function EntreesTableContent({
   fieldSuggestions,
 }: {
   items: EntreeRow[];
-  designationSuggestions: string[];
+  designationSuggestions: DesignationSuggestion[];
   fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   const [resultCount, setResultCount] = useState(items.length);
@@ -61,6 +63,7 @@ function EntreesTableContent({
       createNombrePiecesColumn(),
       createSurfaceTotaleColumn(),
       createSurfaceDesignationColumn(visibleItems),
+      createCommentaireColumn(),
       {
         id: "actions",
         label: "Actions",
@@ -69,6 +72,12 @@ function EntreesTableContent({
         getButtons: (row, selectItem) => (
           <>
             <EditEntreeDialog entree={row} />
+            <EntreeDetailsDialog
+              reference={row.reference}
+              trigger={
+                <RowMenuItemButton icon={ExpandIcon}>Détails</RowMenuItemButton>
+              }
+            />
             {selectItem}
             <CopyMenuItem
               value={buildRowSummary(columns, row, fr.common.locale)}
@@ -129,7 +138,7 @@ function EntreesTableContent({
 
 export function EntreesTable(props: {
   items: EntreeRow[];
-  designationSuggestions: string[];
+  designationSuggestions: DesignationSuggestion[];
   fieldSuggestions: { origine: string[]; conteneur: string[] };
 }) {
   return (

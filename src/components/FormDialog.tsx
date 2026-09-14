@@ -50,14 +50,17 @@ export function FormDialog({
   return (
     <Dialog {...{ open, onOpenChange }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="sr-only">
             {description}
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction} className="flex min-w-0 flex-col gap-4">
+        <form
+          action={formAction}
+          className="flex min-h-0 min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto"
+        >
           {children}
           <FormError>{error}</FormError>
           <DialogFooter>

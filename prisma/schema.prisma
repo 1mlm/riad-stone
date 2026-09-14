@@ -19,6 +19,7 @@ model Entree {
   longueur     Decimal  @db.Decimal(10, 4)
   largeur      Decimal  @db.Decimal(10, 4)
   nombrePieces Int
+  commentaire  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -35,6 +36,7 @@ model Sortie {
   nombrePieces    Int
   dateSortie      DateTime @default(now()) @db.Date
   bonCommande     String?
+  commentaire     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

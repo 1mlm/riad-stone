@@ -53,6 +53,11 @@ function getSummaryRows(details: EntreeDetails) {
       label: "Pièces restantes",
       value: String(details.piecesRestantes),
     },
+    {
+      icon: ICONS.commentaire,
+      label: "Commentaire",
+      value: details.commentaire ?? "-",
+    },
   ];
 }
 
@@ -75,8 +80,11 @@ function SortiesList({ sorties }: { sorties: EntreeDetails["sorties"] }) {
             <td className="py-1.5 pr-3 font-medium">
               {sortie.nombrePieces} pièce{sortie.nombrePieces > 1 ? "s" : ""}
             </td>
-            <td className="py-1.5 font-mono text-muted-foreground">
+            <td className="py-1.5 pr-3 font-mono text-muted-foreground">
               {sortie.bonCommande ?? "-"}
+            </td>
+            <td className="max-w-40 truncate py-1.5 text-muted-foreground">
+              {sortie.commentaire ?? "-"}
             </td>
           </tr>
         ))}
