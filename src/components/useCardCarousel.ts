@@ -36,12 +36,21 @@ export function useCardCarousel<TInitialValues = never>() {
     else cardElements.current.delete(id);
   };
 
+  // scrolls the strip itself rather than calling scrollIntoView on the card:
+  // scrollIntoView walks up and scrolls every scrollable ancestor too, which
+  // includes the dialog's own overflow-x-hidden form — that shifted the whole
+  // dialog sideways and clipped the fields sitting above the carousel
   const scrollToCard = (id: string, index: number) => {
     setActiveIndex(index);
-    cardElements.current.get(id)?.scrollIntoView({
+    const card = cardElements.current.get(id);
+    const strip = scrollRef.current;
+    if (!card || !strip) return;
+    const offsetWithinStrip =
+      card.getBoundingClientRect().left - strip.getBoundingClientRect().left;
+    const centeringOffset = (strip.clientWidth - card.clientWidth) / 2;
+    strip.scrollTo({
+      left: strip.scrollLeft + offsetWithinStrip - centeringOffset,
       behavior: "smooth",
-      inline: "center",
-      block: "nearest",
     });
   };
 

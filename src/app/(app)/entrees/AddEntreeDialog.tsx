@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { getCarouselDialogWidth } from "@/components/CardCarouselShell";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
@@ -166,7 +167,7 @@ export function AddEntreeDialog({
           if (cards.length === 0) addCard();
         } else resetState();
       }}
-      wide
+      contentWidth={getCarouselDialogWidth(cards.length)}
       trigger={
         <Button className="rounded-full corner-squircle">
           <Icon icon={ICONS.add} />

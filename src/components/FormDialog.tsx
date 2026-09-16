@@ -32,7 +32,7 @@ export function FormDialog({
   submitLabel,
   submitVariant,
   submitDisabled,
-  wide,
+  contentWidth,
   children,
 }: {
   open: boolean;
@@ -47,19 +47,24 @@ export function FormDialog({
   submitLabel: ReactNode;
   submitVariant?: ComponentProps<typeof Button>["variant"];
   submitDisabled?: boolean;
-  // lets the multi-fiche add dialogs grow on bigger screens so more than one
-  // fiche fits side by side, instead of staying at the single-column width the
-  // edit dialogs want
-  wide?: boolean;
+  // an explicit CSS width for the multi-fiche add flows, which size
+  // themselves to how many fiches they're showing (see
+  // getCarouselDialogWidth) rather than sitting at a fixed wide size that
+  // leaves a lone fiche stranded in empty space. Left unset, the dialog keeps
+  // the single-column width the edit dialogs want
+  contentWidth?: string;
   children: ReactNode;
 }) {
   return (
     <Dialog {...{ open, onOpenChange }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent
+        style={contentWidth ? { width: contentWidth } : undefined}
         className={cn(
           "flex max-h-[calc(100dvh-2rem)] flex-col",
-          wide ? "sm:max-w-lg lg:max-w-3xl xl:max-w-5xl" : "sm:max-w-md",
+          // the sm: variant too: DialogContent ships sm:max-w-sm, which a
+          // bare max-w-none doesn't override at or above that breakpoint
+          contentWidth ? "max-w-none sm:max-w-none" : "sm:max-w-md",
         )}
       >
         <DialogHeader>

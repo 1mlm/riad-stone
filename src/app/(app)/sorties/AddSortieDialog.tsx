@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useActionState, useEffect, useState } from "react";
+import { getCarouselDialogWidth } from "@/components/CardCarouselShell";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
@@ -168,7 +169,7 @@ export function AddSortieDialog({
   return (
     <FormDialog
       {...{ open, formAction, pending }}
-      wide
+      contentWidth={getCarouselDialogWidth(cards.length)}
       onOpenChange={(next) => {
         setOpen(next);
         // opening straight onto an empty state costs a click before you can
