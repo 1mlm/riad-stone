@@ -1,5 +1,5 @@
 import type { Workbook, Worksheet } from "exceljs";
-import type { LengthUnit } from "@/utils/length";
+import { lengthToMeters, type LengthUnit, metersToUnit } from "@/utils/length";
 import { cellDate, cellNumber, cellText } from "./cell";
 import {
   type ImportField,
@@ -200,14 +200,26 @@ function parseTable(
       ? "m"
       : "cm";
 
+  // the manual add form only ever accepts a whole number in whichever unit
+  // is picked (see UnitLengthInput's step="1") — the value read off the
+  // sheet is whatever the source used (m, cm, a fraction of either), so it's
+  // re-expressed here as a rounded whole number of cm, the one unit fine
+  // enough to hold any realistic tile/slab measurement without losing
+  // anything a packing list would actually record. This keeps every
+  // imported row immediately compatible with the same UnitLengthInput
+  // control and the same integer check the manual form uses, rather than
+  // needing a parallel decimal-friendly path
+  const toWholeCm = (value: number | null, unit: LengthUnit) =>
+    value === null ? null : Math.round(metersToUnit(lengthToMeters(value, unit), "cm"));
+
   const rows: ParsedEntreeRow[] = rawRows.map((raw) => ({
     id: String(nextRowId++),
     designation: raw.designation,
     reference: raw.reference,
-    longueurValue: raw.longueurValue,
-    longueurUnit: explicitLongueurUnit ?? inferredUnit,
-    largeurValue: raw.largeurValue,
-    largeurUnit: explicitLargeurUnit ?? inferredUnit,
+    longueurValue: toWholeCm(raw.longueurValue, explicitLongueurUnit ?? inferredUnit),
+    longueurUnit: "cm",
+    largeurValue: toWholeCm(raw.largeurValue, explicitLargeurUnit ?? inferredUnit),
+    largeurUnit: "cm",
     nombrePieces: raw.nombrePieces,
     date: raw.date,
     origine: raw.origine,
