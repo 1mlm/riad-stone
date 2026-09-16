@@ -19,6 +19,11 @@ export const TYPE_META: Record<HistoryItemType, CustomTableEnumValue> = {
     color: "green",
     label: "Entrée ajoutée",
   },
+  [HistoryItemType.IMPORT_INPUT]: {
+    icon: Download01Icon,
+    color: "green",
+    label: "Entrées importées",
+  },
   [HistoryItemType.UPDATE_INPUT]: {
     icon: EditIcon,
     color: "amber",

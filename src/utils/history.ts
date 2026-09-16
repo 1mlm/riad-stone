@@ -29,12 +29,18 @@ export async function logHistoryBatch(
   });
 }
 
+// a lot's creation, whichever way it was created
+const CREATION_TYPES: HistoryItemType[] = [
+  HistoryItemType.CREATE_INPUT,
+  HistoryItemType.IMPORT_INPUT,
+];
+
 // references are reusable (an entree can be deleted and a new, unrelated
 // one later created with the same reference string) — since events carry
 // no foreign key back to a specific entree row, only string-match the
 // reference, so a stale reference would otherwise blend two lots'
 // histories into one timeline. Cuts the list off at the most recent
-// CREATE_INPUT for that reference: everything older belonged to a prior
+// creation event for that reference: everything older belonged to a prior
 // lot that reused the same string.
 export async function getHistoryEventsForReference(
   reference: string,
@@ -45,8 +51,8 @@ export async function getHistoryEventsForReference(
   const matching = events.filter(
     (event) => getEventReference(event.type, event.data) === reference,
   );
-  const latestCreateIndex = matching.findIndex(
-    (event) => event.type === HistoryItemType.CREATE_INPUT,
+  const latestCreateIndex = matching.findIndex((event) =>
+    CREATION_TYPES.includes(event.type),
   );
   return latestCreateIndex === -1
     ? matching

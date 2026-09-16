@@ -45,6 +45,7 @@ model Sortie {
 
 enum HistoryItemType {
   CREATE_INPUT
+  IMPORT_INPUT
   UPDATE_INPUT
   DELETE_INPUT
   CREATE_OUTPUT
