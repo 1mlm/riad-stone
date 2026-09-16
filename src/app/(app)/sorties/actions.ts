@@ -140,51 +140,71 @@ export type CreateSortiesResult = {
   invalidCardId?: string;
 };
 
-// creates every fiche against one shared entrée in a single transaction:
-// either all of them land, or none do. The sum of their nombrePieces is
-// validated against the entrée's real piecesRestantes — an individual
-// fiche's own max attribute only ever caps it at the full amount, since
-// uncontrolled fiche inputs can't know live what the others currently hold
+// creates every fiche in a single transaction: either all of them land, or
+// none do. A fiche can target several entrées at once, in which case it
+// creates one identical sortie per entrée it points at — so the pieces a
+// single entrée gives up is the sum over every fiche targeting it, which is
+// what gets validated against its real piecesRestantes. An individual
+// fiche's own max attribute only ever caps it at one entrée's full amount,
+// since uncontrolled fiche inputs can't know live what the others hold
 export async function createSorties(
   _prevState: CreateSortiesResult,
   formData: FormData,
 ): Promise<CreateSortiesResult> {
   await requireAuth();
 
-  const entreeReference = String(formData.get("entreeReference") ?? "").trim();
-  if (!entreeReference) return { error: "La référence est requise." };
-
   const cardIds = String(formData.get("cardIds") ?? "")
     .split(",")
     .filter(Boolean);
   if (cardIds.length === 0) return { error: "Ajoutez au moins une fiche." };
 
-  const parsedCards: {
+  const plannedSorties: {
     cardId: string;
+    entreeReference: string;
     data: NonNullable<ReturnType<typeof readSortieFormData>["data"]>;
   }[] = [];
   for (const cardId of cardIds) {
+    const references = formData
+      .getAll(`${cardId}__entreeReferences`)
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+    if (references.length === 0)
+      return {
+        error: "Sélectionnez au moins une référence d'entrée par fiche.",
+        invalidCardId: cardId,
+      };
+
     const parsed = readSortieFormData(formData, cardId);
     if (parsed.error) return { error: parsed.error, invalidCardId: cardId };
-    parsedCards.push({ cardId, data: parsed.data });
+
+    for (const entreeReference of references)
+      plannedSorties.push({ cardId, entreeReference, data: parsed.data });
   }
 
-  const totalNombrePieces = parsedCards.reduce(
-    (sum, { data }) => sum + data.nombrePieces,
-    0,
+  const piecesClaimedByReference = plannedSorties.reduce(
+    (totals, { entreeReference, data }) =>
+      totals.set(
+        entreeReference,
+        (totals.get(entreeReference) ?? 0) + data.nombrePieces,
+      ),
+    new Map<string, number>(),
   );
 
   const outcome = await runSortieTransaction(async (tx) => {
-    const piecesRestantes = await getPiecesRestantes(tx, entreeReference);
-    if (piecesRestantes === null)
-      throw new SortieValidationError("Cette référence n'existe pas.");
-    if (totalNombrePieces > piecesRestantes)
-      throw new SortieValidationError(
-        `Il ne reste que ${piecesRestantes} pièce(s) disponible(s) pour cette référence.`,
-      );
+    for (const [reference, claimed] of piecesClaimedByReference) {
+      const piecesRestantes = await getPiecesRestantes(tx, reference);
+      if (piecesRestantes === null)
+        throw new SortieValidationError(
+          `La référence ${reference} n'existe pas.`,
+        );
+      if (claimed > piecesRestantes)
+        throw new SortieValidationError(
+          `Il ne reste que ${piecesRestantes} pièce(s) disponible(s) pour ${reference}.`,
+        );
+    }
 
     return Promise.all(
-      parsedCards.map(({ data }) =>
+      plannedSorties.map(({ entreeReference, data }) =>
         tx.sortie.create({ data: { entreeReference, ...data } }),
       ),
     );

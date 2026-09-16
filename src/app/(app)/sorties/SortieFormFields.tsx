@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar04Icon, InvoiceIcon } from "@hugeicons/core-free-icons";
+import type { ReactNode } from "react";
 import { DatePickerField } from "@/components/DatePickerField";
 import { FieldLabel } from "@/components/FieldLabel";
 import { fr } from "@/messages/fr";
@@ -27,8 +28,13 @@ export function SortieFormFields({
   namePrefix,
   maxPieces,
   fieldSuggestions,
+  entreePicker,
 }: {
   sortie?: Partial<SortieCardValues>;
+  // the fiche's own entrée multi-select, rendered above its fields — only
+  // the add flow has one, the edit dialog shows the sortie's fixed entrée
+  // outside this component instead
+  entreePicker?: ReactNode;
   // namespaces this instance's fields — set when several fiches share one
   // <form> (the multi-fiche add flow), left unset for the single-fiche edit
   // dialog
@@ -50,6 +56,7 @@ export function SortieFormFields({
 
   return (
     <>
+      {entreePicker}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <FieldLabel htmlFor={nombrePieces.id} icon={ICONS.pieces} required>

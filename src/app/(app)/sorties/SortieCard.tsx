@@ -2,12 +2,15 @@
 
 import { FicheCard } from "@/components/FicheCard";
 import type { Card } from "@/components/useCardCarousel";
+import { EntreeReferencesField } from "./EntreeReferencesField";
 import { SortieFormFields } from "./SortieFormFields";
-import type { SortieCardValues } from "./types";
+import type { AvailableEntree, SortieCardValues } from "./types";
 
 export function SortieCard({
   card,
-  maxPieces,
+  availableEntrees,
+  entreeReferences,
+  onEntreeReferencesChange,
   fieldSuggestions,
   ...chrome
 }: {
@@ -18,15 +21,38 @@ export function SortieCard({
   onDelete: () => void;
   onClone: () => void;
   cardRef: (el: HTMLDivElement | null) => void;
-  maxPieces: number | undefined;
+  availableEntrees: AvailableEntree[];
+  entreeReferences: string[];
+  onEntreeReferencesChange: (references: string[]) => void;
   fieldSuggestions: { bonCommande: string[] };
 }) {
+  // several entrées on one fiche each give up the same number of pièces, so
+  // the only ceiling that always holds is the smallest of them
+  const maxPieces = entreeReferences.length
+    ? Math.min(
+        ...entreeReferences.map(
+          (reference) =>
+            availableEntrees.find((entree) => entree.reference === reference)
+              ?.piecesRestantes ?? 0,
+        ),
+      )
+    : undefined;
+
   return (
     <FicheCard {...chrome}>
       <SortieFormFields
         namePrefix={card.id}
         sortie={card.initialValues}
         {...{ maxPieces, fieldSuggestions }}
+        entreePicker={
+          <EntreeReferencesField
+            name={`${card.id}__entreeReferences`}
+            values={entreeReferences}
+            onValuesChange={onEntreeReferencesChange}
+            invalid={chrome.invalid}
+            {...{ availableEntrees }}
+          />
+        }
       />
     </FicheCard>
   );

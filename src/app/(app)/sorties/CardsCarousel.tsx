@@ -4,14 +4,16 @@ import type { RefObject } from "react";
 import { CardCarouselShell } from "@/components/CardCarouselShell";
 import type { Card } from "@/components/useCardCarousel";
 import { SortieCard } from "./SortieCard";
-import type { SortieCardValues } from "./types";
+import type { AvailableEntree, SortieCardValues } from "./types";
 
 export function CardsCarousel({
   cards,
   activeIndex,
   invalidCardId,
   confirmedCardIds,
-  maxPieces,
+  availableEntrees,
+  cardReferences,
+  onCardReferencesChange,
   fieldSuggestions,
   onToggleCardConfirmed,
   onDeleteCard,
@@ -25,7 +27,9 @@ export function CardsCarousel({
   activeIndex: number;
   invalidCardId: string | undefined;
   confirmedCardIds: string[];
-  maxPieces: number | undefined;
+  availableEntrees: AvailableEntree[];
+  cardReferences: Record<string, string[]>;
+  onCardReferencesChange: (id: string, references: string[]) => void;
   fieldSuggestions: { bonCommande: string[] };
   onToggleCardConfirmed: (id: string) => void;
   onDeleteCard: (id: string) => void;
@@ -41,7 +45,11 @@ export function CardsCarousel({
       renderCard={(card) => (
         <SortieCard
           key={card.id}
-          {...{ card, maxPieces, fieldSuggestions }}
+          {...{ card, availableEntrees, fieldSuggestions }}
+          entreeReferences={cardReferences[card.id] ?? []}
+          onEntreeReferencesChange={(references) =>
+            onCardReferencesChange(card.id, references)
+          }
           invalid={card.id === invalidCardId}
           confirmed={confirmedCardIds.includes(card.id)}
           onToggleConfirmed={() => onToggleCardConfirmed(card.id)}

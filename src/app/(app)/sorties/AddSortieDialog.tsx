@@ -1,103 +1,18 @@
 "use client";
 
-import { EditIcon } from "@hugeicons/core-free-icons";
-import {
-  type ReactNode,
-  useActionState,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { Combobox } from "@/components/Combobox";
+import { type ReactNode, useActionState, useEffect, useState } from "react";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
-import { EntreeDetailsDialog } from "@/components/EntreeDetailsDialog";
-import { FieldLabel } from "@/components/FieldLabel";
 import { FormDialog } from "@/components/FormDialog";
 import { Icon } from "@/components/Icon";
 import { restoreFormValues } from "@/components/restoreFormValues";
 import { useCardCarousel } from "@/components/useCardCarousel";
 import { Button } from "@/shadcn/ui/button";
-import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { cn } from "@/shadcn/utils";
-import { formatShortDate } from "@/utils/date";
 import { ICONS } from "@/utils/icon";
 import { playChime } from "@/utils/sound";
 import { type CreateSortiesResult, createSorties } from "./actions";
 import { CardsCarousel } from "./CardsCarousel";
 import type { AvailableEntree, SortieCardValues } from "./types";
-
-function EntreeReferenceField({
-  availableEntrees,
-  entreeReference,
-  onSelect,
-  onClear,
-  invalid,
-}: {
-  availableEntrees: AvailableEntree[];
-  entreeReference: string;
-  onSelect: (reference: string) => void;
-  onClear: () => void;
-  invalid: boolean;
-}) {
-  if (!entreeReference)
-    return (
-      <Combobox
-        name="entreeReference"
-        value={entreeReference}
-        onValueChange={onSelect}
-        options={availableEntrees.map((entree) => ({
-          value: entree.reference,
-          searchText: `${entree.reference} ${entree.designation}`,
-          content: (
-            <span className="flex items-center gap-2">
-              <span className="shrink-0 font-mono font-semibold">
-                {entree.reference}
-              </span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {formatShortDate(entree.date)}
-              </span>
-              <span className="min-w-0 flex-1 truncate">
-                {entree.designation}
-              </span>
-              <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                <Icon icon={ICONS.pieces} />
-                {entree.piecesRestantes}/{entree.piecesTotal}
-              </span>
-            </span>
-          ),
-        }))}
-        placeholder="Sélectionner une entrée..."
-        searchPlaceholder="Rechercher une référence..."
-        emptyLabel="Aucune entrée disponible."
-        required
-        ariaInvalid={invalid}
-      />
-    );
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <input type="hidden" name="entreeReference" value={entreeReference} />
-      <InputGroup className="flex-1">
-        <InputGroupInput
-          defaultValue={entreeReference}
-          readOnly
-          disabled
-          className="font-mono"
-        />
-      </InputGroup>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon-sm"
-        className="corner-squircle"
-        onClick={onClear}
-      >
-        <Icon icon={EditIcon} />
-      </Button>
-      <EntreeDetailsDialog reference={entreeReference} allowAddSortie={false} />
-    </div>
-  );
-}
 
 export function AddSortieDialog({
   availableEntrees,
@@ -111,9 +26,9 @@ export function AddSortieDialog({
 }: {
   availableEntrees: AvailableEntree[];
   fieldSuggestions?: { bonCommande: string[] };
-  // pre-selects the entrée reference and skips the combobox — used when
-  // opening this dialog from a specific entrée's details rather than the
-  // sorties page, where the user should still pick freely
+  // pre-selects the entrée on the first fiche — used when opening this
+  // dialog from a specific entrée's details rather than the sorties page,
+  // where the user should still pick freely
   initialReference?: string;
   // notified after a successful submit, on top of the dialog's own
   // close/reset — EntreeDetailsDialog uses this to refresh its stale
@@ -122,9 +37,6 @@ export function AddSortieDialog({
   onSuccess?: () => void;
   trigger?: ReactNode;
 }) {
-  const [entreeReference, setEntreeReference] = useState(
-    initialReference ?? "",
-  );
   const {
     cards,
     activeIndex,
@@ -142,36 +54,66 @@ export function AddSortieDialog({
     getCardFieldValue,
   } = useCardCarousel<SortieCardValues>();
 
-  const selectedEntree = useMemo(
-    () =>
-      availableEntrees.find((entree) => entree.reference === entreeReference),
-    [availableEntrees, entreeReference],
-  );
+  // which entrées each fiche targets. Unlike every other fiche field these
+  // can't live purely in the DOM — the chips have to re-render as they're
+  // added and removed
+  const [cardReferences, setCardReferences] = useState<
+    Record<string, string[]>
+  >({});
+
+  const addFiche = (initialValues?: SortieCardValues) => {
+    const id = addCard(initialValues);
+    const references = initialValues?.entreeReferences;
+    if (references?.length)
+      setCardReferences((prev) => ({ ...prev, [id]: references }));
+    return id;
+  };
+
+  const deleteFiche = (id: string) => {
+    deleteCard(id);
+    setCardReferences((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
 
   const resetState = () => {
-    setEntreeReference("");
+    setCardReferences({});
     resetCarousel();
   };
 
-  // each fiche's own "max" only caps it against the entrée's full
-  // piecesRestantes, not against what the other fiches in this same
-  // submission already claim — this running total is what actually catches
-  // an over-allocation before the server round-trip does. Fiche inputs are
-  // uncontrolled, so it's recomputed from the DOM: on every fiche's own
-  // input event (bubbling up to the wrapping div below), and whenever a
-  // fiche is added/cloned/removed
-  const [sumPieces, setSumPieces] = useState(0);
-  const recomputeSumPieces = () => {
-    setSumPieces(
-      cards.reduce(
-        (sum, card) =>
-          sum + (Number(getCardFieldValue(card.id, "nombrePieces")) || 0),
-        0,
-      ),
+  // one fiche pointing at several entrées takes its pièces from each of
+  // them, and several fiches can point at the same entrée, so what actually
+  // has to stay within an entrée's stock is the total claimed across every
+  // fiche targeting it. Fiche inputs are uncontrolled, so this is recomputed
+  // off the DOM: on any fiche's input event, and whenever fiches or their
+  // chips change
+  const [allocations, setAllocations] = useState<
+    { reference: string; claimed: number; piecesRestantes: number }[]
+  >([]);
+  const recomputeAllocations = () => {
+    const claimedByReference = new Map<string, number>();
+    for (const card of cards) {
+      const pieces = Number(getCardFieldValue(card.id, "nombrePieces")) || 0;
+      for (const reference of cardReferences[card.id] ?? [])
+        claimedByReference.set(
+          reference,
+          (claimedByReference.get(reference) ?? 0) + pieces,
+        );
+    }
+    setAllocations(
+      [...claimedByReference].map(([reference, claimed]) => ({
+        reference,
+        claimed,
+        piecesRestantes:
+          availableEntrees.find((entree) => entree.reference === reference)
+            ?.piecesRestantes ?? 0,
+      })),
     );
   };
-  // biome-ignore lint/correctness/useExhaustiveDependencies: getCardFieldValue is a fresh closure every render — only cards actually needs to retrigger this
-  useEffect(recomputeSumPieces, [cards]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getCardFieldValue is a fresh closure every render — only cards and their chips should retrigger this
+  useEffect(recomputeAllocations, [cards, cardReferences]);
 
   // every field on the source fiche is currently visible only in its
   // uncontrolled DOM input (see useCardCarousel's module comment) — read
@@ -180,7 +122,8 @@ export function AddSortieDialog({
   const cloneCard = (sourceId: string) => {
     const nombrePieces = getCardFieldValue(sourceId, "nombrePieces");
     const dateSortie = getCardFieldValue(sourceId, "dateSortie");
-    addCard({
+    addFiche({
+      entreeReferences: cardReferences[sourceId] ?? [],
       nombrePieces: nombrePieces ? Number(nombrePieces) : undefined,
       dateSortie: dateSortie ? new Date(dateSortie) : undefined,
       bonCommande: getCardFieldValue(sourceId, "bonCommande") || null,
@@ -217,6 +160,11 @@ export function AddSortieDialog({
     { error: null },
   );
 
+  const totalSorties = cards.reduce(
+    (total, card) => total + (cardReferences[card.id]?.length ?? 0),
+    0,
+  );
+
   return (
     <FormDialog
       {...{ open, formAction, pending }}
@@ -226,7 +174,12 @@ export function AddSortieDialog({
         // opening straight onto an empty state costs a click before you can
         // type anything, so the first fiche is always already there
         if (next) {
-          if (cards.length === 0) addCard();
+          if (cards.length === 0)
+            addFiche(
+              initialReference
+                ? { entreeReferences: [initialReference] }
+                : undefined,
+            );
         } else resetState();
       }}
       trigger={
@@ -243,13 +196,13 @@ export function AddSortieDialog({
           <DialogTitleChip icon={ICONS.sortie}>sortie</DialogTitleChip>
         </>
       }
-      description="Formulaire de sortie d'une entrée en stock."
+      description="Formulaire de sortie d'une ou plusieurs entrées en stock."
       error={state.error}
       submitIcon={ICONS.check}
-      submitDisabled={cards.length === 0}
+      submitDisabled={totalSorties === 0}
       submitLabel={
         <>
-          Ajouter {cards.length > 1 ? `${cards.length} sorties` : "la sortie"}
+          Ajouter {totalSorties > 1 ? `${totalSorties} sorties` : "la sortie"}
         </>
       }
     >
@@ -258,47 +211,46 @@ export function AddSortieDialog({
         name="cardIds"
         value={cards.map((c) => c.id).join(",")}
       />
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel icon={ICONS.reference} required>
-          Référence de l'entrée
-        </FieldLabel>
-        <EntreeReferenceField
-          {...{ availableEntrees, entreeReference }}
-          onSelect={setEntreeReference}
-          onClear={() => setEntreeReference("")}
-          invalid={Boolean(state.error) && !entreeReference}
-        />
-      </div>
 
-      {selectedEntree && (
-        <p
-          className={cn(
-            "text-xs",
-            sumPieces > selectedEntree.piecesRestantes
-              ? "font-medium text-destructive"
-              : "text-muted-foreground",
-          )}
-        >
-          Total alloué : {sumPieces} / {selectedEntree.piecesRestantes} pièces
-        </p>
+      {allocations.length > 0 && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+          {allocations.map(({ reference, claimed, piecesRestantes }) => (
+            <span
+              key={reference}
+              className={cn(
+                claimed > piecesRestantes
+                  ? "font-medium text-destructive"
+                  : "text-muted-foreground",
+              )}
+            >
+              <span className="font-mono">{reference}</span> : {claimed}/
+              {piecesRestantes} pièces
+            </span>
+          ))}
+        </div>
       )}
-      <div onInput={recomputeSumPieces}>
+
+      <div onInput={recomputeAllocations}>
         <CardsCarousel
           {...{
             cards,
             activeIndex,
             invalidCardId,
             confirmedCardIds,
+            availableEntrees,
+            cardReferences,
             scrollRef,
             setCardRef,
             fieldSuggestions,
           }}
-          maxPieces={selectedEntree?.piecesRestantes}
+          onCardReferencesChange={(id, references) =>
+            setCardReferences((prev) => ({ ...prev, [id]: references }))
+          }
           onToggleCardConfirmed={toggleCardConfirmed}
-          onDeleteCard={deleteCard}
+          onDeleteCard={deleteFiche}
           onCloneCard={cloneCard}
           onNavigate={navigateTo}
-          onAddCard={() => addCard()}
+          onAddCard={() => addFiche()}
         />
       </div>
     </FormDialog>

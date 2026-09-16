@@ -15,9 +15,11 @@ export type SortieRow = {
   commentaire: string | null;
 };
 
-// a single fiche's own fields in the multi-fiche add flow — entreeReference
-// is shared across every fiche and lives outside this shape
+// a single fiche's own fields in the multi-fiche add flow. A fiche can point
+// at several entrées at once, creating one otherwise-identical sortie per
+// entrée it targets
 export type SortieCardValues = {
+  entreeReferences?: string[];
   nombrePieces?: number;
   dateSortie?: Date;
   bonCommande?: string | null;
