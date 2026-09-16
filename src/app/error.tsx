@@ -1,5 +1,6 @@
 "use client";
 
+import { Loading01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
@@ -21,9 +22,19 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  // reset() doesn't return a promise, so this just tracks "we asked it to
+  // retry" — if the retry works this component unmounts anyway, and if it
+  // errors again the boundary remounts a fresh instance of this component,
+  // clearing the state naturally either way
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     console.error(error);
+    // a retry that fails again re-renders this same boundary with a new
+    // error rather than unmounting it, so the spinner from the click that
+    // triggered it needs clearing here — a successful retry unmounts this
+    // component entirely instead, where it stops mattering
+    setRetrying(false);
   }, [error]);
 
   const handleCopyDetails = () => {
@@ -69,8 +80,18 @@ export default function GlobalError({
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button className="rounded-full corner-squircle" onClick={reset}>
-          <Icon icon={ICONS.retry} />
+        <Button
+          className="rounded-full corner-squircle disabled:cursor-wait"
+          disabled={retrying}
+          onClick={() => {
+            setRetrying(true);
+            reset();
+          }}
+        >
+          <Icon
+            icon={retrying ? Loading01Icon : ICONS.retry}
+            className={retrying ? "animate-spin" : undefined}
+          />
           Réessayer
         </Button>
         <Button
