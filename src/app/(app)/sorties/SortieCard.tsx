@@ -10,6 +10,7 @@ export function SortieCard({
   card,
   availableEntrees,
   entreeReferences,
+  remainingByReference,
   onEntreeReferencesChange,
   fieldSuggestions,
   ...chrome
@@ -23,6 +24,7 @@ export function SortieCard({
   cardRef: (el: HTMLDivElement | null) => void;
   availableEntrees: AvailableEntree[];
   entreeReferences: string[];
+  remainingByReference: Record<string, number>;
   onEntreeReferencesChange: (references: string[]) => void;
   fieldSuggestions: { bonCommande: string[] };
 }) {
@@ -50,7 +52,7 @@ export function SortieCard({
             values={entreeReferences}
             onValuesChange={onEntreeReferencesChange}
             invalid={chrome.invalid}
-            {...{ availableEntrees }}
+            {...{ availableEntrees, remainingByReference }}
           />
         }
       />

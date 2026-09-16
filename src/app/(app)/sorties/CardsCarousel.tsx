@@ -13,6 +13,7 @@ export function CardsCarousel({
   confirmedCardIds,
   availableEntrees,
   cardReferences,
+  remainingByReference,
   onCardReferencesChange,
   fieldSuggestions,
   onToggleCardConfirmed,
@@ -29,6 +30,8 @@ export function CardsCarousel({
   confirmedCardIds: string[];
   availableEntrees: AvailableEntree[];
   cardReferences: Record<string, string[]>;
+  // pieces each targeted entrée would have left once this submission lands
+  remainingByReference: Record<string, number>;
   onCardReferencesChange: (id: string, references: string[]) => void;
   fieldSuggestions: { bonCommande: string[] };
   onToggleCardConfirmed: (id: string) => void;
@@ -45,7 +48,12 @@ export function CardsCarousel({
       renderCard={(card) => (
         <SortieCard
           key={card.id}
-          {...{ card, availableEntrees, fieldSuggestions }}
+          {...{
+            card,
+            availableEntrees,
+            remainingByReference,
+            fieldSuggestions,
+          }}
           entreeReferences={cardReferences[card.id] ?? []}
           onEntreeReferencesChange={(references) =>
             onCardReferencesChange(card.id, references)

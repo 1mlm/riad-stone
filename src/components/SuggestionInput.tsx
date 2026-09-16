@@ -47,7 +47,7 @@ export function SuggestionInput({
   return (
     <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
-        <InputGroup>
+        <InputGroup className="corner-squircle">
           <InputGroupInput
             ref={inputRef}
             // the browser's own autofill dropdown would sit on top of this one

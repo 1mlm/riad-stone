@@ -245,7 +245,7 @@ export function MultiCombobox({
       <PopoverAnchor asChild>
         <div
           aria-invalid={ariaInvalid}
-          className="flex min-h-8 w-full flex-wrap items-center gap-1 rounded-lg border border-input p-1 transition-colors aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 has-[button:focus-visible]:border-ring has-[button:focus-visible]:ring-3 has-[button:focus-visible]:ring-ring/50 dark:bg-input/30"
+          className="flex min-h-8 w-full flex-wrap items-center gap-1 rounded-lg corner-squircle border border-input p-1 transition-colors aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 has-[button:focus-visible]:border-ring has-[button:focus-visible]:ring-3 has-[button:focus-visible]:ring-ring/50 dark:bg-input/30"
         >
           {values.map((value) => (
             <span

@@ -8,7 +8,6 @@ import { Icon } from "@/components/Icon";
 import { restoreFormValues } from "@/components/restoreFormValues";
 import { useCardCarousel } from "@/components/useCardCarousel";
 import { Button } from "@/shadcn/ui/button";
-import { cn } from "@/shadcn/utils";
 import { ICONS } from "@/utils/icon";
 import { playChime } from "@/utils/sound";
 import { type CreateSortiesResult, createSorties } from "./actions";
@@ -87,12 +86,14 @@ export function AddSortieDialog({
   // one fiche pointing at several entrées takes its pièces from each of
   // them, and several fiches can point at the same entrée, so what actually
   // has to stay within an entrée's stock is the total claimed across every
-  // fiche targeting it. Fiche inputs are uncontrolled, so this is recomputed
-  // off the DOM: on any fiche's input event, and whenever fiches or their
-  // chips change
-  const [allocations, setAllocations] = useState<
-    { reference: string; claimed: number; piecesRestantes: number }[]
-  >([]);
+  // fiche targeting it. Each entrée's chip shows what it would have left once
+  // this submission lands, which is where an over-allocation surfaces (the
+  // number goes negative and red) — fiche inputs are uncontrolled, so it's
+  // recomputed off the DOM: on any fiche's input event, and whenever fiches
+  // or their chips change
+  const [remainingByReference, setRemainingByReference] = useState<
+    Record<string, number>
+  >({});
   const recomputeAllocations = () => {
     const claimedByReference = new Map<string, number>();
     for (const card of cards) {
@@ -103,14 +104,15 @@ export function AddSortieDialog({
           (claimedByReference.get(reference) ?? 0) + pieces,
         );
     }
-    setAllocations(
-      [...claimedByReference].map(([reference, claimed]) => ({
-        reference,
-        claimed,
-        piecesRestantes:
-          availableEntrees.find((entree) => entree.reference === reference)
-            ?.piecesRestantes ?? 0,
-      })),
+    setRemainingByReference(
+      Object.fromEntries(
+        [...claimedByReference].map(([reference, claimed]) => {
+          const piecesRestantes =
+            availableEntrees.find((entree) => entree.reference === reference)
+              ?.piecesRestantes ?? 0;
+          return [reference, piecesRestantes - claimed];
+        }),
+      ),
     );
   };
   // biome-ignore lint/correctness/useExhaustiveDependencies: getCardFieldValue is a fresh closure every render — only cards and their chips should retrigger this
@@ -213,24 +215,6 @@ export function AddSortieDialog({
         value={cards.map((c) => c.id).join(",")}
       />
 
-      {allocations.length > 0 && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-          {allocations.map(({ reference, claimed, piecesRestantes }) => (
-            <span
-              key={reference}
-              className={cn(
-                claimed > piecesRestantes
-                  ? "font-medium text-destructive"
-                  : "text-muted-foreground",
-              )}
-            >
-              <span className="font-mono">{reference}</span> : {claimed}/
-              {piecesRestantes} pièces
-            </span>
-          ))}
-        </div>
-      )}
-
       <div onInput={recomputeAllocations}>
         <CardsCarousel
           {...{
@@ -240,6 +224,7 @@ export function AddSortieDialog({
             confirmedCardIds,
             availableEntrees,
             cardReferences,
+            remainingByReference,
             scrollRef,
             setCardRef,
             fieldSuggestions,
