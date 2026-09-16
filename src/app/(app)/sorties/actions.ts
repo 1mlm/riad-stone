@@ -3,7 +3,7 @@
 import type { Sortie } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
-import { logHistory } from "@/utils/history";
+import { logHistory, logHistoryBatch } from "@/utils/history";
 import { type PrismaTransactionClient, prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
 import { revalidateStockPaths } from "@/utils/revalidate";
@@ -211,8 +211,10 @@ export async function createSorties(
   });
   if (outcome.result === null) return { error: outcome.error };
 
-  for (const sortie of outcome.result)
-    await logHistory(HistoryItemType.CREATE_OUTPUT, toSortieSnapshot(sortie));
+  await logHistoryBatch(
+    HistoryItemType.CREATE_OUTPUT,
+    outcome.result.map(toSortieSnapshot),
+  );
   revalidateStockPaths();
   return { error: null };
 }

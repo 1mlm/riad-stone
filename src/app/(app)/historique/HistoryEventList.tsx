@@ -20,6 +20,30 @@ import { HistoryDataTable } from "./HistoryDataTable";
 import { getDisplayFields } from "./historyFieldMeta";
 import { TYPE_META } from "./historyTypeMeta";
 
+// a batch created in one submit is stored as one event per row, so each lot
+// keeps its own creation row in its own timeline — but it was one action and
+// reads as noise listed N times here. logHistoryBatch gives every row of a
+// batch the same exact createdAt, which is what identifies them as one
+type HistoryRow = HistoryEvent & { batch: HistoryEvent[] };
+
+// every reference the row covers — more than one only for a grouped batch
+function getRowReferences(row: HistoryRow): string[] {
+  return row.batch
+    .map((event) => getEventReference(event.type, event.data))
+    .filter((reference) => reference !== undefined);
+}
+
+function groupBatchedEvents(events: HistoryEvent[]): HistoryRow[] {
+  const rowsByBatch = new Map<string, HistoryRow>();
+  for (const event of events) {
+    const key = `${event.type}-${event.createdAt.getTime()}`;
+    const row = rowsByBatch.get(key);
+    if (row) row.batch.push(event);
+    else rowsByBatch.set(key, { ...event, batch: [event] });
+  }
+  return [...rowsByBatch.values()];
+}
+
 function HistoryEventListContent({
   events,
   emptyTitle,
@@ -29,7 +53,8 @@ function HistoryEventListContent({
   emptyTitle: string;
   emptySubtitle: string;
 }) {
-  const [resultCount, setResultCount] = useState(events.length);
+  const rows = groupBatchedEvents(events);
+  const [resultCount, setResultCount] = useState(rows.length);
 
   if (events.length === 0)
     return (
@@ -40,16 +65,24 @@ function HistoryEventListContent({
       />
     );
 
-  const columns: CustomTableColumn<HistoryEvent>[] = [
+  const columns: CustomTableColumn<HistoryRow>[] = [
     {
       id: "actions",
       label: "Actions",
       icon: ICONS.actions,
       type: "buttons",
       getButtons: (event, selectItem) => {
-        const { before, current } = getEventSnapshots(event.type, event.data);
-        const hasDetails = getDisplayFields(current, before).length > 0;
-        const reference = getEventReference(event.type, event.data);
+        const { before } = getEventSnapshots(event.type, event.data);
+        const entries = event.batch.map((batched) => ({
+          id: batched.id,
+          snapshot: getEventSnapshots(batched.type, batched.data).current,
+        }));
+        const hasDetails =
+          getDisplayFields(
+            Object.assign({}, ...entries.map((entry) => entry.snapshot)),
+            before,
+          ).length > 0;
+        const references = getRowReferences(event);
         return (
           <>
             {hasDetails && (
@@ -60,10 +93,7 @@ function HistoryEventListContent({
                   </RowMenuItemButton>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto max-w-[calc(100vw-2rem)] max-h-(--radix-popover-content-available-height) overflow-y-auto">
-                  <HistoryDataTable
-                    eventId={event.id}
-                    {...{ current, before }}
-                  />
+                  <HistoryDataTable {...{ entries, before }} />
                 </PopoverContent>
               </Popover>
             )}
@@ -73,10 +103,10 @@ function HistoryEventListContent({
               label="Copier"
               copiedLabel="Copié"
             />
-            {reference && (
+            {references.length === 1 && (
               <CopyMenuItem
                 icon={Share03Icon}
-                value={buildShareLink("/historique", "hq", reference)}
+                value={buildShareLink("/historique", "hq", references[0])}
                 label="Partager"
                 copiedLabel="Lien copié"
               />
@@ -99,7 +129,7 @@ function HistoryEventListContent({
       icon: ICONS.reference,
       type: "string",
       monospace: true,
-      getString: (event) => getEventReference(event.type, event.data) ?? "",
+      getString: (event) => getRowReferences(event).join(", "),
     },
     {
       id: "date",
@@ -122,7 +152,7 @@ function HistoryEventListContent({
         />
       </div>
       <CustomTable
-        items={events}
+        items={rows}
         {...{ columns }}
         getItemId={(event) => String(event.id)}
         exportFilePrefix="historique"

@@ -10,15 +10,21 @@ import { FIELD_META, getDisplayFields } from "./historyFieldMeta";
 // per-field "label, previous, next" layout, so every popover in the app
 // reads the same way regardless of how many fields it's showing
 export function HistoryDataTable({
-  eventId,
-  current,
+  entries,
   before,
 }: {
-  eventId: number;
-  current: HistorySnapshot;
+  // several when the row is a batch created in one submit — they share a
+  // shape, so they're just extra rows under the same headers, each still
+  // carrying its own event id
+  entries: { id: number; snapshot: HistorySnapshot }[];
   before?: HistorySnapshot;
 }) {
-  const fields = getDisplayFields(current, before);
+  // merged only to collect the union of keys in FIELD_META's order; each row
+  // still renders its own snapshot's values
+  const fields = getDisplayFields(
+    Object.assign({}, ...entries.map((entry) => entry.snapshot)),
+    before,
+  );
   if (fields.length === 0) return null;
 
   return (
@@ -54,30 +60,34 @@ export function HistoryDataTable({
                   )}
                 >
                   <HistoryFieldValue
-                    {...{ field, eventId }}
+                    {...{ field }}
+                    eventId={entries[0].id}
                     value={before[field]}
                   />
                 </td>
               ))}
             </tr>
           )}
-          <tr>
-            {fields.map((field) => (
-              <td
-                key={field}
-                className={cn(
-                  "px-3 py-1.5",
-                  field === "bonCommande" && "font-mono",
-                  before && "font-bold text-green-600",
-                )}
-              >
-                <HistoryFieldValue
-                  {...{ field, eventId }}
-                  value={current[field]}
-                />
-              </td>
-            ))}
-          </tr>
+          {entries.map(({ id, snapshot }) => (
+            <tr key={id} className="border-t border-border/50 first:border-t-0">
+              {fields.map((field) => (
+                <td
+                  key={field}
+                  className={cn(
+                    "px-3 py-1.5",
+                    field === "bonCommande" && "font-mono",
+                    before && "font-bold text-green-600",
+                  )}
+                >
+                  <HistoryFieldValue
+                    {...{ field }}
+                    eventId={id}
+                    value={snapshot[field]}
+                  />
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

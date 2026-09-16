@@ -3,7 +3,7 @@
 import type { Entree } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { HistoryItemType } from "@/generated/prisma/enums";
-import { logHistory } from "@/utils/history";
+import { logHistory, logHistoryBatch } from "@/utils/history";
 import { LENGTH_UNITS, type LengthUnit, lengthToMeters } from "@/utils/length";
 import { type PrismaTransactionClient, prisma } from "@/utils/prisma";
 import { requireAuth } from "@/utils/requireAuth";
@@ -322,8 +322,10 @@ export async function createEntrees(
       duplicateReference: outcome.duplicateReference,
     };
 
-  for (const entree of outcome.result)
-    await logHistory(HistoryItemType.CREATE_INPUT, toEntreeSnapshot(entree));
+  await logHistoryBatch(
+    HistoryItemType.CREATE_INPUT,
+    outcome.result.map(toEntreeSnapshot),
+  );
   revalidateStockPaths();
   return { error: null };
 }
