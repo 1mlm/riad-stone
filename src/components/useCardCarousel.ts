@@ -23,6 +23,11 @@ export function useCardCarousel<TInitialValues = never>() {
   const [cards, setCards] = useState<Card<TInitialValues>[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [invalidCardId, setInvalidCardId] = useState<string>();
+  // fiches the user ticked off as done — purely a visual/readOnly lock, they
+  // still get created with everything else at submit. Nothing is written to
+  // the database before the one transactional submit, so a tick can always be
+  // undone
+  const [confirmedCardIds, setConfirmedCardIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardElements = useRef(new Map<string, HTMLDivElement>());
 
@@ -58,15 +63,24 @@ export function useCardCarousel<TInitialValues = never>() {
     const index = cards.findIndex((c) => c.id === id);
     const next = cards.filter((c) => c.id !== id);
     setCards(next);
+    setConfirmedCardIds((prev) => prev.filter((cardId) => cardId !== id));
     cardElements.current.delete(id);
     if (next.length === 0) return;
     requestAnimationFrame(() => navigateTo(Math.min(index, next.length - 1)));
   };
 
+  const toggleCardConfirmed = (id: string) =>
+    setConfirmedCardIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((cardId) => cardId !== id)
+        : [...prev, id],
+    );
+
   const resetState = () => {
     setCards([]);
     setActiveIndex(0);
     setInvalidCardId(undefined);
+    setConfirmedCardIds([]);
     cardElements.current.clear();
   };
 
@@ -100,6 +114,8 @@ export function useCardCarousel<TInitialValues = never>() {
     activeIndex,
     invalidCardId,
     setInvalidCardId,
+    confirmedCardIds,
+    toggleCardConfirmed,
     scrollRef,
     setCardRef,
     scrollToCard,

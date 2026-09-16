@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shadcn/ui/dialog";
+import { cn } from "@/shadcn/utils";
 import { FormError } from "./FormError";
 import { SubmitButton } from "./SubmitButton";
 
@@ -31,6 +32,7 @@ export function FormDialog({
   submitLabel,
   submitVariant,
   submitDisabled,
+  wide,
   children,
 }: {
   open: boolean;
@@ -45,12 +47,21 @@ export function FormDialog({
   submitLabel: ReactNode;
   submitVariant?: ComponentProps<typeof Button>["variant"];
   submitDisabled?: boolean;
+  // lets the multi-fiche add dialogs grow on bigger screens so more than one
+  // fiche fits side by side, instead of staying at the single-column width the
+  // edit dialogs want
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
     <Dialog {...{ open, onOpenChange }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col sm:max-w-md">
+      <DialogContent
+        className={cn(
+          "flex max-h-[calc(100dvh-2rem)] flex-col",
+          wide ? "sm:max-w-lg lg:max-w-3xl xl:max-w-5xl" : "sm:max-w-md",
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="sr-only">

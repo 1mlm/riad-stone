@@ -1,6 +1,5 @@
 "use client";
 
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { useActionState, useState } from "react";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FieldLabel } from "@/components/FieldLabel";
@@ -37,6 +36,8 @@ export function AddEntreeDialog({
     activeIndex,
     invalidCardId,
     setInvalidCardId,
+    confirmedCardIds,
+    toggleCardConfirmed,
     scrollRef,
     setCardRef,
     scrollToCard,
@@ -159,11 +160,16 @@ export function AddEntreeDialog({
       {...{ open, formAction, pending }}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) resetState();
+        // opening straight onto an empty state costs a click before you can
+        // type anything, so the first fiche is always already there
+        if (next) {
+          if (cards.length === 0) addCard();
+        } else resetState();
       }}
+      wide
       trigger={
         <Button className="rounded-full corner-squircle">
-          <Icon icon={PlusSignIcon} />
+          <Icon icon={ICONS.add} />
           Ajouter une entrée
         </Button>
       }
@@ -175,7 +181,7 @@ export function AddEntreeDialog({
       }
       description="Formulaire d'ajout d'une ou plusieurs entrées en stock partageant une même désignation."
       error={state.error}
-      submitIcon={PlusSignIcon}
+      submitIcon={ICONS.check}
       submitDisabled={cards.length === 0}
       submitLabel={
         <>Ajouter {cards.length > 1 ? `${cards.length} entrées` : "l'entrée"}</>
@@ -199,43 +205,22 @@ export function AddEntreeDialog({
         />
       </div>
 
-      {cards.length === 0 ? (
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-full corner-squircle"
-          onClick={() => addCard()}
-        >
-          <Icon icon={PlusSignIcon} />
-          Ajouter une fiche
-        </Button>
-      ) : (
-        <>
-          <CardsCarousel
-            {...{
-              cards,
-              activeIndex,
-              invalidCardId,
-              scrollRef,
-              setCardRef,
-              fieldSuggestions,
-            }}
-            onDeleteCard={deleteCard}
-            onCloneCard={cloneCard}
-            onNavigate={navigateTo}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="corner-squircle"
-            onClick={() => addFicheAfter(cards[cards.length - 1]?.id)}
-          >
-            <Icon icon={PlusSignIcon} />
-            Ajouter une autre fiche
-          </Button>
-        </>
-      )}
+      <CardsCarousel
+        {...{
+          cards,
+          activeIndex,
+          invalidCardId,
+          confirmedCardIds,
+          scrollRef,
+          setCardRef,
+          fieldSuggestions,
+        }}
+        onToggleCardConfirmed={toggleCardConfirmed}
+        onDeleteCard={deleteCard}
+        onCloneCard={cloneCard}
+        onNavigate={navigateTo}
+        onAddCard={() => addFicheAfter(cards[cards.length - 1]?.id)}
+      />
     </FormDialog>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { EditIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { EditIcon } from "@hugeicons/core-free-icons";
 import {
   type ReactNode,
   useActionState,
@@ -130,6 +130,8 @@ export function AddSortieDialog({
     activeIndex,
     invalidCardId,
     setInvalidCardId,
+    confirmedCardIds,
+    toggleCardConfirmed,
     scrollRef,
     setCardRef,
     scrollToCard,
@@ -218,14 +220,19 @@ export function AddSortieDialog({
   return (
     <FormDialog
       {...{ open, formAction, pending }}
+      wide
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) resetState();
+        // opening straight onto an empty state costs a click before you can
+        // type anything, so the first fiche is always already there
+        if (next) {
+          if (cards.length === 0) addCard();
+        } else resetState();
       }}
       trigger={
         trigger ?? (
           <Button className="rounded-full corner-squircle">
-            <Icon icon={PlusSignIcon} />
+            <Icon icon={ICONS.add} />
             Ajouter une sortie
           </Button>
         )
@@ -238,7 +245,7 @@ export function AddSortieDialog({
       }
       description="Formulaire de sortie d'une entrée en stock."
       error={state.error}
-      submitIcon={PlusSignIcon}
+      submitIcon={ICONS.check}
       submitDisabled={cards.length === 0}
       submitLabel={
         <>
@@ -263,60 +270,37 @@ export function AddSortieDialog({
         />
       </div>
 
-      {cards.length === 0 ? (
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-full corner-squircle"
-          disabled={!selectedEntree}
-          onClick={() => addCard()}
-        >
-          <Icon icon={PlusSignIcon} />
-          Ajouter une fiche
-        </Button>
-      ) : (
-        <>
-          {selectedEntree && (
-            <p
-              className={cn(
-                "text-xs",
-                sumPieces > selectedEntree.piecesRestantes
-                  ? "font-medium text-destructive"
-                  : "text-muted-foreground",
-              )}
-            >
-              Total alloué : {sumPieces} / {selectedEntree.piecesRestantes}{" "}
-              pièces
-            </p>
+      {selectedEntree && (
+        <p
+          className={cn(
+            "text-xs",
+            sumPieces > selectedEntree.piecesRestantes
+              ? "font-medium text-destructive"
+              : "text-muted-foreground",
           )}
-          <div onInput={recomputeSumPieces}>
-            <CardsCarousel
-              {...{
-                cards,
-                activeIndex,
-                invalidCardId,
-                scrollRef,
-                setCardRef,
-                fieldSuggestions,
-              }}
-              maxPieces={selectedEntree?.piecesRestantes}
-              onDeleteCard={deleteCard}
-              onCloneCard={cloneCard}
-              onNavigate={navigateTo}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="corner-squircle"
-            onClick={() => addCard()}
-          >
-            <Icon icon={PlusSignIcon} />
-            Ajouter une autre fiche
-          </Button>
-        </>
+        >
+          Total alloué : {sumPieces} / {selectedEntree.piecesRestantes} pièces
+        </p>
       )}
+      <div onInput={recomputeSumPieces}>
+        <CardsCarousel
+          {...{
+            cards,
+            activeIndex,
+            invalidCardId,
+            confirmedCardIds,
+            scrollRef,
+            setCardRef,
+            fieldSuggestions,
+          }}
+          maxPieces={selectedEntree?.piecesRestantes}
+          onToggleCardConfirmed={toggleCardConfirmed}
+          onDeleteCard={deleteCard}
+          onCloneCard={cloneCard}
+          onNavigate={navigateTo}
+          onAddCard={() => addCard()}
+        />
+      </div>
     </FormDialog>
   );
 }
