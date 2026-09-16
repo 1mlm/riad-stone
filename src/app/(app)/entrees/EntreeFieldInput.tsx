@@ -1,4 +1,5 @@
 import { DatePickerField } from "@/components/DatePickerField";
+import { SuggestionInput } from "@/components/SuggestionInput";
 import { fr } from "@/messages/fr";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { Textarea } from "@/shadcn/ui/textarea";
@@ -23,34 +24,30 @@ export function EntreeFieldInput({
   if (field.kind === "text") {
     const locked = mode === "edit" && field.lockedOnEdit;
     const fieldSuggestions = suggestions?.[field.key];
-    const datalistId = fieldSuggestions
-      ? `${getInputId(field.key, context)}-suggestions`
-      : undefined;
+    const inputProps = {
+      id: getInputId(field.key, context),
+      name: getInputName(field.key, context),
+      type: "text",
+      placeholder: field.placeholder,
+      defaultValue: entree
+        ? ((entree[field.key] as string | null) ?? "")
+        : undefined,
+      readOnly: locked,
+      required: field.required,
+    };
+
+    if (fieldSuggestions && !locked)
+      return <SuggestionInput suggestions={fieldSuggestions} {...inputProps} />;
+
     return (
       <InputGroup className={locked ? "bg-input/50 opacity-70" : undefined}>
         <InputGroupInput
-          id={getInputId(field.key, context)}
-          name={getInputName(field.key, context)}
-          type="text"
           autoComplete={locked ? "off" : "on"}
-          list={datalistId}
-          placeholder={field.placeholder}
-          defaultValue={
-            entree ? ((entree[field.key] as string | null) ?? "") : undefined
-          }
-          readOnly={locked}
           className={
             locked ? "cursor-not-allowed text-muted-foreground" : undefined
           }
-          required={field.required}
+          {...inputProps}
         />
-        {fieldSuggestions && (
-          <datalist id={datalistId}>
-            {fieldSuggestions.map((value) => (
-              <option key={value} {...{ value }} />
-            ))}
-          </datalist>
-        )}
       </InputGroup>
     );
   }

@@ -4,6 +4,7 @@ import { Calendar04Icon, InvoiceIcon } from "@hugeicons/core-free-icons";
 import type { ReactNode } from "react";
 import { DatePickerField } from "@/components/DatePickerField";
 import { FieldLabel } from "@/components/FieldLabel";
+import { SuggestionInput } from "@/components/SuggestionInput";
 import { fr } from "@/messages/fr";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { Textarea } from "@/shadcn/ui/textarea";
@@ -43,7 +44,7 @@ export function SortieFormFields({
   // Several fiches in the same submission can each go up to this; the
   // server validates their sum against the real remaining stock
   maxPieces?: number;
-  // past bonCommande values, offered as a <datalist> — the multi-fiche form
+  // past bonCommande values, offered as suggestions — the multi-fiche form
   // namespaces every field under a per-fiche id, which defeats the
   // browser's own name-based autofill history, same reasoning as
   // entrees' origine/conteneur suggestions
@@ -95,27 +96,14 @@ export function SortieFormFields({
         <FieldLabel htmlFor={bonCommande.id} icon={InvoiceIcon}>
           Bon de commande
         </FieldLabel>
-        <InputGroup>
-          <InputGroupInput
-            id={bonCommande.id}
-            name={bonCommande.name}
-            defaultValue={sortie?.bonCommande ?? ""}
-            placeholder="C928492748"
-            list={
-              fieldSuggestions?.bonCommande.length
-                ? `${bonCommande.id}-suggestions`
-                : undefined
-            }
-            className="font-mono"
-          />
-        </InputGroup>
-        {Boolean(fieldSuggestions?.bonCommande.length) && (
-          <datalist id={`${bonCommande.id}-suggestions`}>
-            {fieldSuggestions?.bonCommande.map((value) => (
-              <option key={value} {...{ value }} />
-            ))}
-          </datalist>
-        )}
+        <SuggestionInput
+          id={bonCommande.id}
+          name={bonCommande.name}
+          defaultValue={sortie?.bonCommande ?? ""}
+          placeholder="C928492748"
+          suggestions={fieldSuggestions?.bonCommande ?? []}
+          className="font-mono"
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">

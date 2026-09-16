@@ -69,8 +69,8 @@ export async function getAvailableEntrees(): Promise<AvailableEntree[]> {
 }
 
 // the multi-fiche add form namespaces every field under a per-fiche uuid,
-// which defeats the browser's own name-based autofill history — a datalist
-// fed by past values is the fix, same reasoning as
+// which defeats the browser's own name-based autofill history — feeding past
+// values to a SuggestionInput is the fix, same reasoning as
 // entrees/actions.ts's getEntreeFieldSuggestions
 export async function getSortieFieldSuggestions(): Promise<{
   bonCommande: string[];

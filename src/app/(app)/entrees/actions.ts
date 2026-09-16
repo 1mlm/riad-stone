@@ -112,8 +112,9 @@ export async function getDesignationSuggestions(): Promise<
 }
 
 // the multi-card add form namespaces every field under a per-card uuid, which
-// defeats the browser's own name-based autofill history — a datalist fed by
-// past values is the fix, for the two free-text fields worth suggesting
+// defeats the browser's own name-based autofill history — feeding past values
+// to a SuggestionInput is the fix, for the two free-text fields worth
+// suggesting
 export async function getEntreeFieldSuggestions(): Promise<{
   origine: string[];
   conteneur: string[];

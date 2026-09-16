@@ -3,7 +3,7 @@ import type { EntreeRow } from "./types";
 
 // past values for text fields worth suggesting — keyed by field key, only
 // populated for fields the caller actually has suggestions for (origine,
-// conteneur). Feeds a native <datalist> since the multi-card add form
+// conteneur). Feeds a SuggestionInput, since the multi-card add form
 // namespaces every input's name under a per-card uuid, which defeats the
 // browser's own name-based autofill history
 export type FieldSuggestions = Partial<Record<EntreeField["key"], string[]>>;
