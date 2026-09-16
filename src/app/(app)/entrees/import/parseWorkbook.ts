@@ -1,5 +1,5 @@
 import type { Workbook, Worksheet } from "exceljs";
-import { lengthToMeters, type LengthUnit, metersToUnit } from "@/utils/length";
+import { type LengthUnit, lengthToMeters, metersToUnit } from "@/utils/length";
 import { cellDate, cellNumber, cellText } from "./cell";
 import {
   type ImportField,
@@ -210,15 +210,23 @@ function parseTable(
   // control and the same integer check the manual form uses, rather than
   // needing a parallel decimal-friendly path
   const toWholeCm = (value: number | null, unit: LengthUnit) =>
-    value === null ? null : Math.round(metersToUnit(lengthToMeters(value, unit), "cm"));
+    value === null
+      ? null
+      : Math.round(metersToUnit(lengthToMeters(value, unit), "cm"));
 
   const rows: ParsedEntreeRow[] = rawRows.map((raw) => ({
     id: String(nextRowId++),
     designation: raw.designation,
     reference: raw.reference,
-    longueurValue: toWholeCm(raw.longueurValue, explicitLongueurUnit ?? inferredUnit),
+    longueurValue: toWholeCm(
+      raw.longueurValue,
+      explicitLongueurUnit ?? inferredUnit,
+    ),
     longueurUnit: "cm",
-    largeurValue: toWholeCm(raw.largeurValue, explicitLargeurUnit ?? inferredUnit),
+    largeurValue: toWholeCm(
+      raw.largeurValue,
+      explicitLargeurUnit ?? inferredUnit,
+    ),
     largeurUnit: "cm",
     nombrePieces: raw.nombrePieces,
     date: raw.date,

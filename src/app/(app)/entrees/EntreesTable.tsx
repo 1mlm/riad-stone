@@ -34,6 +34,7 @@ import {
   DESIGNATION_THEN_REFERENCE_SORT,
 } from "./columns";
 import { EditEntreeDialog } from "./EditEntreeDialog";
+import { ImportEntreesDialog } from "./import/ImportEntreesDialog";
 import type { EntreeRow } from "./types";
 
 function EntreesTableContent({
@@ -116,6 +117,7 @@ function EntreesTableContent({
           resultLabelPlural={fr.searchBar.resultLabelPlural}
           {...{ resultCount }}
         />
+        <ImportEntreesDialog />
         <AddEntreeDialog {...{ designationSuggestions, fieldSuggestions }} />
       </div>
       <CustomTable

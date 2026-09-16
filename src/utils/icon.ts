@@ -16,6 +16,7 @@ import {
   Delete02Icon,
   Download01Icon,
   EditIcon,
+  FileImportIcon,
   FileNotFoundIcon,
   FilterIcon,
   HashIcon,
@@ -80,4 +81,5 @@ export const ICONS = {
   add: PlusSignIcon,
   delete: Delete02Icon,
   edit: EditIcon,
+  import: FileImportIcon,
 } satisfies Record<string, HugeIcon>;

@@ -3,11 +3,29 @@ import { HistoryItemType } from "@/generated/prisma/enums";
 import { getEventReference } from "@/utils/historySnapshot";
 import { prisma } from "@/utils/prisma";
 
+// every caller logs history strictly after its real change already committed
+// (the create/update/delete transaction lands first, this runs after) — so
+// logging was already meant to be best-effort, and letting it throw broke
+// that: a caller mid-transaction never sees this, but a caller outside one
+// (every create/update/delete action here) would surface a false failure to
+// the user for data that in fact saved correctly, with nothing telling them
+// so — caught live when a stale dev-server Prisma client rejected a brand
+// new enum value after an 18-row import had already landed
+async function logHistorySafely(write: () => Promise<unknown>): Promise<void> {
+  try {
+    await write();
+  } catch (error) {
+    console.error("Failed to log history event:", error);
+  }
+}
+
 export async function logHistory(
   type: HistoryItemType,
   data: Prisma.InputJsonObject,
 ): Promise<void> {
-  await prisma.historyEvent.create({ data: { type, data } });
+  await logHistorySafely(() =>
+    prisma.historyEvent.create({ data: { type, data } }),
+  );
 }
 
 // everything created in one submit still gets its own event, so each lot
@@ -24,9 +42,11 @@ export async function logHistoryBatch(
 ): Promise<void> {
   if (items.length === 0) return;
   const createdAt = new Date();
-  await prisma.historyEvent.createMany({
-    data: items.map((data) => ({ type, data, createdAt })),
-  });
+  await logHistorySafely(() =>
+    prisma.historyEvent.createMany({
+      data: items.map((data) => ({ type, data, createdAt })),
+    }),
+  );
 }
 
 // a lot's creation, whichever way it was created
