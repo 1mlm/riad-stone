@@ -28,20 +28,42 @@ import { countReferences, getRowFieldErrors } from "./validateImportRow";
 // no picker step, no template — clicking Importer (or dropping a file
 // anywhere on the page) goes straight from file to this popup, already
 // showing the rows it's about to add. Confirm or cancel from there
+// same shape importEntrees expects, off a preview row that's already
+// cleared validation (the null-coalescing defaults never actually apply at
+// that point, they're just satisfying the type)
+function buildImportInput(row: ParsedEntreeRow) {
+  return {
+    designation: row.designation ?? "",
+    reference: row.reference ?? "",
+    origine: row.origine,
+    conteneur: row.conteneur,
+    commentaire: row.commentaire,
+    date: row.date,
+    longueurValue: row.longueurValue ?? 0,
+    longueurUnit: row.longueurUnit,
+    largeurValue: row.largeurValue ?? 0,
+    largeurUnit: row.largeurUnit,
+    nombrePieces: row.nombrePieces ?? 0,
+  };
+}
+
 export function ImportEntreesDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rows, setRows] = useState<ParsedEntreeRow[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [existingReferences, setExistingReferences] = useState<Set<string>>(
     new Set(),
   );
   const [readError, setReadError] = useState<string | null>(null);
   const [unmatchedHeaders, setUnmatchedHeaders] = useState<string[][]>([]);
   const [pending, setPending] = useState(false);
+  const [selectionPending, setSelectionPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const resetState = () => {
     setRows([]);
+    setSelectedIds(new Set());
     setReadError(null);
     setUnmatchedHeaders([]);
     setSubmitError(null);
@@ -114,21 +136,7 @@ export function ImportEntreesDialog() {
     setPending(true);
     setSubmitError(null);
     try {
-      const result = await importEntrees(
-        rows.map((row) => ({
-          designation: row.designation ?? "",
-          reference: row.reference ?? "",
-          origine: row.origine,
-          conteneur: row.conteneur,
-          commentaire: row.commentaire,
-          date: row.date,
-          longueurValue: row.longueurValue ?? 0,
-          longueurUnit: row.longueurUnit,
-          largeurValue: row.largeurValue ?? 0,
-          largeurUnit: row.largeurUnit,
-          nombrePieces: row.nombrePieces ?? 0,
-        })),
-      );
+      const result = await importEntrees(rows.map(buildImportInput));
       if (result.error) {
         setSubmitError(result.error);
         return;
@@ -146,6 +154,36 @@ export function ImportEntreesDialog() {
       );
     } finally {
       setPending(false);
+    }
+  };
+
+  // imports only the selected rows and keeps the dialog open, so a batch
+  // can be worked through in pieces — fix the good rows, import them, come
+  // back for the rest, without losing your place. The rows that landed
+  // leave both `rows` and the selection; existingReferences is re-fetched
+  // since those references now exist for real, not just in this preview,
+  // so a leftover row reusing one still gets caught before the next submit
+  const handleImportSelected = async () => {
+    const selectedRows = rows.filter((row) => selectedIds.has(row.id));
+    if (selectedRows.length === 0) return;
+    setSelectionPending(true);
+    setSubmitError(null);
+    try {
+      const result = await importEntrees(selectedRows.map(buildImportInput));
+      if (result.error) {
+        setSubmitError(result.error);
+        return;
+      }
+      setRows(rows.filter((row) => !selectedIds.has(row.id)));
+      setSelectedIds(new Set());
+      setExistingReferences(new Set(await getExistingReferences()));
+      playChime("success");
+    } catch {
+      setSubmitError(
+        "La requête a échoué — vérifiez la connexion et réessayez. Si l'import a en fait réussi, les entrées seront visibles dans la liste.",
+      );
+    } finally {
+      setSelectionPending(false);
     }
   };
 
@@ -230,8 +268,11 @@ export function ImportEntreesDialog() {
                   {rows.length > 1 ? "s" : ""}
                 </span>
                 <ImportPreviewTable
-                  {...{ rows, existingReferences }}
+                  {...{ rows, existingReferences, selectedIds }}
+                  onSelectedIdsChange={setSelectedIds}
                   onRowsChange={setRows}
+                  onImportSelected={handleImportSelected}
+                  importSelectedPending={selectionPending}
                 />
               </div>
             ) : (

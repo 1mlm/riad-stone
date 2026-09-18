@@ -4,6 +4,7 @@ import { Icon } from "@/components/Icon";
 import { UnitDropdown } from "@/components/UnitDropdown";
 import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
+import { Checkbox } from "@/shadcn/ui/checkbox";
 import { Input } from "@/shadcn/ui/input";
 import { InputGroup, InputGroupInput } from "@/shadcn/ui/input-group";
 import { cn } from "@/shadcn/utils";
@@ -19,11 +20,15 @@ import type { RowFieldError } from "./validateImportRow";
 export function ImportPreviewRow({
   row,
   errors,
+  selected,
+  onToggleSelected,
   onChange,
   onDelete,
 }: {
   row: ParsedEntreeRow;
   errors: Set<RowFieldError>;
+  selected: boolean;
+  onToggleSelected: () => void;
   onChange: (row: ParsedEntreeRow) => void;
   onDelete: () => void;
 }) {
@@ -36,7 +41,14 @@ export function ImportPreviewRow({
     cn("p-1 align-top", hasError && "bg-destructive/10");
 
   return (
-    <tr className="border-t border-border/50">
+    <tr className={cn("border-t border-border/50", selected && "bg-primary/5")}>
+      <td className="p-1 text-center align-top">
+        <Checkbox
+          checked={selected}
+          onCheckedChange={onToggleSelected}
+          aria-label="Sélectionner cette ligne"
+        />
+      </td>
       <td className={cellClass(errors.has("reference"))}>
         <Input
           value={row.reference ?? ""}
