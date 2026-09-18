@@ -1,11 +1,12 @@
 "use client";
 
 import ExcelJS from "exceljs";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DialogTitleChip } from "@/components/DialogTitleChip";
 import { FormError } from "@/components/FormError";
 import { Icon } from "@/components/Icon";
 import { SubmitButton } from "@/components/SubmitButton";
+import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
 import {
   Dialog,
@@ -14,23 +15,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/shadcn/ui/dialog";
-import { cn } from "@/shadcn/utils";
 import { ICONS } from "@/utils/icon";
 import { playChime } from "@/utils/sound";
 import { getExistingReferences, importEntrees } from "../actions";
 import { ImportPreviewTable } from "./ImportPreviewTable";
-import { ImportStepPicker } from "./ImportStepPicker";
 import { parseWorkbook } from "./parseWorkbook";
 import type { ParsedEntreeRow } from "./types";
+import { useWindowFileDrop } from "./useWindowFileDrop";
 import { countReferences, getRowFieldErrors } from "./validateImportRow";
 
-type Step = "pick" | "preview";
-
+// no picker step, no template — clicking Importer (or dropping a file
+// anywhere on the page) goes straight from file to this popup, already
+// showing the rows it's about to add. Confirm or cancel from there
 export function ImportEntreesDialog() {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<Step>("pick");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [rows, setRows] = useState<ParsedEntreeRow[]>([]);
   const [existingReferences, setExistingReferences] = useState<Set<string>>(
     new Set(),
@@ -41,7 +41,6 @@ export function ImportEntreesDialog() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const resetState = () => {
-    setStep("pick");
     setRows([]);
     setReadError(null);
     setUnmatchedHeaders([]);
@@ -49,8 +48,8 @@ export function ImportEntreesDialog() {
   };
 
   const handleFileSelected = async (file: File) => {
-    setReadError(null);
-    setUnmatchedHeaders([]);
+    resetState();
+    setDialogOpen(true);
     try {
       const buffer = await file.arrayBuffer();
       const workbook = new ExcelJS.Workbook();
@@ -61,22 +60,23 @@ export function ImportEntreesDialog() {
         setUnmatchedHeaders(result.headerCandidates.map((c) => c.headers));
         setReadError(
           result.headerCandidates.length > 0
-            ? "Aucun tableau reconnu — voici les en-têtes trouvés, à comparer avec le modèle."
+            ? "Aucun tableau reconnu dans ce fichier — voici les en-têtes trouvés."
             : "Aucune donnée reconnaissable n'a été trouvée dans ce fichier.",
         );
         return;
       }
 
-      const [existing] = await Promise.all([getExistingReferences()]);
+      const existing = await getExistingReferences();
       setExistingReferences(new Set(existing));
       setRows(result.tables.flatMap((table) => table.rows));
-      setStep("preview");
     } catch {
       setReadError(
         "Ce fichier n'a pas pu être lu — vérifiez qu'il s'agit bien d'un fichier Excel (.xlsx).",
       );
     }
   };
+
+  const isDraggingFile = useWindowFileDrop(handleFileSelected);
 
   const referenceCounts = countReferences(rows);
   const hasErrors = rows.some(
@@ -107,7 +107,7 @@ export function ImportEntreesDialog() {
         setSubmitError(result.error);
         return;
       }
-      setOpen(false);
+      setDialogOpen(false);
       resetState();
       playChime("success");
     } catch {
@@ -124,93 +124,107 @@ export function ImportEntreesDialog() {
   };
 
   return (
-    <Dialog
-      {...{ open }}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) resetState();
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-full corner-squircle">
-          <Icon icon={ICONS.import} />
-          Importer
-        </Button>
-      </DialogTrigger>
-      <DialogContent
-        style={{ width: "min(100vw - 2rem, 64rem)" }}
-        className="flex max-h-[calc(100dvh-2rem)] max-w-none flex-col sm:max-w-none"
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) handleFileSelected(file);
+        }}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        className="rounded-full corner-squircle"
+        onClick={() => fileInputRef.current?.click()}
       >
-        <DialogHeader>
-          <DialogTitle>
-            Importer des{" "}
-            <DialogTitleChip icon={ICONS.entree}>entrées</DialogTitleChip>
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Importer plusieurs entrées à partir d'un fichier Excel.
-          </DialogDescription>
-        </DialogHeader>
+        <Icon icon={ICONS.import} />
+        Importer
+      </Button>
 
-        {/* the picker and the preview sit side by side in a strip twice the
-            dialog's width, translated left once a file is chosen — the
-            dialog's own overflow-x-hidden (below) clips whichever half isn't
-            showing, so this is a pure CSS transition, no library */}
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-          <div
-            className={cn(
-              "flex w-[200%] transition-transform duration-300 ease-in-out",
-              step === "preview" && "-translate-x-1/2",
-            )}
-          >
-            <div className="flex w-1/2 flex-col gap-3 pr-2">
-              <ImportStepPicker onFileSelected={handleFileSelected} />
-              {readError && (
-                <div className="flex flex-col gap-2">
-                  <FormError>{readError}</FormError>
-                  {unmatchedHeaders.length > 0 && (
-                    <div className="flex flex-col gap-1 rounded-lg border border-border p-2 text-xs text-muted-foreground">
-                      {unmatchedHeaders.map((headers, index) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: these rows have no stable identity, only their position in an error report that never reorders
-                        <span key={index}>{headers.join(" · ")}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex w-1/2 flex-col gap-3 pl-2">
-              {step === "preview" && (
-                <>
-                  <div className="flex items-center justify-between gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setStep("pick");
-                        setRows([]);
-                      }}
-                    >
-                      <Icon icon={ICONS.back} />
-                      Choisir un autre fichier
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {rows.length} ligne{rows.length > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <ImportPreviewTable
-                    {...{ rows, existingReferences }}
-                    onRowsChange={setRows}
-                  />
-                </>
-              )}
-            </div>
+      {/* covers the whole page (not just this button) the moment a file is
+          dragged over it anywhere — dropping it goes straight into the same
+          popup as clicking Importer would */}
+      {isDraggingFile && (
+        <div
+          aria-hidden
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm"
+        >
+          <div className="flex flex-col items-center gap-3 rounded-2xl corner-squircle border-2 border-dashed border-primary p-12 text-primary">
+            <Icon icon={ICONS.import} className="size-10" />
+            <span className="text-lg font-semibold">
+              Déposez le fichier ici
+            </span>
           </div>
         </div>
+      )}
 
-        <FormError>{submitError}</FormError>
-        {step === "preview" && (
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(next) => {
+          setDialogOpen(next);
+          if (!next) resetState();
+        }}
+      >
+        <DialogContent
+          style={{ width: "min(100vw - 2rem, 64rem)" }}
+          className="flex max-h-[calc(100dvh-2rem)] max-w-none flex-col sm:max-w-none"
+        >
+          <DialogHeader>
+            <DialogTitle>
+              Importer des{" "}
+              <DialogTitleChip icon={ICONS.entree}>entrées</DialogTitleChip>
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Importer plusieurs entrées à partir d'un fichier Excel.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            {readError ? (
+              <div className="flex flex-col gap-2">
+                <FormError>{readError}</FormError>
+                {unmatchedHeaders.length > 0 && (
+                  <div className="flex flex-col gap-1 rounded-lg border border-border p-2 text-xs text-muted-foreground">
+                    {unmatchedHeaders.map((headers, index) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: these rows have no stable identity, only their position in an error report that never reorders
+                      <span key={index}>{headers.join(" · ")}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : rows.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-muted-foreground">
+                  {rows.length} ligne{rows.length > 1 ? "s" : ""} détectée
+                  {rows.length > 1 ? "s" : ""}
+                </span>
+                <ImportPreviewTable
+                  {...{ rows, existingReferences }}
+                  onRowsChange={setRows}
+                />
+              </div>
+            ) : (
+              <p className="flex items-center gap-1.5 py-6 text-sm text-muted-foreground">
+                <Icon icon={ICONS.retry} className="animate-spin" />
+                Lecture du fichier...
+              </p>
+            )}
+          </div>
+
+          <FormError>{submitError}</FormError>
           <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDialogOpen(false)}
+            >
+              {fr.common.cancel}
+            </Button>
             <SubmitButton
               icon={ICONS.check}
               {...{ pending }}
@@ -220,8 +234,8 @@ export function ImportEntreesDialog() {
               Importer {rows.length > 1 ? `${rows.length} entrées` : "l'entrée"}
             </SubmitButton>
           </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
