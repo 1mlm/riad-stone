@@ -92,7 +92,11 @@ export function CustomTableColumnHeader<T>({
   );
 
   if (!canFilter && !canSort)
-    return <span className="inline-flex">{label}</span>;
+    return (
+      <span className="flex w-full items-center justify-center px-4 py-2">
+        {label}
+      </span>
+    );
 
   // a flyout sub-menu (side="right") has nowhere to go on a narrow mobile
   // viewport — Radix's Sub only flips right/left, and near a screen edge
@@ -110,7 +114,9 @@ export function CustomTableColumnHeader<T>({
         if (!open) setView("root");
       }}
     >
-      <DropdownMenuTrigger>{label}</DropdownMenuTrigger>
+      <DropdownMenuTrigger className="flex w-full cursor-pointer items-center justify-center px-4 py-2 hover:bg-foreground/5">
+        {label}
+      </DropdownMenuTrigger>
       <DropdownMenuContent
         align="center"
         className={cn(

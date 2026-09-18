@@ -7,6 +7,11 @@ import { MetaPage } from "@/components/MetaPage";
 import { Checkbox } from "@/shadcn/ui/checkbox";
 import { DropdownMenuItem } from "@/shadcn/ui/dropdown-menu";
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/shadcn/ui/input-group";
+import {
   TableBody,
   TableCell,
   TableHead,
@@ -50,6 +55,10 @@ export type CustomTableColumn<T> = {
   // fades header + cell to signal "secondary, for context" info, e.g. the
   // entree's own fields shown alongside a sortie's own fields
   dimmed?: boolean;
+  // reddens the cell background, e.g. a validation error on an editable
+  // column — kept table-level (not string-only) so any column type could
+  // flag a cell invalid, even though only editable columns use it today
+  getCellError?: (item: T) => boolean;
 } & (
   | {
       type: "string";
@@ -78,6 +87,12 @@ export type CustomTableColumn<T> = {
       // can be blank (e.g. a per-group total hidden for single-row groups),
       // where two unrelated blank rows would otherwise look "equal" and merge
       getMergeKey?: (item: T) => string;
+      // fully custom cell content (an input, a unit dropdown, whatever the
+      // caller needs) instead of the plain getString text — getString still
+      // drives sort/filter/search/export, render only overrides what's
+      // painted. Bypasses the empty-value placeholder and onClick wrapping,
+      // since a render column owns its own interaction entirely
+      render?: (item: T) => ReactNode;
     }
   | {
       type: "copy";
@@ -186,6 +201,9 @@ export function CustomTable<T>({
   onDeleteSelected,
   pinnedItemIds,
   labels: labelOverrides,
+  syncToUrl = true,
+  selectionActions,
+  actionBarPlacement = "fixed",
 }: {
   items: T[];
   columns: CustomTableColumn<T>[];
@@ -197,7 +215,7 @@ export function CustomTable<T>({
   sortable?: boolean;
   // turn off for short lists where paging just adds a click
   paginate?: boolean;
-  // must match the queryKey given to the page's SearchBar
+  // must match the queryKey given to the page's SearchBar — ignored when syncToUrl is false
   searchQueryKey?: string;
   // override when a second CustomTable can render on the same page/URL (e.g.
   // one nested in a dialog) so their URL-synced state doesn't collide
@@ -220,12 +238,24 @@ export function CustomTable<T>({
   pinnedItemIds?: string[];
   // English by default, override the keys you need to localize
   labels?: Partial<CustomTableLabels>;
+  // false for a table embedded in a dialog — search/filter/sort/page become
+  // plain component state instead of URL query params, and the table draws
+  // its own search box (there's no external SearchBar to share local state
+  // with) using labels.search as its placeholder
+  syncToUrl?: boolean;
+  // extra buttons next to the built-in selection actions, e.g. a
+  // caller-specific "Import selected" — only shown once something's selected
+  selectionActions?: (items: T[]) => ReactNode;
+  // see CustomTableActionBar — "inline" for a table embedded in a dialog,
+  // where a viewport-fixed bar would collide with the dialog's own footer
+  actionBarPlacement?: "fixed" | "inline";
 }) {
   const labels = resolveTableLabels(labelOverrides);
 
   const {
     visibleItems,
     search,
+    setSearch,
     sort,
     sortRaw,
     setSort,
@@ -242,6 +272,7 @@ export function CustomTable<T>({
     defaultSort,
     getItemId,
     pinnedItemIds,
+    syncToUrl,
   });
 
   useEffect(() => {
@@ -255,6 +286,7 @@ export function CustomTable<T>({
       // a newly pinned row (e.g. just-created) belongs on page 1 — jump
       // there the same way a narrowing filter/search/sort would
       resetDeps: [search, filterValues, sortRaw, pinnedItemIds],
+      syncToUrl,
     });
 
   const mergeRuns = useMergeRuns(columns, paginatedItems);
@@ -302,236 +334,255 @@ export function CustomTable<T>({
     "size-7 rounded-[min(var(--radius-md),12px)] corner-squircle";
 
   return (
-    <div className="rounded-(--radius-concentric) corner-squircle overflow-clip">
-      <div
-        ref={scrollContainerRef}
-        className="w-full overflow-x-auto"
-        style={{ maskImage, WebkitMaskImage: maskImage }}
-      >
-        <table className="w-full border-separate border-spacing-0 caption-bottom text-sm">
-          <TableHeader>
-            {/* no internal scroll region to be sticky within — the page
+    <div className="flex flex-col gap-2">
+      {!syncToUrl && (
+        <InputGroup className="rounded-(--radius-concentric)!">
+          <InputGroupAddon>
+            <Icon icon={ICONS.filter} />
+          </InputGroupAddon>
+          <InputGroupInput
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={labels.search}
+          />
+        </InputGroup>
+      )}
+      <div className="rounded-(--radius-concentric) corner-squircle overflow-clip">
+        <div
+          ref={scrollContainerRef}
+          className="w-full overflow-x-auto"
+          style={{ maskImage, WebkitMaskImage: maskImage }}
+        >
+          <table className="w-full border-separate border-spacing-0 caption-bottom text-sm">
+            <TableHeader>
+              {/* no internal scroll region to be sticky within — the page
             scrolls instead, so the header just scrolls away with the rest
             of the table. Top corners round for free off the wrapper's own
             overflow-clip, no need for the header cells to also round
             themselves */}
-            <TableRow
-              className={cn(
-                "*:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
-                isTableEmpty &&
-                  "*:first:rounded-bl-(--radius-concentric) *:first:corner-squircle *:last:rounded-br-(--radius-concentric) *:last:corner-squircle",
-              )}
-            >
-              {hasCheckboxColumn && (
-                <TableHead ref={checkboxColumnRef} className="left-0 z-20">
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={triState}
-                      onCheckedChange={toggleAll}
-                      aria-label={labels.selectAllRows}
-                      className={leadCheckboxClassName}
+              <TableRow
+                className={cn(
+                  "*:outline *:outline-border *:text-center *:text-xs *:bg-muted *:px-4",
+                  isTableEmpty &&
+                    "*:first:rounded-bl-(--radius-concentric) *:first:corner-squircle *:last:rounded-br-(--radius-concentric) *:last:corner-squircle",
+                )}
+              >
+                {hasCheckboxColumn && (
+                  <TableHead ref={checkboxColumnRef} className="left-0 z-20">
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={triState}
+                        onCheckedChange={toggleAll}
+                        aria-label={labels.selectAllRows}
+                        className={leadCheckboxClassName}
+                      />
+                    </div>
+                  </TableHead>
+                )}
+                {hasRowMenu && <TableHead className="w-10" />}
+                {bodyColumns.map((column) => (
+                  <TableHead
+                    key={column.id}
+                    className={cn(
+                      "px-0!",
+                      column.dividerBefore && "border-l-2 border-l-border",
+                      column.dimmed && "opacity-80",
+                    )}
+                  >
+                    <CustomTableColumnHeader
+                      {...{ column, items, filterable, sortable, labels }}
+                      getField={getColumnField(column.id)}
+                      setField={(field: ColumnFilterField, value: string) =>
+                        setColumnField(column.id, field, value)
+                      }
+                      sort={sort?.columnId === column.id ? sort.dir : null}
+                      onSortChange={(dir: "asc" | "desc" | null) =>
+                        setSort(dir ? { columnId: column.id, dir } : null)
+                      }
                     />
-                  </div>
-                </TableHead>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && (
+                <CustomTableSkeletonRows
+                  {...{ bodyColumns, hasCheckboxColumn, hasRowMenu }}
+                />
               )}
-              {hasRowMenu && <TableHead className="w-10" />}
-              {bodyColumns.map((column) => (
-                <TableHead
-                  key={column.id}
-                  className={cn(
-                    column.dividerBefore && "border-l-2 border-l-border",
-                    column.dimmed && "opacity-80",
-                  )}
-                >
-                  <CustomTableColumnHeader
-                    {...{ column, items, filterable, sortable, labels }}
-                    getField={getColumnField(column.id)}
-                    setField={(field: ColumnFilterField, value: string) =>
-                      setColumnField(column.id, field, value)
-                    }
-                    sort={sort?.columnId === column.id ? sort.dir : null}
-                    onSortChange={(dir: "asc" | "desc" | null) =>
-                      setSort(dir ? { columnId: column.id, dir } : null)
-                    }
-                  />
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && (
-              <CustomTableSkeletonRows
-                {...{ bodyColumns, hasCheckboxColumn, hasRowMenu }}
-              />
-            )}
-            {!loading &&
-              paginatedItems.map((item, index) => {
-                const id = getItemId(item);
-                // a mergeAdjacent column starting a new run here means a new
-                // designation group begins — a heavier top border separates
-                // it from the previous group, on top of the usual striping
-                const isGroupStart =
-                  index > 0 &&
-                  columns.some(
-                    (column) =>
-                      column.type === "string" &&
-                      column.mergeAdjacent &&
-                      mergeRuns.get(column.id)?.[index]?.start,
-                  );
-                const selected = isSelected(id);
-                const isPinned = pinnedItemIds?.includes(id) ?? false;
-                // opaque color-mix instead of a translucent bg-*/N utility —
-                // the sticky lead cell paints this same color on itself, and
-                // a translucent background there would show other columns
-                // sliding underneath it as the table scrolls horizontally
-                const rowBackgroundClassName = selected
-                  ? "bg-[color-mix(in_oklch,var(--background),var(--color-green-500)_15%)]"
-                  : isPinned
-                    ? "bg-[color-mix(in_oklch,var(--background),var(--color-amber-400)_12%)]"
-                    : index % 2 === 1
-                      ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
-                      : "bg-background";
-                const isLastDataRow = index === paginatedItems.length - 1;
-                // border-separate means a <tr> border never paints — the row
-                // divider and group-start divider both live on the cells.
-                // The checkbox column never spans rows, so its own bottom
-                // edge always matches the row's
-                const selectItem = selectable ? (
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setSelectionMode(true);
-                      toggleRow(id);
-                    }}
-                  >
-                    <Icon icon={ICONS.actions} />
-                    {labels.selectRow}
-                  </DropdownMenuItem>
-                ) : null;
+              {!loading &&
+                paginatedItems.map((item, index) => {
+                  const id = getItemId(item);
+                  // a mergeAdjacent column starting a new run here means a new
+                  // designation group begins — a heavier top border separates
+                  // it from the previous group, on top of the usual striping
+                  const isGroupStart =
+                    index > 0 &&
+                    columns.some(
+                      (column) =>
+                        column.type === "string" &&
+                        column.mergeAdjacent &&
+                        mergeRuns.get(column.id)?.[index]?.start,
+                    );
+                  const selected = isSelected(id);
+                  const isPinned = pinnedItemIds?.includes(id) ?? false;
+                  // opaque color-mix instead of a translucent bg-*/N utility —
+                  // the sticky lead cell paints this same color on itself, and
+                  // a translucent background there would show other columns
+                  // sliding underneath it as the table scrolls horizontally
+                  const rowBackgroundClassName = selected
+                    ? "bg-[color-mix(in_oklch,var(--background),var(--color-green-500)_15%)]"
+                    : isPinned
+                      ? "bg-[color-mix(in_oklch,var(--background),var(--color-amber-400)_12%)]"
+                      : index % 2 === 1
+                        ? "bg-[color-mix(in_oklch,var(--background),var(--foreground)_5%)]"
+                        : "bg-background";
+                  const isLastDataRow = index === paginatedItems.length - 1;
+                  // border-separate means a <tr> border never paints — the row
+                  // divider and group-start divider both live on the cells.
+                  // The checkbox column never spans rows, so its own bottom
+                  // edge always matches the row's
+                  const selectItem = selectable ? (
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setSelectionMode(true);
+                        toggleRow(id);
+                      }}
+                    >
+                      <Icon icon={ICONS.actions} />
+                      {labels.selectRow}
+                    </DropdownMenuItem>
+                  ) : null;
 
-                return (
-                  <TableRow
-                    key={id}
-                    className={cn("group/row", rowBackgroundClassName)}
-                  >
-                    {hasCheckboxColumn && (
-                      <TableCell
-                        className={cn(
-                          "sticky left-0 z-10 border-r border-border/50 text-center",
-                          rowBackgroundClassName,
-                          !isLastDataRow && "border-b border-border",
-                          isGroupStart && "border-t-2 border-t-border",
-                          isLastDataRow &&
-                            "rounded-bl-(--radius-concentric) corner-squircle",
-                        )}
-                      >
-                        <div className="flex justify-center">
-                          <Checkbox
-                            checked={selected}
-                            onCheckedChange={() => toggleRow(id)}
-                            aria-label={labels.selectRow}
-                            className={leadCheckboxClassName}
-                          />
-                        </div>
-                      </TableCell>
-                    )}
-                    {hasRowMenu && (
-                      <TableCell
-                        className={cn(
-                          "border-r border-border/50 text-center",
-                          !isLastDataRow && "border-b border-border",
-                          isGroupStart && "border-t-2 border-t-border",
-                          isLastDataRow &&
-                            !hasCheckboxColumn &&
-                            "rounded-bl-(--radius-concentric) corner-squircle",
-                        )}
-                      >
-                        <RowMenu
-                          ariaLabel={labels.rowMenuLabel}
-                          icon={MoreVerticalIcon}
-                        >
-                          {actionsColumn
-                            ? actionsColumn.getButtons(item, selectItem)
-                            : selectItem}
-                        </RowMenu>
-                      </TableCell>
-                    )}
-                    {bodyColumns.map((column, columnIndex) => {
-                      const run =
-                        column.type === "string" && column.mergeAdjacent
-                          ? mergeRuns.get(column.id)?.[index]
-                          : undefined;
-                      if (run && !run.start) return null;
-                      // a merged group's cell rowSpans past this row — the
-                      // one actually touching the table's bottom edge is
-                      // wherever that span ends, not necessarily this row
-                      const isBottomEdgeCell = run?.start
-                        ? index + run.length - 1 === paginatedItems.length - 1
-                        : isLastDataRow;
-                      return (
+                  return (
+                    <TableRow
+                      key={id}
+                      className={cn("group/row", rowBackgroundClassName)}
+                    >
+                      {hasCheckboxColumn && (
                         <TableCell
-                          key={column.id}
-                          rowSpan={run?.start ? run.length : undefined}
                           className={cn(
-                            "border-r border-border/50 last:border-r-0",
-                            !isBottomEdgeCell && "border-b border-border",
+                            "sticky left-0 z-10 border-r border-border/50 text-center",
+                            rowBackgroundClassName,
+                            !isLastDataRow && "border-b border-border",
                             isGroupStart && "border-t-2 border-t-border",
-                            column.dividerBefore &&
-                              "border-l-2 border-l-border",
-                            column.dimmed && "opacity-80",
-                            column.type === "string" &&
-                              column.align === "right" &&
-                              "text-right",
-                            (column.type === "copy" ||
-                              column.type === "enum" ||
-                              column.type === "tags") &&
-                              "text-center",
-                            isBottomEdgeCell &&
-                              columnIndex === 0 &&
-                              !hasCheckboxColumn &&
-                              !hasRowMenu &&
+                            isLastDataRow &&
                               "rounded-bl-(--radius-concentric) corner-squircle",
-                            isBottomEdgeCell &&
-                              columnIndex === bodyColumns.length - 1 &&
-                              "rounded-br-(--radius-concentric) corner-squircle",
-                            run?.start &&
-                              run.length > 1 &&
-                              "bg-foreground/5! align-middle",
                           )}
                         >
-                          <CustomTableCell {...{ column, item, labels }} />
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={selected}
+                              onCheckedChange={() => toggleRow(id)}
+                              aria-label={labels.selectRow}
+                              className={leadCheckboxClassName}
+                            />
+                          </div>
                         </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
-          </TableBody>
-        </table>
-      </div>
-      {!loading && visibleItems.length === 0 && (
-        <MetaPage
-          icon={InboxIcon}
-          title={labels.emptyTitle}
-          className="border-t border-border"
+                      )}
+                      {hasRowMenu && (
+                        <TableCell
+                          className={cn(
+                            "border-r border-border/50 text-center",
+                            !isLastDataRow && "border-b border-border",
+                            isGroupStart && "border-t-2 border-t-border",
+                            isLastDataRow &&
+                              !hasCheckboxColumn &&
+                              "rounded-bl-(--radius-concentric) corner-squircle",
+                          )}
+                        >
+                          <RowMenu
+                            ariaLabel={labels.rowMenuLabel}
+                            icon={MoreVerticalIcon}
+                          >
+                            {actionsColumn
+                              ? actionsColumn.getButtons(item, selectItem)
+                              : selectItem}
+                          </RowMenu>
+                        </TableCell>
+                      )}
+                      {bodyColumns.map((column, columnIndex) => {
+                        const run =
+                          column.type === "string" && column.mergeAdjacent
+                            ? mergeRuns.get(column.id)?.[index]
+                            : undefined;
+                        if (run && !run.start) return null;
+                        // a merged group's cell rowSpans past this row — the
+                        // one actually touching the table's bottom edge is
+                        // wherever that span ends, not necessarily this row
+                        const isBottomEdgeCell = run?.start
+                          ? index + run.length - 1 === paginatedItems.length - 1
+                          : isLastDataRow;
+                        return (
+                          <TableCell
+                            key={column.id}
+                            rowSpan={run?.start ? run.length : undefined}
+                            className={cn(
+                              "border-r border-border/50 last:border-r-0",
+                              !isBottomEdgeCell && "border-b border-border",
+                              isGroupStart && "border-t-2 border-t-border",
+                              column.dividerBefore &&
+                                "border-l-2 border-l-border",
+                              column.dimmed && "opacity-80",
+                              column.type === "string" &&
+                                column.align === "right" &&
+                                "text-right",
+                              (column.type === "copy" ||
+                                column.type === "enum" ||
+                                column.type === "tags") &&
+                                "text-center",
+                              isBottomEdgeCell &&
+                                columnIndex === 0 &&
+                                !hasCheckboxColumn &&
+                                !hasRowMenu &&
+                                "rounded-bl-(--radius-concentric) corner-squircle",
+                              isBottomEdgeCell &&
+                                columnIndex === bodyColumns.length - 1 &&
+                                "rounded-br-(--radius-concentric) corner-squircle",
+                              run?.start &&
+                                run.length > 1 &&
+                                "bg-foreground/5! align-middle",
+                              column.getCellError?.(item) &&
+                                "bg-destructive/10!",
+                            )}
+                          >
+                            <CustomTableCell {...{ column, item, labels }} />
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </table>
+        </div>
+        {!loading && visibleItems.length === 0 && (
+          <MetaPage
+            icon={InboxIcon}
+            title={labels.emptyTitle}
+            className="border-t border-border"
+          />
+        )}
+        <CustomTableActionBar
+          {...{
+            currentPage,
+            setPage,
+            pageCount,
+            canResetFilterAndSort,
+            resetFilterAndSort,
+            selectable,
+            selectionMode,
+            clearSelection,
+            selectedItems,
+            onDeleteSelected,
+            columns,
+            labels,
+            exportFilePrefix,
+            selectionActions,
+            placement: actionBarPlacement,
+          }}
         />
-      )}
-      <CustomTableActionBar
-        {...{
-          currentPage,
-          setPage,
-          pageCount,
-          canResetFilterAndSort,
-          resetFilterAndSort,
-          selectable,
-          selectionMode,
-          clearSelection,
-          selectedItems,
-          onDeleteSelected,
-          columns,
-          labels,
-          exportFilePrefix,
-        }}
-      />
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { parseAsString, useQueryState, useQueryStates } from "nuqs";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { CustomTableColumn } from "./CustomTable";
 import {
   type ColumnFilterField,
@@ -47,6 +47,7 @@ export function useTableFilterSort<T>(
     defaultSort,
     getItemId,
     pinnedItemIds,
+    syncToUrl,
   }: {
     filterable: boolean;
     sortable: boolean;
@@ -57,12 +58,23 @@ export function useTableFilterSort<T>(
     // kept in front of the sorted/filtered list, in this order, regardless
     // of the active sort — e.g. rows just created this session
     pinnedItemIds?: string[];
+    // false for a table embedded in a dialog: its search/filter/sort are
+    // session-local, not something that belongs in the page's shareable URL
+    // or should survive the dialog closing. Both branches are always called
+    // (hooks can't be conditional) and the unused one just sits idle
+    syncToUrl: boolean;
   },
 ) {
-  const [search] = useQueryState(searchQueryKey, { defaultValue: "" });
-  const [sortRaw, setSortRaw] = useQueryState(sortQueryKey, {
+  const [urlSearch] = useQueryState(searchQueryKey, { defaultValue: "" });
+  const [localSearch, setLocalSearch] = useState("");
+  const search = syncToUrl ? urlSearch : localSearch;
+
+  const [urlSortRaw, setUrlSortRaw] = useQueryState(sortQueryKey, {
     defaultValue: "",
   });
+  const [localSortRaw, setLocalSortRaw] = useState("");
+  const sortRaw = syncToUrl ? urlSortRaw : localSortRaw;
+  const setSortRaw = syncToUrl ? setUrlSortRaw : setLocalSortRaw;
   const sort = sortable ? parseSort(sortRaw) : null;
 
   const filterParsers = useMemo(
@@ -79,7 +91,15 @@ export function useTableFilterSort<T>(
       ),
     [columns, filterable],
   );
-  const [filterValues, setFilterValues] = useQueryStates(filterParsers);
+  const [urlFilterValues, setUrlFilterValues] = useQueryStates(filterParsers);
+  const [localFilterValues, setLocalFilterValues] = useState<
+    Record<string, string>
+  >({});
+  const filterValues = syncToUrl ? urlFilterValues : localFilterValues;
+  const setFilterValues = syncToUrl
+    ? setUrlFilterValues
+    : (patch: Record<string, string>) =>
+        setLocalFilterValues((prev) => ({ ...prev, ...patch }));
 
   const getColumnField =
     (columnId: string) =>
@@ -167,6 +187,9 @@ export function useTableFilterSort<T>(
   return {
     visibleItems,
     search,
+    // only meaningful when syncToUrl is false — otherwise the page's own
+    // SearchBar owns writes to the shared URL key instead
+    setSearch: setLocalSearch,
     sort,
     // raw string form, safe to use as an effect dependency (parsed `sort` is
     // a fresh object every render even when unchanged, which would falsely

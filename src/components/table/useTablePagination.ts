@@ -1,5 +1,5 @@
 import { parseAsInteger, useQueryState } from "nuqs";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const PAGE_SIZE = 100;
 
@@ -13,16 +13,21 @@ export function useTablePagination<T>(
     paginate,
     pageQueryKey,
     resetDeps,
+    syncToUrl,
   }: {
     paginate: boolean;
     pageQueryKey: string;
     resetDeps: readonly unknown[];
+    syncToUrl: boolean;
   },
 ) {
-  const [page, setPage] = useQueryState(
+  const [urlPage, setUrlPage] = useQueryState(
     pageQueryKey,
     parseAsInteger.withDefault(1),
   );
+  const [localPage, setLocalPage] = useState(1);
+  const page = syncToUrl ? urlPage : localPage;
+  const setPage = syncToUrl ? setUrlPage : setLocalPage;
   const pageCount = paginate
     ? Math.max(1, Math.ceil(visibleItems.length / PAGE_SIZE))
     : 1;

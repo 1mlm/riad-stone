@@ -1,7 +1,7 @@
 "use client";
 
 import { BrushCleaningIcon, Delete02Icon } from "@hugeicons/core-free-icons";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/shadcn/ui/button";
@@ -14,6 +14,7 @@ import {
   PaginationPrevious,
 } from "@/shadcn/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shadcn/ui/popover";
+import { cn } from "@/shadcn/utils";
 import { ICONS } from "@/utils/icon";
 import type { CustomTableColumn } from "./CustomTable";
 import { ExtractButton } from "./ExtractButton";
@@ -97,6 +98,8 @@ export function CustomTableActionBar<T>({
   columns,
   labels,
   exportFilePrefix,
+  selectionActions,
+  placement = "fixed",
 }: {
   currentPage: number;
   setPage: (page: number) => void;
@@ -111,13 +114,29 @@ export function CustomTableActionBar<T>({
   columns: CustomTableColumn<T>[];
   labels: CustomTableLabels;
   exportFilePrefix: string;
+  // extra buttons rendered alongside the built-in selection actions, e.g. a
+  // caller-specific "Import selected" — mirrors how a "buttons" column's
+  // getButtons(item, selectItem) already lets a caller slot its own actions
+  // in next to a ready-made one
+  selectionActions?: (items: T[]) => ReactNode;
+  // "fixed" (default) floats the bar over the viewport, which is right for
+  // a full page but collides with a dialog's own footer — "inline" renders
+  // it as a normal flow element instead, for a table embedded in a dialog
+  placement?: "fixed" | "inline";
 }) {
   const hasSelection = Boolean(selectable) && selectedItems.length > 0;
   const showActionBar = canResetFilterAndSort || hasSelection || pageCount > 1;
   if (!showActionBar) return null;
 
   return (
-    <div className="fixed inset-x-4 bottom-4 flex flex-col items-end gap-2 sm:inset-x-auto sm:bottom-8 sm:right-8 sm:flex-row border border-border bg-sidebar px-4 py-2 rounded-full corner-squircle shadow-[0_0_16px_rgba(0,0,0,0.35)]">
+    <div
+      className={cn(
+        "flex flex-col items-end gap-2 border border-border bg-sidebar px-4 py-2 sm:flex-row",
+        placement === "fixed"
+          ? "fixed inset-x-4 bottom-4 rounded-full corner-squircle shadow-[0_0_16px_rgba(0,0,0,0.35)] sm:inset-x-auto sm:bottom-8 sm:right-8"
+          : "w-full rounded-lg corner-squircle sm:items-center sm:justify-end",
+      )}
+    >
       {pageCount > 1 && (
         <Pagination className="w-auto">
           <PaginationContent>
@@ -181,6 +200,7 @@ export function CustomTableActionBar<T>({
           {labels.cancelSelection}
         </Button>
       )}
+      {hasSelection && selectionActions?.(selectedItems)}
       {selectable && onDeleteSelected && selectedItems.length > 0 && (
         <ConfirmDialog
           trigger={

@@ -47,6 +47,7 @@ export function CustomTableCell<T>({
   labels: CustomTableLabels;
 }) {
   if (column.type === "string") {
+    if (column.render) return column.render(item);
     const value = column.getString(item);
     if (!value) return <CustomTableEmptyValue />;
     const content = renderStringContent(column, item, value);
