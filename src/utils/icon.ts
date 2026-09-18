@@ -14,6 +14,7 @@ import {
   Cursor02Icon,
   DashboardSquare01Icon,
   Delete02Icon,
+  DicesIcon,
   Download01Icon,
   EditIcon,
   FileImportIcon,
@@ -82,4 +83,5 @@ export const ICONS = {
   delete: Delete02Icon,
   edit: EditIcon,
   import: FileImportIcon,
+  dice: DicesIcon,
 } satisfies Record<string, HugeIcon>;

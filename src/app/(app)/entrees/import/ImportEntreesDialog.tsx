@@ -83,6 +83,31 @@ export function ImportEntreesDialog() {
     (row) =>
       getRowFieldErrors(row, referenceCounts, existingReferences).size > 0,
   );
+  // most source files have nothing usable as a unique per-row id (see
+  // parseWorkbook's note on "N° Block") — typing one in by hand for every
+  // row defeats the point of importing, so the submit button is replaced by
+  // this until every row has something, rather than blocking on it silently
+  const hasBlankReference = rows.some((row) => !row.reference);
+
+  const generateRandomReferences = () => {
+    const taken = new Set([
+      ...existingReferences,
+      ...rows.map((row) => row.reference).filter((ref) => ref !== null),
+    ]);
+    const nextRandomReference = () => {
+      let candidate: string;
+      do {
+        candidate = `IMP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      } while (taken.has(candidate));
+      taken.add(candidate);
+      return candidate;
+    };
+    setRows(
+      rows.map((row) =>
+        row.reference ? row : { ...row, reference: nextRandomReference() },
+      ),
+    );
+  };
 
   const handleSubmit = async () => {
     setPending(true);
@@ -223,16 +248,25 @@ export function ImportEntreesDialog() {
               variant="ghost"
               onClick={() => setDialogOpen(false)}
             >
+              <Icon icon={ICONS.cancel} />
               {fr.common.cancel}
             </Button>
-            <SubmitButton
-              icon={ICONS.check}
-              {...{ pending }}
-              disabled={rows.length === 0 || hasErrors}
-              onClick={handleSubmit}
-            >
-              Importer {rows.length > 1 ? `${rows.length} entrées` : "l'entrée"}
-            </SubmitButton>
+            {hasBlankReference ? (
+              <Button type="button" onClick={generateRandomReferences}>
+                <Icon icon={ICONS.dice} />
+                Générer des références aléatoires
+              </Button>
+            ) : (
+              <SubmitButton
+                icon={ICONS.check}
+                {...{ pending }}
+                disabled={rows.length === 0 || hasErrors}
+                onClick={handleSubmit}
+              >
+                Importer{" "}
+                {rows.length > 1 ? `${rows.length} entrées` : "l'entrée"}
+              </SubmitButton>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

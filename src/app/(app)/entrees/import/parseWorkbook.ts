@@ -8,6 +8,7 @@ import {
 } from "./fieldMatchers";
 import { looksLikeFooterRow } from "./footerKeywords";
 import { lengthUnitFromHeader } from "./lengthUnitFromHeader";
+import { normalizeHeader } from "./normalize";
 import type {
   HeaderCandidate,
   ParsedEntreeRow,
@@ -24,6 +25,15 @@ const METADATA_FIELDS: ImportField[] = [
   "origine",
   "commentaire",
 ];
+
+// labels worth pulling from that same metadata block even though they don't
+// map to any entrée column of their own (see the sample file's "Client" /
+// "Fournisseur" lines) — folded into the commentaire instead of dropped
+const EXTRA_METADATA_LABELS = [
+  { label: "client", heading: "Client" },
+  { label: "fournisseur", heading: "Fournisseur" },
+] as const;
+type ExtraMetadataLabel = (typeof EXTRA_METADATA_LABELS)[number]["label"];
 
 // below this, a longueur/largeur value can only sensibly be metres — no real
 // tile or slab is a few centimetres long. Above it, only cm makes sense: a
@@ -81,31 +91,56 @@ function readMetadataDefaults(
   sheet: Worksheet,
   headerRow: number,
   maxCol: number,
-): Partial<Record<ImportField, string>> {
-  const defaults: Partial<Record<ImportField, string>> = {};
+): {
+  fields: Partial<Record<ImportField, string>>;
+  extra: Partial<Record<ExtraMetadataLabel, string>>;
+} {
+  const fields: Partial<Record<ImportField, string>> = {};
+  const extra: Partial<Record<ExtraMetadataLabel, string>> = {};
   const lowest = Math.max(1, headerRow - MAX_METADATA_LOOKBACK);
   for (let rowNumber = headerRow - 1; rowNumber >= lowest; rowNumber--) {
     const texts = rowCellTexts(sheet, rowNumber, maxCol);
     if (looksLikeFooterRow(texts)) break;
     const firstNonEmptyIndex = texts.findIndex((text) => text !== "");
     if (firstNonEmptyIndex === -1) continue;
-    const field = identifyField(texts[firstNonEmptyIndex]);
-    if (!field || !METADATA_FIELDS.includes(field) || field in defaults)
-      continue;
     const valueIndex = texts.findIndex(
       (text, index) => index > firstNonEmptyIndex && text !== "",
     );
     if (valueIndex === -1) continue;
-    // the date label's value cell needs cellDate's parsing (a real Excel
-    // date, or dd/mm/yyyy text) — every other metadata field is read as
-    // plain text already, straight off `texts`
-    const parsed =
-      field === "date"
-        ? cellDate(sheet.getRow(rowNumber).getCell(valueIndex + 1))
-        : texts[valueIndex];
-    if (parsed) defaults[field] = parsed;
+
+    const field = identifyField(texts[firstNonEmptyIndex]);
+    if (field && METADATA_FIELDS.includes(field) && !(field in fields)) {
+      // the date label's value cell needs cellDate's parsing (a real Excel
+      // date, or dd/mm/yyyy text) — every other metadata field is read as
+      // plain text already, straight off `texts`
+      const parsed =
+        field === "date"
+          ? cellDate(sheet.getRow(rowNumber).getCell(valueIndex + 1))
+          : texts[valueIndex];
+      if (parsed) fields[field] = parsed;
+      continue;
+    }
+
+    const normalizedLabel = normalizeHeader(texts[firstNonEmptyIndex]);
+    const extraLabel = EXTRA_METADATA_LABELS.find(
+      (entry) => entry.label === normalizedLabel,
+    )?.label;
+    if (extraLabel && !(extraLabel in extra))
+      extra[extraLabel] = texts[valueIndex];
   }
-  return defaults;
+  return { fields, extra };
+}
+
+// Client/Fournisseur have nowhere else to go, so they ride along in the
+// commentaire — a placeholder-redacted sample ("*****") still comes through
+// honestly as "Client: *****", which is exactly what the cell said
+function buildMetadataNote(
+  extra: Partial<Record<ExtraMetadataLabel, string>>,
+): string | null {
+  const parts = EXTRA_METADATA_LABELS.map(({ label, heading }) =>
+    extra[label] ? `${heading}: ${extra[label]}` : null,
+  ).filter((part) => part !== null);
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 let nextRowId = 0;
@@ -117,7 +152,9 @@ function parseTable(
   maxCol: number,
 ): { table: ParsedTable; nextRow: number } {
   const columns = mapHeaderColumns(sheet, headerRow, maxCol);
-  const metadataDefaults = readMetadataDefaults(sheet, headerRow, maxCol);
+  const { fields: metadataDefaults, extra: metadataExtra } =
+    readMetadataDefaults(sheet, headerRow, maxCol);
+  const metadataNote = buildMetadataNote(metadataExtra);
   const columnEntries = [...columns.entries()];
   const getColumn = (field: ImportField) =>
     columnEntries.find(([, mapped]) => mapped === field)?.[0];
@@ -170,9 +207,12 @@ function parseTable(
       conteneur:
         nonEmpty(textOf(conteneurCol)) ?? metadataDefaults.conteneur ?? null,
       commentaire:
-        nonEmpty(textOf(commentaireCol)) ??
-        metadataDefaults.commentaire ??
-        null,
+        [
+          nonEmpty(textOf(commentaireCol)) ?? metadataDefaults.commentaire,
+          metadataNote,
+        ]
+          .filter((part) => part !== null && part !== undefined)
+          .join(" — ") || null,
     });
   }
 
