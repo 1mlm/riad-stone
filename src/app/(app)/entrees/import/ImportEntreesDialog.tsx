@@ -169,6 +169,28 @@ export function ImportEntreesDialog() {
     );
   };
 
+  // same correction as handleTableUnitChange, applied to every table in one
+  // go — for a source file where every sheet/table really is in the same
+  // wrong unit, fixing it table by table would be needless repetition
+  const handleGlobalUnitChange = (
+    field: "longueur" | "largeur",
+    unit: LengthUnit,
+  ) => {
+    haptic("selection");
+    setRows((current) =>
+      tables.reduce(
+        (acc, table) => reinterpretTableUnit(acc, table, field, unit),
+        current,
+      ),
+    );
+    setTables((current) =>
+      current.map((t) => ({
+        ...t,
+        [field === "longueur" ? "longueurUnit" : "largeurUnit"]: unit,
+      })),
+    );
+  };
+
   const handleSubmit = async () => {
     setPending(true);
     setSubmitError(null);
@@ -307,6 +329,7 @@ export function ImportEntreesDialog() {
                   {...{ tables, rows, existingReferences }}
                   onRowsChange={setRows}
                   onTableUnitChange={handleTableUnitChange}
+                  onGlobalUnitChange={handleGlobalUnitChange}
                   onImportRows={handleImportSelected}
                   importPending={selectionPending}
                 />

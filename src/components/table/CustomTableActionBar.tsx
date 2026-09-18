@@ -100,6 +100,7 @@ export function CustomTableActionBar<T>({
   exportFilePrefix,
   selectionActions,
   placement = "fixed",
+  showExtract = true,
 }: {
   currentPage: number;
   setPage: (page: number) => void;
@@ -123,6 +124,10 @@ export function CustomTableActionBar<T>({
   // a full page but collides with a dialog's own footer — "inline" renders
   // it as a normal flow element instead, for a table embedded in a dialog
   placement?: "fixed" | "inline";
+  // off for a table whose rows aren't real persisted data yet (e.g. an
+  // unsaved import preview) — exporting them reads as more official than
+  // it is
+  showExtract?: boolean;
 }) {
   const hasSelection = Boolean(selectable) && selectedItems.length > 0;
   const showActionBar = canResetFilterAndSort || hasSelection || pageCount > 1;
@@ -227,7 +232,7 @@ export function CustomTableActionBar<T>({
           }}
         />
       )}
-      {selectable && (
+      {selectable && showExtract && (
         <ExtractButton
           {...{ selectedItems, columns, labels }}
           filePrefix={exportFilePrefix}

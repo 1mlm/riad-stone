@@ -1,12 +1,20 @@
 "use client";
 
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/Icon";
 import { CustomTable } from "@/components/table/CustomTable";
 import { UnitDropdown } from "@/components/UnitDropdown";
 import { fr } from "@/messages/fr";
 import { Button } from "@/shadcn/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shadcn/ui/dropdown-menu";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
-import type { LengthUnit } from "@/utils/length";
+import { LENGTH_UNITS, type LengthUnit } from "@/utils/length";
 import { buildImportPreviewColumns } from "./previewColumns";
 import type { ParsedEntreeRow } from "./types";
 import { reinterpretLargeurUnit, reinterpretLongueurUnit } from "./units";
@@ -22,6 +30,41 @@ export type ImportTableMeta = {
   longueurUnit: LengthUnit;
   largeurUnit: LengthUnit;
 };
+
+// no "current unit" to show on the trigger — tables can legitimately
+// differ, so this is an action ("apply this unit everywhere"), not a
+// reflection of shared state the way the per-table control is
+function GlobalUnitButton({
+  label,
+  onUnitChange,
+}: {
+  label: string;
+  onUnitChange: (unit: LengthUnit) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" size="sm">
+          {label}
+          <Icon icon={ArrowDown01Icon} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {LENGTH_UNITS.map((option) => (
+          <DropdownMenuItem
+            key={option}
+            onClick={() => {
+              haptic("selection");
+              onUnitChange(option);
+            }}
+          >
+            {option}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function UnitFixControl({
   label,
@@ -50,6 +93,7 @@ export function ImportPreviewTables({
   rows,
   onRowsChange,
   onTableUnitChange,
+  onGlobalUnitChange,
   existingReferences,
   onImportRows,
   importPending,
@@ -62,6 +106,8 @@ export function ImportPreviewTables({
     field: "longueur" | "largeur",
     unit: LengthUnit,
   ) => void;
+  // same correction as onTableUnitChange, applied to every table at once
+  onGlobalUnitChange: (field: "longueur" | "largeur", unit: LengthUnit) => void;
   existingReferences: Set<string>;
   onImportRows: (rows: ParsedEntreeRow[]) => Promise<void>;
   importPending: boolean;
@@ -88,6 +134,19 @@ export function ImportPreviewTables({
 
   return (
     <div className="flex flex-col gap-6">
+      {tables.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg corner-squircle border border-dashed border-border p-2 text-xs text-muted-foreground">
+          Corriger l'unité pour tout le fichier :
+          <GlobalUnitButton
+            label="Longueur"
+            onUnitChange={(unit) => onGlobalUnitChange("longueur", unit)}
+          />
+          <GlobalUnitButton
+            label="Largeur"
+            onUnitChange={(unit) => onGlobalUnitChange("largeur", unit)}
+          />
+        </div>
+      )}
       {tables.map((table) => {
         const tableRows = rows.filter(
           (row) => tableKey(row.source) === table.key,
@@ -131,6 +190,7 @@ export function ImportPreviewTables({
               syncToUrl={false}
               selectable
               actionBarPlacement="inline"
+              showExtract={false}
               paginate={false}
               labels={{
                 ...fr.table,

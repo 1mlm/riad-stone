@@ -204,6 +204,7 @@ export function CustomTable<T>({
   syncToUrl = true,
   selectionActions,
   actionBarPlacement = "fixed",
+  showExtract = true,
 }: {
   items: T[];
   columns: CustomTableColumn<T>[];
@@ -249,6 +250,8 @@ export function CustomTable<T>({
   // see CustomTableActionBar — "inline" for a table embedded in a dialog,
   // where a viewport-fixed bar would collide with the dialog's own footer
   actionBarPlacement?: "fixed" | "inline";
+  // off for rows that aren't real persisted data yet — see CustomTableActionBar
+  showExtract?: boolean;
 }) {
   const labels = resolveTableLabels(labelOverrides);
 
@@ -580,6 +583,7 @@ export function CustomTable<T>({
             exportFilePrefix,
             selectionActions,
             placement: actionBarPlacement,
+            showExtract,
           }}
         />
       </div>
