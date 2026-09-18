@@ -83,10 +83,11 @@ export function ImportEntreesDialog() {
     (row) =>
       getRowFieldErrors(row, referenceCounts, existingReferences).size > 0,
   );
-  // most source files have nothing usable as a unique per-row id (see
-  // parseWorkbook's note on "N° Block") — typing one in by hand for every
-  // row defeats the point of importing, so the submit button is replaced by
-  // this until every row has something, rather than blocking on it silently
+  // "N° Block"/"Bloc" maps to reference when a file has one (see
+  // parseWorkbook), but plenty of files have no per-row unique id column at
+  // all — typing one in by hand for every row defeats the point of
+  // importing, so the submit button is replaced by this until every row has
+  // something, rather than blocking on it silently
   const hasBlankReference = rows.some((row) => !row.reference);
 
   const generateRandomReferences = () => {

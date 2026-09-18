@@ -60,8 +60,10 @@ function isBlankRow(texts: string[]) {
 
 // which column holds which field, for the table whose header sits at
 // `headerRow` — a column with no recognizable header is simply left out, so
-// e.g. "N° Block" or "Total m2" (a computed column the app doesn't take as
-// input) are read as ordinary text but never mapped anywhere
+// e.g. "Total m2" (a computed column the app doesn't take as input) is read
+// as ordinary text but never mapped anywhere. "N° Block"/"Bloc" does map,
+// to reference — it's the per-lot id in these files, not just a column name
+// that looks like one
 function mapHeaderColumns(sheet: Worksheet, headerRow: number, maxCol: number) {
   const row = sheet.getRow(headerRow);
   const columns = new Map<number, ImportField>();

@@ -18,7 +18,16 @@ export type ImportField =
 // reliable enough on its own once accents and spacing are gone
 const EXACT_ALIASES: Record<ImportField, string[]> = {
   designation: ["designation", "design", "produit", "article", "nom"],
-  reference: ["reference", "ref", "codearticle", "code"],
+  reference: [
+    "reference",
+    "ref",
+    "codearticle",
+    "code",
+    "bloc",
+    "block",
+    "numerodebloc",
+    "nblock",
+  ],
   longueur: ["longueur", "long", "length", "l"],
   largeur: ["largeur", "larg", "width", "w"],
   nombrePieces: ["nombredepieces", "nbpieces", "nbrpieces", "qte", "quantite"],
@@ -33,7 +42,7 @@ const SUBSTRING_FALLBACKS: Partial<Record<ImportField, string[]>> = {
   largeur: ["larg", "width"],
   nombrePieces: ["piece"],
   conteneur: ["conten"],
-  reference: ["ref"],
+  reference: ["ref", "bloc"],
 };
 
 export function matchesField(headerText: string, field: ImportField): boolean {
@@ -66,8 +75,8 @@ export function identifyField(headerText: string): ImportField | undefined {
 
 // the fields a header ROW needs to show before it's trusted as a table's
 // header rather than some unrelated row of text — reference is deliberately
-// excluded: plenty of real packing lists have no per-row unique id column at
-// all (see the "N° Block" case, which isn't a reference and isn't mapped)
+// excluded: some real packing lists have no per-row unique id column at all,
+// even though "N° Block"/"Bloc" often is one (it maps to reference above)
 export const REQUIRED_HEADER_FIELDS: ImportField[] = [
   "designation",
   "longueur",
