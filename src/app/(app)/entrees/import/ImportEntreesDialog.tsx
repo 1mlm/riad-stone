@@ -16,10 +16,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shadcn/ui/dialog";
+import { haptic } from "@/utils/haptics";
 import { ICONS } from "@/utils/icon";
+import type { LengthUnit } from "@/utils/length";
 import { playChime } from "@/utils/sound";
 import { getExistingReferences, importEntrees } from "../actions";
-import { ImportPreviewTable } from "./ImportPreviewTable";
+import {
+  ImportPreviewTables,
+  type ImportTableMeta,
+  reinterpretTableUnit,
+  tableKey,
+} from "./ImportPreviewTables";
 import { parseWorkbook } from "./parseWorkbook";
 import type { ParsedEntreeRow } from "./types";
 import { useWindowFileDrop } from "./useWindowFileDrop";
@@ -51,7 +58,7 @@ export function ImportEntreesDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rows, setRows] = useState<ParsedEntreeRow[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [tables, setTables] = useState<ImportTableMeta[]>([]);
   const [existingReferences, setExistingReferences] = useState<Set<string>>(
     new Set(),
   );
@@ -63,7 +70,7 @@ export function ImportEntreesDialog() {
 
   const resetState = () => {
     setRows([]);
-    setSelectedIds(new Set());
+    setTables([]);
     setReadError(null);
     setUnmatchedHeaders([]);
     setSubmitError(null);
@@ -91,6 +98,15 @@ export function ImportEntreesDialog() {
       const existing = await getExistingReferences();
       setExistingReferences(new Set(existing));
       setRows(result.tables.flatMap((table) => table.rows));
+      setTables(
+        result.tables.map((table) => ({
+          key: tableKey(table),
+          sheet: table.sheet,
+          tableIndex: table.tableIndex,
+          longueurUnit: table.longueurUnit,
+          largeurUnit: table.largeurUnit,
+        })),
+      );
     } catch {
       setReadError(
         "Ce fichier n'a pas pu être lu — vérifiez qu'il s'agit bien d'un fichier Excel (.xlsx).",
@@ -132,6 +148,27 @@ export function ImportEntreesDialog() {
     );
   };
 
+  const handleTableUnitChange = (
+    key: string,
+    field: "longueur" | "largeur",
+    unit: LengthUnit,
+  ) => {
+    const table = tables.find((t) => t.key === key);
+    if (!table) return;
+    haptic("selection");
+    setRows((current) => reinterpretTableUnit(current, table, field, unit));
+    setTables((current) =>
+      current.map((t) =>
+        t.key === key
+          ? {
+              ...t,
+              [field === "longueur" ? "longueurUnit" : "largeurUnit"]: unit,
+            }
+          : t,
+      ),
+    );
+  };
+
   const handleSubmit = async () => {
     setPending(true);
     setSubmitError(null);
@@ -157,14 +194,13 @@ export function ImportEntreesDialog() {
     }
   };
 
-  // imports only the selected rows and keeps the dialog open, so a batch
-  // can be worked through in pieces — fix the good rows, import them, come
-  // back for the rest, without losing your place. The rows that landed
-  // leave both `rows` and the selection; existingReferences is re-fetched
-  // since those references now exist for real, not just in this preview,
-  // so a leftover row reusing one still gets caught before the next submit
-  const handleImportSelected = async () => {
-    const selectedRows = rows.filter((row) => selectedIds.has(row.id));
+  // imports only the rows selected within one table's block and keeps the
+  // dialog open, so a batch can be worked through in pieces — fix the good
+  // rows, import them, come back for the rest, without losing your place.
+  // The rows that landed leave `rows`; existingReferences is re-fetched
+  // since those references now exist for real, not just in this preview, so
+  // a leftover row reusing one still gets caught before the next submit
+  const handleImportSelected = async (selectedRows: ParsedEntreeRow[]) => {
     if (selectedRows.length === 0) return;
     setSelectionPending(true);
     setSubmitError(null);
@@ -174,8 +210,8 @@ export function ImportEntreesDialog() {
         setSubmitError(result.error);
         return;
       }
-      setRows(rows.filter((row) => !selectedIds.has(row.id)));
-      setSelectedIds(new Set());
+      const importedIds = new Set(selectedRows.map((row) => row.id));
+      setRows((current) => current.filter((row) => !importedIds.has(row.id)));
       setExistingReferences(new Set(await getExistingReferences()));
       playChime("success");
     } catch {
@@ -235,7 +271,7 @@ export function ImportEntreesDialog() {
         }}
       >
         <DialogContent
-          style={{ width: "min(100vw - 2rem, 64rem)" }}
+          style={{ width: "min(100vw - 2rem, 72rem)" }}
           className="flex max-h-[calc(100dvh-2rem)] max-w-none flex-col sm:max-w-none"
         >
           <DialogHeader>
@@ -267,12 +303,12 @@ export function ImportEntreesDialog() {
                   {rows.length} ligne{rows.length > 1 ? "s" : ""} détectée
                   {rows.length > 1 ? "s" : ""}
                 </span>
-                <ImportPreviewTable
-                  {...{ rows, existingReferences, selectedIds }}
-                  onSelectedIdsChange={setSelectedIds}
+                <ImportPreviewTables
+                  {...{ tables, rows, existingReferences }}
                   onRowsChange={setRows}
-                  onImportSelected={handleImportSelected}
-                  importSelectedPending={selectionPending}
+                  onTableUnitChange={handleTableUnitChange}
+                  onImportRows={handleImportSelected}
+                  importPending={selectionPending}
                 />
               </div>
             ) : (
